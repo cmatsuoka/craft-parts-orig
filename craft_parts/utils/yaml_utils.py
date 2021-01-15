@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2018-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,63 +20,61 @@ import collections
 from typing import Any, TextIO
 
 import yaml
-import yaml.constructor
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
-    # Use them if possible. If not, we could fallback to the normal loader/dumper, but
-    # they actually behave differently, so raise an error instead.
+    # Use them if possible. If not, we could fallback to the normal loader/dumper.
+    # from .yaml_utils_c import SafeDumper, SafeLoader
+
+    import yaml.constructor
     from yaml import CSafeDumper, CSafeLoader  # type: ignore
+
+    class SafeLoader(CSafeLoader):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.add_constructor(
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
+            )
+
+    class SafeDumper(CSafeDumper):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.add_representer(str, _str_presenter)
+            self.add_representer(collections.OrderedDict, _dict_representer)
+
+    def _dict_constructor(loader, node):
+        # Necessary in order to make yaml merge tags work
+        loader.flatten_mapping(node)
+        value = loader.construct_pairs(node)
+
+        try:
+            return collections.OrderedDict(value)
+        except TypeError:
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                "found unhashable key",
+                node.start_mark,
+            )
+
+    def _dict_representer(dumper, data):
+        return dumper.represent_dict(data.items())
+
+    def _str_presenter(dumper, data):
+        if len(data.splitlines()) > 1:  # check for multiline string
+            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
 except ImportError:
-    raise RuntimeError("craft-parts requires PyYAML to be built with libyaml bindings")
+    from yaml import SafeDumper, SafeLoader  # type: ignore
 
 
 def load(stream: TextIO) -> Any:
     """Safely load YAML in ordered manner."""
-    return yaml.load(stream, Loader=_SafeOrderedLoader)
-
-
-class _SafeOrderedLoader(CSafeLoader):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_constructor(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
-        )
-
-
-class _SafeOrderedDumper(CSafeDumper):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_representer(str, _str_presenter)
-        self.add_representer(collections.OrderedDict, _dict_representer)
-
-
-def _dict_constructor(loader, node):
-    # Necessary in order to make yaml merge tags work
-    loader.flatten_mapping(node)
-    value = loader.construct_pairs(node)
-
-    try:
-        return collections.OrderedDict(value)
-    except TypeError:
-        raise yaml.constructor.ConstructorError(
-            "while constructing a mapping",
-            node.start_mark,
-            "found unhashable key",
-            node.start_mark,
-        )
-
-
-def _dict_representer(dumper, data):
-    return dumper.represent_dict(data.items())
-
-
-def _str_presenter(dumper, data):
-    if len(data.splitlines()) > 1:  # check for multiline string
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+    return yaml.load(stream, Loader=SafeLoader)
 
 
 class YAMLObject(yaml.YAMLObject):
-    yaml_loader = _SafeOrderedLoader
-    yaml_dumper = _SafeOrderedDumper
+    yaml_loader = SafeLoader
+    yaml_dumper = SafeDumper
