@@ -1,0 +1,70 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2021 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import enum
+from typing import List
+
+
+@enum.unique
+class Step(enum.IntEnum):
+    """All the steps needed to fully process a part.
+
+    Steps corresponds to the tasks that must be fulfilled in order to
+    process each of the parts in the project specification.
+    """
+
+    PULL = 1
+    BUILD = 2
+    STAGE = 3
+    PRIME = 4
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}.{self.name}"
+
+    def previous_steps(self) -> List["Step"]:
+        """List the steps that should happen before the current step."""
+
+        steps = []
+
+        if self >= Step.BUILD:
+            steps.append(Step.PULL)
+        if self >= Step.STAGE:
+            steps.append(Step.BUILD)
+        if self >= Step.PRIME:
+            steps.append(Step.STAGE)
+
+        return steps
+
+    def next_steps(self) -> List["Step"]:
+        """List the steps that should happen after the current step."""
+
+        steps = []
+
+        if self == Step.PULL:
+            steps.append(Step.BUILD)
+        if self <= Step.BUILD:
+            steps.append(Step.STAGE)
+        if self <= Step.STAGE:
+            steps.append(Step.PRIME)
+
+        return steps
+
+
+def dependency_prerequisite_step(step: Step) -> Step:
+    if step <= Step.STAGE:
+        return Step.STAGE
+    else:
+        return step
