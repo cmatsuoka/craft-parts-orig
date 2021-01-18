@@ -79,7 +79,7 @@ def humanize_list(
 
 
 def pluralize(container: Sized, if_one: str, if_multiple: str) -> str:
-    """Return the appropriate plural form according to the number of elements in container."""
+    """Return the appropriate plural form according to the number of elements."""
 
     if len(container) > 1:
         return if_multiple

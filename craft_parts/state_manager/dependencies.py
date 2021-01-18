@@ -20,6 +20,8 @@ from craft_parts.steps import Step
 
 
 class Dependency:
+    """A step that is necessary to execute another part's step."""
+
     def __init__(self, *, part_name: str, step: Step):
         self.part_name = part_name
         self.step = step

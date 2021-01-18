@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The parts lifecycle manager definition and helpers."""
+
 from typing import Any, Dict, List
 
 from craft_parts import executor, parts, sequencer

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Definitions and helpers to handle parts."""
+
 import os
 from typing import Any, Dict, List, Set
 
@@ -21,6 +23,14 @@ from craft_parts import errors
 
 
 class Part:
+    """Each of the components used in the project specification.
+
+    During the craft-parts lifecycle each part is processed through
+    different steps in order to obtain its final artifacts. The Part
+    class holds the part specification data and additional configuration
+    information used during step processing.
+    """
+
     def __init__(self, name: str, data: Dict[str, Any], *, work_dir: str = "."):
         self.name = name
         self.data = data
@@ -38,9 +48,9 @@ class Part:
 def part_by_name(name: str, part_list: List[Part]) -> Part:
     """Obtain the part with the given name from the part list."""
 
-    for p in part_list:
-        if p.name is name:
-            return p
+    for part in part_list:
+        if part.name is name:
+            return part
 
     raise errors.InternalError(f"unknown part {name!r}")
 

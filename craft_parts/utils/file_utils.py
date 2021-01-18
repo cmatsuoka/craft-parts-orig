@@ -21,4 +21,6 @@ from datetime import datetime
 
 
 def timestamp(filename: str) -> datetime:
+    """Return the timestamp of the given file in datetime format."""
+
     return datetime.fromtimestamp(os.stat(filename).st_mtime)

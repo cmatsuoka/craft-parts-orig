@@ -118,14 +118,14 @@ def load_state(part: Part, step: Step) -> Optional[PartState]:
     """Retrieve the persistent state for the given part and step."""
 
     state_data = {}
-    state_file = os.path.join(part.part_state_dir, step.name.lower())
-    if not os.path.isfile(state_file):
+    filename = os.path.join(part.part_state_dir, step.name.lower())
+    if not os.path.isfile(filename):
         return None
 
-    with open(state_file, "r") as f:
-        data = yaml_utils.load(f)
+    with open(filename, "r") as state_file:
+        data = yaml_utils.load(state_file)
         if data:
             state_data.update(data)
 
-    state_data["timestamp"] = file_utils.timestamp(state_file)
+    state_data["timestamp"] = file_utils.timestamp(filename)
     return PartState(data=state_data)

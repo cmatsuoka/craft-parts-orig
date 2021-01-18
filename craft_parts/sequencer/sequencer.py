@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 class Sequencer:
+    """Obtain a list of actions from the parts specification."""
+
     def __init__(self, all_parts: List[Part]):
         self._all_parts = sort_parts(all_parts)
         self._sm = StateManager(all_parts)
@@ -123,20 +125,20 @@ class Sequencer:
 
     def _prepare_step(self, part: Part, step: Step) -> None:
         all_deps = parts.part_dependencies(part.name, part_list=self._all_parts)
-        if (
-            step > Step.PULL
-        ):  # With v2 plugins we don't need to stage dependencies before PULL
-            prerequisite_step = steps.dependency_prerequisite_step(step)
-            deps = {
-                p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)
-            }
+        prerequisite_step = steps.dependency_prerequisite_step(step)
 
-            for dep in deps:
-                self._add_all_actions(
-                    target_step=prerequisite_step,
-                    part_names=[dep.name],
-                    reason=f"required to {step_verb(step)} {part.name}",
-                )
+        # With v2 plugins we don't need to stage dependencies before PULL
+        if not prerequisite_step:
+            return
+
+        deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
+
+        for dep in deps:
+            self._add_all_actions(
+                target_step=prerequisite_step,
+                part_names=[dep.name],
+                reason=f"required to {_step_verb(step)} {part.name}",
+            )
 
     def _run_step(
         self,
@@ -195,7 +197,7 @@ class Sequencer:
         )
 
 
-def step_verb(step: Step) -> str:
+def _step_verb(step: Step) -> str:
     verb = {
         Step.PULL: "pull",
         Step.BUILD: "build",

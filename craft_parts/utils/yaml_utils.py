@@ -30,6 +30,8 @@ try:
     from yaml import CSafeDumper, CSafeLoader  # type: ignore
 
     class SafeLoader(CSafeLoader):
+        """C-based SafeLoader wrapper."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.add_constructor(
@@ -37,6 +39,8 @@ try:
             )
 
     class SafeDumper(CSafeDumper):
+        """C-based SafeDumper wrapper."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.add_representer(str, _str_presenter)
@@ -49,13 +53,13 @@ try:
 
         try:
             return collections.OrderedDict(value)
-        except TypeError:
+        except TypeError as type_error:
             raise yaml.constructor.ConstructorError(
                 "while constructing a mapping",
                 node.start_mark,
                 "found unhashable key",
                 node.start_mark,
-            )
+            ) from type_error
 
     def _dict_representer(dumper, data):
         return dumper.represent_dict(data.items())
@@ -76,5 +80,7 @@ def load(stream: TextIO) -> Any:
 
 
 class YAMLObject(yaml.YAMLObject):
+    """YAML object wrapper."""
+
     yaml_loader = SafeLoader
     yaml_dumper = SafeDumper

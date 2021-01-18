@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Definitions and helpers to handle lifecycle steps."""
+
 import enum
-from typing import List
+from typing import List, Optional
 
 
 @enum.unique
@@ -63,8 +65,11 @@ class Step(enum.IntEnum):
         return steps
 
 
-def dependency_prerequisite_step(step: Step) -> Step:
-    if step <= Step.STAGE:
-        return Step.STAGE
-    else:
-        return step
+def dependency_prerequisite_step(step: Step) -> Optional[Step]:
+    """Obtain the step a given step may depend on."""
+
+    #  With V2 plugins we don't need to repull if dependency is restaged
+    if step == Step.PULL:
+        return None
+
+    return Step.STAGE if step <= Step.STAGE else step

@@ -87,6 +87,8 @@ class StateManager:
                     self._state.set(part_name=part.name, step=step, state=state)
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
+        """Set the ephemeral state of the given part and step."""
+
         self._state.set(part_name=part.name, step=step, state=state)
 
     def should_step_run(self, part: Part, step: Step) -> bool:
@@ -129,8 +131,8 @@ class StateManager:
     def clean_part(self, part: Part, step: Step) -> None:
         """Remove the state for this and all later steps."""
 
-        for s in [step] + step.next_steps():
-            self._state.remove(part_name=part.name, step=step)
+        for next_step in [step] + step.next_steps():
+            self._state.remove(part_name=part.name, step=next_step)
 
     def dirty_report(self, part: Part, step: Step) -> Optional[DirtyReport]:
         """Obtain the dirty report for a given step of the given part.
@@ -140,8 +142,8 @@ class StateManager:
         :return: Dirty report (could be None)
         """
 
-        # With V2 plugins we don't need to repull if dependency is restaged
-        if step is Step.PULL:
+        prerequisite_step = steps.dependency_prerequisite_step(step)
+        if not prerequisite_step:
             return None
 
         # Get the dirty report from the PluginHandler. If it's dirty, we can
@@ -154,7 +156,6 @@ class StateManager:
         # properties specific to that part. If it's not dirty because of those,
         # we need to expand it here to also take its dependencies (if any) into
         # account
-        prerequisite_step = steps.dependency_prerequisite_step(step)
         dependencies = parts.part_dependencies(
             part.name, part_list=self._all_parts, recursive=True
         )

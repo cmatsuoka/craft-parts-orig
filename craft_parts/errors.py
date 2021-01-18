@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Public error definitions."""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 
 
+# pylint: disable=R0201
 class _Error(Exception, ABC):
     """Base class for craft_parts exceptions."""
 
@@ -53,6 +56,8 @@ class _ReportableError(_Error, ABC):
 
 
 class InternalError(_ReportableError):
+    """Internal error."""
+
     def __init__(self, msg: str):
         super().__init__()
         self._msg = msg
@@ -65,7 +70,10 @@ class InternalError(_ReportableError):
 
 
 class InvalidArchitecture(_Error):
+    """The machine architecture is not supported."""
+
     def __init__(self, arch_name: str):
+        super().__init__()
         self._arch_name = arch_name
 
     def get_brief(self) -> str:
@@ -76,6 +84,8 @@ class InvalidArchitecture(_Error):
 
 
 class PartDependencyCycle(_Error):
+    """Dependency cycles have been detected in the parts definition."""
+
     def get_brief(self) -> str:
         return "A circular dependency chain was detected."
 
@@ -84,7 +94,10 @@ class PartDependencyCycle(_Error):
 
 
 class InvalidPartName(_Error):
+    """An operation was requested on a part that's not listed in the parts specification."""
+
     def __init__(self, part_name: str):
+        super().__init__()
         self._part_name = part_name
 
     def get_brief(self) -> str:

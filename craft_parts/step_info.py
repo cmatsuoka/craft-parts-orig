@@ -60,22 +60,32 @@ class StepInfo:
 
     @property
     def arch_triplet(self) -> str:
+        """The machine-vendor-os platform triplet definition."""
+
         return self.__machine_info["triplet"]
 
     @property
     def is_cross_compiling(self) -> bool:
+        """Whether the target and host architectures are different."""
+
         return self.__target_machine != self.__platform_arch
 
     @property
     def parallel_build_count(self) -> int:
+        """The maximum allowable number of concurrent build jobs."""
+
         return self._parallel_build_count
 
     @property
     def local_plugins_dir(self) -> str:
+        """The location of local plugins in the filesystem."""
+
         return self._local_plugins_dir
 
     @property
     def deb_arch(self) -> str:
+        """The architecture used for deb packages."""
+
         return self.__machine_info["deb"]
 
     def _set_machine(self, target_arch):
