@@ -62,6 +62,7 @@ class LifecycleManager:
             platform_version_id=platform_version_id,
             parallel_build_count=parallel_build_count,
             local_plugins_dir=local_plugins_dir,
+            custom_args=custom_args,
         )
 
     def clean(self, part_list: List[str] = None) -> None:

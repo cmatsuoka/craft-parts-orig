@@ -94,14 +94,44 @@ class PartDependencyCycle(_Error):
 
 
 class InvalidPartName(_Error):
-    """An operation was requested on a part that's not listed in the parts specification."""
+    """An operation was requested on a part that's in the parts specification."""
 
     def __init__(self, part_name: str):
         super().__init__()
         self._part_name = part_name
 
     def get_brief(self) -> str:
-        return f'A part named "{self._part_name}" is not defined in the parts list.'
+        return f"A part named {self._part_name!r} is not defined in the parts list."
 
     def get_resolution(self) -> str:
         return "Check for typos in the part name or in the parts definition."
+
+
+class UnknownPluginVersion(_Error):
+    """A request was made to use a plugin version that's not defined."""
+
+    def __init__(self, version: str):
+        super().__init__()
+        self._version = version
+
+    def get_brief(self) -> str:
+        return f"Plugin version {self._version!r} does not exist."
+
+    def get_resolution(self) -> str:
+        return "Check for typos in the plugin version."
+
+
+class UnknownPlugin(_Error):
+    """A request was made to use a plugin that's not defined."""
+
+    def __init__(self, plugin_name: str):
+        super().__init__()
+        self._plugin_name = plugin_name
+
+    def get_brief(self) -> str:
+        return f"Plugin {self._plugin_name!r} does not exist."
+
+    def get_resolution(self) -> str:
+        return (
+            "Check for typos in the plugin name and make sure the plugin is supported."
+        )
