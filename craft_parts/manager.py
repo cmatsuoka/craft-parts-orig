@@ -16,6 +16,7 @@
 
 """The parts lifecycle manager definition and helpers."""
 
+import os.path
 from typing import Any, Dict, List
 
 from craft_parts import executor, parts, sequencer
@@ -23,6 +24,9 @@ from craft_parts.actions import Action
 from craft_parts.parts import Part
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
+from craft_parts.validator import Validator
+
+_SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schema", "parts.json")
 
 
 class LifecycleManager:
@@ -47,7 +51,8 @@ class LifecycleManager:
         plugin_version: str = "v2",
         **custom_args,  # custom passthrough args
     ):
-        # TODO: validate parts
+        self._validator = Validator(_SCHEMA_DIR)
+        self._validator.validate(all_parts)
 
         parts_data = all_parts.get("parts", {})
         self._parts = [

@@ -105,7 +105,7 @@ servedocs: docs
 
 .PHONY: test-black
 test-black:
-	black --check --diff .
+	black --check --diff --exclude setup.py .
 
 .PHONY: test-codespell
 test-codespell:

@@ -17,7 +17,11 @@
 """Public error definitions."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
+import jsonschema  # type: ignore
+
+from craft_parts.utils import schema_helpers
+
 
 
 # pylint: disable=R0201
@@ -137,6 +141,20 @@ class UnknownPlugin(_Error):
         )
 
 
+class PluginBuildError(_ReportableError):
+    """An exception to raise when the PluginV2 build fails at runtime."""
+
+    def __init__(self, *, part_name: str) -> None:
+        super().__init__()
+        self._part_name = part_name
+
+    def get_brief(self) -> str:
+        return f"Failed to build {self._part_name!r}."
+
+    def get_resolution(self) -> str:
+        return "Check the build logs and ensure the part's configuration and sources are correct."
+
+
 class ScriptletRunError(_Error):
     """A part scriptlet execution failed."""
 
@@ -153,4 +171,49 @@ class ScriptletRunError(_Error):
         )
 
     def get_resolution(self) -> str:
-        return "Look for errors in the scriptlet definition."
+        return "Check the build logs and make sure the scriptlet is correct."
+
+
+class SchemaValidation(_Error):
+    """The parts data failed schema validation."""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Schema validation error: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Check the parts definition and make sure it's correct."
+
+    @classmethod
+    def from_validation_error(cls, error: jsonschema.ValidationError):
+        """Take a jsonschema.ValidationError and create a SnapcraftSchemaError.
+
+        The validation errors coming from jsonschema are a nightmare. This
+        class tries to make them a bit more understandable.
+        """
+
+        messages: List[str] = []
+
+        preamble = schema_helpers.determine_preamble(error)
+        cause = schema_helpers.determine_cause(error)
+        supplement = schema_helpers.determine_supplemental_info(error)
+
+        if preamble:
+            messages.append(preamble)
+
+        # If we have a preamble we are not at the root
+        if supplement and preamble:
+            messages.append(error.message)
+            messages.append(f"({supplement})")
+        elif supplement:
+            messages.append(supplement)
+        elif cause:
+            messages.append(cause)
+        else:
+
+            messages.append(error.message)
+
+        return cls(" ".join(messages))

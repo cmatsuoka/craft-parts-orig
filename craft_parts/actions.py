@@ -50,10 +50,30 @@ class Action:
         action_type: ActionType = ActionType.RUN,
         reason: Optional[str] = None,
     ):
-        self.part_name = part_name
-        self.step = step
-        self.type = action_type
-        self.reason = reason
+        self._part_name = part_name
+        self._step = step
+        self._type = action_type
+        self._reason = reason
+
+    @property
+    def part_name(self) -> str:
+        """The name of part this action will be executed for."""
+        return self._part_name
+
+    @property
+    def step(self) -> Step:
+        """The step to be executed in this action."""
+        return self._step
+
+    @property
+    def type(self) -> ActionType:
+        """The type of this action."""
+        return self._type
+
+    @property
+    def reason(self) -> Optional[str]:
+        """The reason why this action is being executed."""
+        return self._reason
 
     def __repr__(self):
         return f"{self.part_name}:{self.step!r}({self.type!r})"
