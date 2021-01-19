@@ -44,7 +44,7 @@ def get_plugin(name: str, *, version: str) -> Plugin:
     return _PLUGINS[version][name]
 
 
-def register_plugin(plugins: Dict[str, Plugin], *, version: str = "v2") -> None:
+def register_plugin(plugins: Dict[str, Plugin], *, version: str) -> None:
     """Register part handler plugins."""
 
     if version not in _PLUGINS:

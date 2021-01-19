@@ -41,6 +41,8 @@ class StepInfo:
     ):
         self._set_machine(target_arch)
 
+        self._platform_id = platform_id
+        self._platform_version_id = platform_version_id
         self._parallel_build_count = parallel_build_count
         self._local_plugins_dir = local_plugins_dir
 

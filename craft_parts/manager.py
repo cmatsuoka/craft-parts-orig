@@ -44,6 +44,7 @@ class LifecycleManager:
         platform_version_id: str = "",
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
+        plugin_version: str = "v2",
         **custom_args,  # custom passthrough args
     ):
         # TODO: validate parts
@@ -54,6 +55,9 @@ class LifecycleManager:
         ]
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(self._parts)
+        self._executor = executor.Executor(
+            part_list=self._parts, plugin_version=plugin_version
+        )
 
         self._step_info = StepInfo(
             work_dir=work_dir,
@@ -79,4 +83,4 @@ class LifecycleManager:
 
         for act in actions:
             part = parts.part_by_name(act.part_name, self._parts)
-            executor.run_action(act, part=part, step_info=self._step_info)
+            self._executor.run_action(act, part=part, step_info=self._step_info)

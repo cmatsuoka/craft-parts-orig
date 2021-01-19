@@ -40,6 +40,8 @@ class Part:
         self.part_build_dir = os.path.join(self.part_dir, "build")
         self.part_install_dir = os.path.join(self.part_dir, "install")
         self.part_state_dir = os.path.join(self.part_dir, "state")
+        self.stage_dir = os.path.join(work_dir, "stage")
+        self.prime_dir = os.path.join(work_dir, "prime")
 
     def __repr__(self):
         return f"Part({self.name})"

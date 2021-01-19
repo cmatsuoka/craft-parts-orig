@@ -135,3 +135,22 @@ class UnknownPlugin(_Error):
         return (
             "Check for typos in the plugin name and make sure the plugin is supported."
         )
+
+
+class ScriptletRunError(_Error):
+    """A part scriptlet execution failed."""
+
+    fmt = "Failed to run {scriptlet_name!r}: Exit code was {code}."
+
+    def __init__(self, scriptlet_name: str, code: int):
+        super().__init__()
+        self._scriptlet_name = scriptlet_name
+        self._code = code
+
+    def get_brief(self) -> str:
+        return (
+            f"{self._scriptlet_name} scriptlet execution failed with code {self._code}."
+        )
+
+    def get_resolution(self) -> str:
+        return "Look for errors in the scriptlet definition."

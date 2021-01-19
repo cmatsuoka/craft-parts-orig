@@ -16,4 +16,4 @@
 
 """Execute lifecycle actions."""
 
-from .executor import run_action  # noqa: F401
+from .executor import Executor  # noqa: F401
