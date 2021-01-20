@@ -31,7 +31,7 @@ from craft_parts.utils import file_utils
 logger = logging.getLogger(__name__)
 
 
-def run(scriptlet_name: str, scriptlet: str, workdir: str) -> None:
+def run(*, scriptlet_name: str, scriptlet: str, workdir: str, env: str = "") -> None:
     """Run a scriptlet."""
 
     with tempfile.TemporaryDirectory() as tempdir:
@@ -39,10 +39,6 @@ def run(scriptlet_name: str, scriptlet: str, workdir: str) -> None:
         feedback_fifo = file_utils.NonBlockingRWFifo(
             os.path.join(tempdir, "call_feedback")
         )
-
-        # TODO: set env
-        # env=self._env_generator(step),
-        env = ""
 
         # snapcraftctl only works consistently if it's using the exact same
         # interpreter as that used by snapcraft itself, thus the definition

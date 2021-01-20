@@ -21,6 +21,7 @@ from typing import Dict, List
 
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
+from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 
 from .part_handler import PartHandler
@@ -31,9 +32,12 @@ logger = logging.getLogger(__name__)
 class Executor:
     """Execute lifecycle actions."""
 
-    def __init__(self, *, part_list: List[Part], plugin_version: str):
+    def __init__(
+        self, *, part_list: List[Part], plugin_version: str, validator: Validator
+    ):
         self._part_list = part_list
         self._plugin_version = plugin_version
+        self._validator = validator
         self._handler: Dict[str, PartHandler] = {}
 
     def run_action(self, action: Action, *, part: Part, step_info: StepInfo):
@@ -46,7 +50,7 @@ class Executor:
 
         if part.name not in self._handler:
             self._handler[part.name] = PartHandler(
-                part, plugin_version=self._plugin_version
+                part, plugin_version=self._plugin_version, validator=self._validator
             )
 
         handler = self._handler[part.name]

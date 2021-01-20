@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Schema validation helpers and definitions."""
+
 import json
 from typing import Any, Dict
 
@@ -51,10 +53,10 @@ class Validator:
         try:
             with open(schema) as schema_file:
                 self._schema = json.load(schema_file)
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise errors.SchemaValidation(
                 "schema validation file is missing from installation path"
-            )
+            ) from err
 
     def validate(self, data: Dict[str, Any]) -> None:
         """Validate the given data against the validator's schema."""
