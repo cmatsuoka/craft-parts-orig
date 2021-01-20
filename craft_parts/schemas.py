@@ -25,8 +25,8 @@ from craft_parts import errors
 class Validator:
     """Parts schema validator."""
 
-    def __init__(self, schema: str):
-        self._load_schema(schema)
+    def __init__(self, *, filename: str):
+        self._load_schema(filename)
 
     @property
     def schema(self):
@@ -45,7 +45,6 @@ class Validator:
     @property
     def definitions_schema(self):
         """Return sub-schema that describes definitions used within schema."""
-
         return self._schema["definitions"].copy()
 
     def _load_schema(self, schema: str):
@@ -58,8 +57,15 @@ class Validator:
             )
 
     def validate(self, data: Dict[str, Any]) -> None:
-        format_check = jsonschema.FormatChecker()
-        try:
-            jsonschema.validate(data, self._schema, format_checker=format_check)
-        except jsonschema.ValidationError as err:
-            raise errors.SchemaValidation.from_validation_error(err)
+        """Validate the given data against the validator's schema."""
+        validate_schema(data=data, schema=self._schema)
+
+
+def validate_schema(*, data: Dict[str, Any], schema: Dict[str, Any]) -> None:
+    """Validate properties according to the given schema."""
+
+    format_check = jsonschema.FormatChecker()
+    try:
+        jsonschema.validate(data, schema, format_checker=format_check)
+    except jsonschema.ValidationError as err:
+        raise errors.SchemaValidation.from_validation_error(err)

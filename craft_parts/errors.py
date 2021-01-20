@@ -18,10 +18,10 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Optional
+
 import jsonschema  # type: ignore
 
 from craft_parts.utils import schema_helpers
-
 
 
 # pylint: disable=R0201
@@ -152,7 +152,7 @@ class PluginBuildError(_ReportableError):
         return f"Failed to build {self._part_name!r}."
 
     def get_resolution(self) -> str:
-        return "Check the build logs and ensure the part's configuration and sources are correct."
+        return "Check the build logs and ensure the part configuration is correct."
 
 
 class ScriptletRunError(_Error):
@@ -186,6 +186,11 @@ class SchemaValidation(_Error):
 
     def get_resolution(self) -> str:
         return "Check the parts definition and make sure it's correct."
+
+    @property
+    def message(self):
+        """The schema validation error message."""
+        return self._message
 
     @classmethod
     def from_validation_error(cls, error: jsonschema.ValidationError):

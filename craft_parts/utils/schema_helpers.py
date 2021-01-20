@@ -18,11 +18,11 @@
 
 import collections
 import contextlib
-import jsonschema  # type: ignore
 from typing import Dict, List
 
-from craft_parts.utils import formatting_utils
+import jsonschema  # type: ignore
 
+from craft_parts.utils import formatting_utils
 
 # dict of jsonschema validator -> cause pairs. Wish jsonschema just gave us
 # better messages.
