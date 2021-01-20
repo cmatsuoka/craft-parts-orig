@@ -21,7 +21,7 @@ This plugin just dumps the content from a specified part source.
 
 from typing import Any, Dict, List, Set
 
-from .plugin_v2 import PluginV2
+from ..plugin_v2 import PluginV2
 
 
 class DumpPlugin(PluginV2):

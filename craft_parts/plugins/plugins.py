@@ -21,7 +21,7 @@ from typing import Dict, Type
 from craft_parts import errors
 
 from . import v2
-from .v2.plugin_v2 import PluginV2
+from .plugin_v2 import PluginV2
 
 Plugin = Type[PluginV2]
 
