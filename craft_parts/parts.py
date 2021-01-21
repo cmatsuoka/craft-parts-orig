@@ -16,7 +16,7 @@
 
 """Definitions and helpers to handle parts."""
 
-import os
+from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from craft_parts import errors
@@ -32,19 +32,58 @@ class Part:
     """
 
     def __init__(self, name: str, data: Dict[str, Any], *, work_dir: str = "."):
-        self.name = name
-        self.data = data
-        parts_dir = os.path.join(work_dir, "parts")
-        self.part_dir = os.path.join(parts_dir, name)
-        self.part_src_dir = os.path.join(self.part_dir, "src")
-        self.part_build_dir = os.path.join(self.part_dir, "build")
-        self.part_install_dir = os.path.join(self.part_dir, "install")
-        self.part_state_dir = os.path.join(self.part_dir, "state")
-        self.stage_dir = os.path.join(work_dir, "stage")
-        self.prime_dir = os.path.join(work_dir, "prime")
+        self._name = name
+        self._data = data
+        self._work_dir = Path(work_dir)
+        self._part_dir = self._work_dir / "parts" / name
 
     def __repr__(self):
         return f"Part({self.name})"
+
+    @property
+    def name(self) -> str:
+        """The part name."""
+        return self._name
+
+    @property
+    def data(self) -> Dict[str, Any]:
+        """The part properties."""
+        return self._data
+
+    @property
+    def part_src_dir(self) -> Path:
+        """The subdirectory containing this part's source code."""
+        return self._part_dir / "src"
+
+    @property
+    def part_build_dir(self) -> Path:
+        """The subdirectory containing this part's build tree."""
+        return self._part_dir / "build"
+
+    @property
+    def part_install_dir(self) -> Path:
+        """The subdirectory to install this part's build artifacts."""
+        return self._part_dir / "install"
+
+    @property
+    def part_state_dir(self) -> Path:
+        """The subdirectory containing this part's lifecycle state."""
+        return self._part_dir / "state"
+
+    @property
+    def part_run_dir(self) -> Path:
+        """The subdirectory containing this part's plugin scripts."""
+        return self._part_dir / "run"
+
+    @property
+    def stage_dir(self) -> Path:
+        """The staging area containing the installed file for all parts."""
+        return self._work_dir / "stage"
+
+    @property
+    def prime_dir(self) -> Path:
+        """The primed tree containing the artifacts to deploy."""
+        return self._work_dir / "prime"
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -54,7 +93,7 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
         if part.name is name:
             return part
 
-    raise errors.InternalError(f"unknown part {name!r}")
+    raise errors.InvalidPartName(name)
 
 
 def sort_parts(part_list: List[Part]) -> List[Part]:
@@ -89,7 +128,7 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
 def part_dependencies(
     part_name: str, *, part_list: List[Part], recursive: bool = False
 ) -> Set[Part]:
-    """Returns a set of all the parts upon which part_name depends."""
+    """Returns a set of all the parts upon which the named part depends."""
 
     part = next((p for p in part_list if p.name == part_name), None)
     if not part:

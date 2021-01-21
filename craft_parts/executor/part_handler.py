@@ -20,7 +20,6 @@ import io
 import logging
 import os
 import os.path
-import pathlib
 import shutil
 import subprocess
 import time
@@ -79,7 +78,7 @@ class PartHandler:
 
     def _run_pull(self, step_info: StepInfo):
         _remove(self._part.part_src_dir)
-        self._makedirs()
+        self._make_dirs()
 
         # TODO: fetch and install stage packages/snaps
 
@@ -99,7 +98,7 @@ class PartHandler:
         _save_state_file(self._part, "pull")
 
     def _run_build(self, step_info: StepInfo, *, update=False):
-        self._makedirs()
+        self._make_dirs()
         _remove(self._part.part_build_dir)
         shutil.copytree(
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
@@ -147,12 +146,13 @@ class PartHandler:
         time.sleep(0.1)
         _save_state_file(self._part, "prime")
 
-    def _makedirs(self):
+    def _make_dirs(self):
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
             self._part.part_install_dir,
             self._part.part_state_dir,
+            self._part.part_run_dir,
             self._part.stage_dir,
             self._part.prime_dir,
         ]
@@ -211,8 +211,7 @@ class PartHandler:
             raise errors.InternalError("Plugin version not supported.")
 
         # Save script to execute.
-        build_script_path = pathlib.Path(self._part.part_dir) / "run" / "build.sh"
-        build_script_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+        build_script_path = self._part.part_run_dir / "build.sh"
 
         # Plugin commands.
         plugin_build_commands = self._plugin.get_build_commands()
@@ -227,7 +226,6 @@ class PartHandler:
 
             run_file.flush()
 
-        build_script_path.chmod(0o755)
         source_subdir = self._part.data.get("source-subdir", "")
         build_work_dir = os.path.join(self._part.part_build_dir, source_subdir)
 
@@ -243,11 +241,11 @@ def _save_state_file(part: Part, name: str) -> None:
     Path(state_file).touch()
 
 
-def _remove(filename: str) -> None:
-    if os.path.islink(filename) or os.path.isfile(filename):
+def _remove(filename: Path) -> None:
+    if filename.is_symlink() or filename.is_file():
         logger.debug("remove file %s", filename)
-        os.remove(filename)
-    elif os.path.isdir(filename):
+        os.unlink(filename)
+    elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
 

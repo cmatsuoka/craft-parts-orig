@@ -24,6 +24,7 @@ import sys
 import tempfile
 import textwrap
 import time
+from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import file_utils
@@ -31,7 +32,7 @@ from craft_parts.utils import file_utils
 logger = logging.getLogger(__name__)
 
 
-def run(*, scriptlet_name: str, scriptlet: str, workdir: str, env: str = "") -> None:
+def run(*, scriptlet_name: str, scriptlet: str, workdir: Path, env: str = "") -> None:
     """Run a scriptlet."""
 
     with tempfile.TemporaryDirectory() as tempdir:
