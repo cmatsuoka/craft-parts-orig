@@ -24,7 +24,7 @@ import jsonschema  # type: ignore
 from craft_parts.utils import schema_helpers
 
 
-# pylint: disable=R0201
+# pylint: disable=no-self-use
 class _Error(Exception, ABC):
     """Base class for craft_parts exceptions."""
 

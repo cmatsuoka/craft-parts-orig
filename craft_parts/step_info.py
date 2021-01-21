@@ -25,6 +25,7 @@ from craft_parts import errors
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class StepInfo:
     """All the information needed by part handlers."""
 

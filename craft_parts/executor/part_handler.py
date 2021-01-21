@@ -38,10 +38,6 @@ from . import environment, scriptlets
 logger = logging.getLogger(__name__)
 
 
-class _Options:
-    pass
-
-
 class PartHandler:
     """Handle steps for a part using the appropriate plugins."""
 
@@ -265,6 +261,11 @@ def _merged_part_and_plugin_schemas(
     plugin_schema["definitions"].update(definitions_schema)
 
     return plugin_schema
+
+
+# pylint: disable=too-few-public-methods
+class _Options:
+    pass
 
 
 def _make_options(*, properties, schema) -> _Options:
