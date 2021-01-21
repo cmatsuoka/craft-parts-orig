@@ -1,5 +1,5 @@
 *****************
-Actions and Steps
+Steps and Actions
 *****************
 
 .. autoclass:: craft_parts.Step
@@ -23,4 +23,3 @@ Actions and Steps
 .. autoclass:: craft_parts.Action
    :show-inheritance:
    :members:
-

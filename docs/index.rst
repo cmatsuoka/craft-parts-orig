@@ -15,7 +15,7 @@ final artifacts.
 .. toctree::
    :caption: Public APIs
 
-   actions_steps
+   steps_actions
 
    lifecycle
 

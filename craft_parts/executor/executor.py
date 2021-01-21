@@ -55,3 +55,8 @@ class Executor:
 
         handler = self._handler[part.name]
         handler.run_action(action, step_info)
+
+    def clean(self, part_names: List[str] = None):
+        """Clean the given parts, or all parts if none is specified."""
+
+        # TODO: implement part cleaning

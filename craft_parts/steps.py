@@ -24,8 +24,13 @@ from typing import List, Optional
 class Step(enum.IntEnum):
     """All the steps needed to fully process a part.
 
-    Steps corresponds to the tasks that must be fulfilled in order to
-    process each of the parts in the project specification.
+    Steps correspond to the tasks that must be fulfilled in order to
+    process each of the parts in the project specification. In the
+    ``PULL`` step sources for a part are retrieved and unpacked, and
+    in the ``BUILD`` step artifacts are built and installed. In the
+    ``STAGE`` step installed build artifacts from all parts are added
+    to a staging area, and further processed in the ``PRIME`` step to
+    obtain the final tree with files ready for deployment.
     """
 
     PULL = 1
