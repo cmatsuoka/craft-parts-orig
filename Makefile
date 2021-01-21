@@ -103,9 +103,17 @@ release: dist
 servedocs: docs
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
+.PHONY: graph-svg
+graph-svg:
+	pydeps -Tsvg --no-show --cluster craft_parts
+
+.PHONY: graph-png
+graph-png:
+	pydeps -Tpng --no-show --max-bacon=2 --cluster craft_parts
+
 .PHONY: test-black
 test-black:
-	black --check --diff --exclude setup.py .
+	black --check --diff .
 
 .PHONY: test-codespell
 test-codespell:
@@ -130,7 +138,7 @@ test-mypy:
 .PHONY: test-pylint
 test-pylint:
 	pylint --fail-under=9.0 craft_parts
-	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,redefined-outer-name
+	pylint tests --disable=invalid-name,missing-module-docstring,missing-function-docstring,redefined-outer-name,no-self-use
 
 .PHONY: test-pyright
 test-pyright:
@@ -138,7 +146,7 @@ test-pyright:
 
 .PHONY: test-units
 test-units:
-	pytest tests/unit
+	pytest -W ignore::DeprecationWarning tests/unit
 
 .PHONY: tests
 tests: lint test-integrations test-units
