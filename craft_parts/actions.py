@@ -100,4 +100,4 @@ class Action:
         return self._reason
 
     def __repr__(self):
-        return f"{self.part_name}:{self.step!r}({self.type!r})"
+        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r})"

@@ -38,7 +38,7 @@ class Part:
         self._part_dir = self._work_dir / "parts" / name
 
     def __repr__(self):
-        return f"Part({self.name})"
+        return f"Part({self.name!r})"
 
     @property
     def name(self) -> str:
