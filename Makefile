@@ -93,7 +93,7 @@ install: clean
 	python setup.py install
 
 .PHONY: lint
-lint: test-black test-flake8 test-isort test-mypy test-pyright test-pylint
+lint: test-black test-codespell test-flake8 test-isort test-mypy test-pyright test-pylint
 
 .PHONY: release
 release: dist
@@ -125,7 +125,7 @@ test-flake8:
 
 .PHONY: test-integrations
 test-integrations:
-	pytest tests/integration
+	pytest -W ignore::DeprecationWarning tests/integration
 
 .PHONY: test-isort
 test-isort:

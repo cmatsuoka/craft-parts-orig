@@ -71,6 +71,14 @@ class Action:
         self._type = action_type
         self._reason = reason
 
+    def __eq__(self, other):
+        return (
+            self._part_name == other._part_name
+            and self._step == other._step
+            and self._type == other._type
+            and self._reason == other._reason
+        )
+
     @property
     def part_name(self) -> str:
         """The name of part this action will be executed for."""
