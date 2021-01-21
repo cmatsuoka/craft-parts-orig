@@ -17,7 +17,8 @@
 """Schema validation helpers and definitions."""
 
 import json
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, Union
 
 import jsonschema  # type: ignore
 
@@ -27,7 +28,7 @@ from craft_parts import errors
 class Validator:
     """Parts schema validator."""
 
-    def __init__(self, *, filename: str):
+    def __init__(self, filename: Union[str, Path]):
         self._load_schema(filename)
 
     @property
@@ -49,7 +50,7 @@ class Validator:
         """Return sub-schema that describes definitions used within schema."""
         return self._schema["definitions"].copy()
 
-    def _load_schema(self, schema: str):
+    def _load_schema(self, schema: Union[str, Path]):
         try:
             with open(schema) as schema_file:
                 self._schema = json.load(schema_file)
