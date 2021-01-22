@@ -16,24 +16,22 @@
 
 """Definitions and helpers for part handlers."""
 
-import io
 import logging
 import os
 import os.path
 import shutil
-import subprocess
-import time
 from pathlib import Path
 from typing import Any, Dict
 
-from craft_parts import errors, plugins, schemas
+from craft_parts import plugins, schemas
 from craft_parts.actions import Action
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
-from . import environment, scriptlets
+from . import builtin, environment, scriptlets
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +61,8 @@ class PartHandler:
 
         # TODO: handle action_type
 
+        os_utils.reset_env()
+
         if action.step == Step.PULL:
             self._run_pull(step_info)
         elif action.step == Step.BUILD:
@@ -76,17 +76,21 @@ class PartHandler:
         _remove(self._part.part_src_dir)
         self._make_dirs()
 
-        # TODO: fetch and install stage packages/snaps
+        # TODO: fetch and unpack stage packages/snaps
+
+        # TODO: handle part replacements
 
         scriptlet = self._part.data.get("override-pull")
         if scriptlet:
-            part_env = self._generate_part_env(step=Step.PULL, step_info=step_info)
+            part_env = self._generate_environment(step=Step.PULL, step_info=step_info)
             scriptlets.run(
                 scriptlet_name="override-pull",
                 scriptlet=scriptlet,
                 workdir=self._part.part_src_dir,
                 env=part_env,
             )
+        else:
+            builtin.pull(part=self._part)
         # TODO: implement source handlers
         # elif self.source_handler:
         #    self.source_handler.pull()
@@ -96,13 +100,20 @@ class PartHandler:
     def _run_build(self, step_info: StepInfo, *, update=False):
         self._make_dirs()
         _remove(self._part.part_build_dir)
+
+        # TODO: unpack stage packages/snaps
+        # Stage packages are fetched and unpacked in the pull step, but we'll
+        # unpack again here just in case the build step has been cleaned.
+
+        # TODO: handle part replacements
+
         shutil.copytree(
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
         )
 
+        part_env = self._generate_environment(step=Step.BUILD, step_info=step_info)
         scriptlet = self._part.data.get("override-build")
         if scriptlet:
-            part_env = self._generate_part_env(step=Step.BUILD, step_info=step_info)
             scriptlets.run(
                 scriptlet_name="override-build",
                 scriptlet=scriptlet,
@@ -110,7 +121,7 @@ class PartHandler:
                 env=part_env,
             )
         else:
-            self._do_v2_build(step_info=step_info)
+            builtin.build(part=self._part, plugin=self._plugin, env=part_env)
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
@@ -135,12 +146,45 @@ class PartHandler:
         _save_state_file(self._part, "build")
 
     def _run_stage(self, step_info: StepInfo):
-        time.sleep(0.1)
+        # TODO: handle part replacements
+        self._make_dirs()
+
+        scriptlet = self._part.data.get("override-stage")
+        if scriptlet:
+            part_env = self._generate_environment(step=Step.STAGE, step_info=step_info)
+            scriptlets.run(
+                scriptlet_name="override-stage",
+                scriptlet=scriptlet,
+                workdir=self._part.stage_dir,
+                env=part_env,
+            )
+        else:
+            builtin.stage(part=self._part)
+
         _save_state_file(self._part, "stage")
 
     def _run_prime(self, step_info: StepInfo):
-        time.sleep(0.1)
+        # TODO: handle part replacements
+        self._make_dirs()
+
+        scriptlet = self._part.data.get("override-prime")
+        if scriptlet:
+            part_env = self._generate_environment(step=Step.STAGE, step_info=step_info)
+            scriptlets.run(
+                scriptlet_name="override-prime",
+                scriptlet=scriptlet,
+                workdir=self._part.prime_dir,
+                env=part_env,
+            )
+        else:
+            builtin.prime(part=self._part)
+
         _save_state_file(self._part, "prime")
+
+    def _generate_environment(self, *, step: Step, step_info: StepInfo) -> str:
+        return environment.generate_part_environment(
+            part=self._part, step=step, plugin=self._plugin, step_info=step_info
+        )
 
     def _make_dirs(self):
         dirs = [
@@ -154,81 +198,6 @@ class PartHandler:
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
-
-    def _generate_part_env(self, *, step: Step, step_info: StepInfo) -> str:
-        """Generates an environment suitable to run during a step.
-
-        :returns: str with the build step environment.
-        """
-        if not isinstance(self._plugin, plugins.PluginV2):
-            raise errors.InternalError("Plugin version not supported.")
-
-        # Craft parts' say.
-        our_build_environment = environment.get_part_environment(
-            part=self._part, step=step, step_info=step_info
-        )
-
-        # Plugin's say.
-        if step == Step.BUILD:
-            plugin_environment = self._plugin.get_build_environment()
-        else:
-            plugin_environment = dict()
-
-        # Part's (user) say.
-        user_build_environment = self._part.data.get("build-environment", {})
-
-        # TODO: fix environment setting
-
-        # Create the script.
-        with io.StringIO() as run_environment:
-            print("#!/bin/sh", file=run_environment)
-            print("set -e", file=run_environment)
-
-            print("# Environment", file=run_environment)
-
-            print("## Part Environment", file=run_environment)
-            for key, val in our_build_environment.items():
-                print(f'export {key}="{val}"', file=run_environment)
-
-            print("## Plugin Environment", file=run_environment)
-            for key, val in plugin_environment.items():
-                print(f'export {key}="{val}"', file=run_environment)
-
-            print("## User Environment", file=run_environment)
-            for env in user_build_environment:
-                for key, val in env.items():
-                    print(f'export {key}="{val}"', file=run_environment)
-
-            # Return something suitable for Runner.
-            return run_environment.getvalue()
-
-    def _do_v2_build(self, *, step_info: StepInfo):
-        if not isinstance(self._plugin, plugins.PluginV2):
-            raise errors.InternalError("Plugin version not supported.")
-
-        # Save script to execute.
-        build_script_path = self._part.part_run_dir / "build.sh"
-
-        # Plugin commands.
-        plugin_build_commands = self._plugin.get_build_commands()
-
-        with build_script_path.open("w") as run_file:
-            part_env = self._generate_part_env(step=Step.BUILD, step_info=step_info)
-            print(part_env, file=run_file)
-            print("set -x", file=run_file)
-
-            for build_command in plugin_build_commands:
-                print(build_command, file=run_file)
-
-            run_file.flush()
-
-        source_subdir = self._part.data.get("source-subdir", "")
-        build_work_dir = os.path.join(self._part.part_build_dir, source_subdir)
-
-        try:
-            subprocess.run([build_script_path], check=True, cwd=build_work_dir)
-        except subprocess.CalledProcessError as process_error:
-            raise errors.PluginBuildError(part_name=self._part.name) from process_error
 
 
 def _save_state_file(part: Part, name: str) -> None:

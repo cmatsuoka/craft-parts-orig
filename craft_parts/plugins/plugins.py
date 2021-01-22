@@ -16,23 +16,24 @@
 
 """Definitions and helpers to handle plugins."""
 
-from typing import Dict, Type
+from typing import Dict, Type, Union
 
 from craft_parts import errors
 
 from . import v2
 from .plugin_v2 import PluginV2
 
-Plugin = Type[PluginV2]
+Plugin = Union[PluginV2]
+PluginType = Type[Plugin]
 
 
 # Plugin registry by plugin API version
-_PLUGINS: Dict[str, Dict[str, Plugin]] = {
+_PLUGINS: Dict[str, Dict[str, PluginType]] = {
     "v2": {"nil": v2.NilPlugin, "dump": v2.DumpPlugin}
 }
 
 
-def get_plugin(name: str, *, version: str) -> Plugin:
+def get_plugin(name: str, *, version: str) -> PluginType:
     """Obtain a plugin class given the name and plugin API version."""
 
     if version not in _PLUGINS:
@@ -44,7 +45,7 @@ def get_plugin(name: str, *, version: str) -> Plugin:
     return _PLUGINS[version][name]
 
 
-def register_plugin(plugins: Dict[str, Plugin], *, version: str) -> None:
+def register_plugin(plugins: Dict[str, PluginType], *, version: str) -> None:
     """Register part handler plugins."""
 
     if version not in _PLUGINS:

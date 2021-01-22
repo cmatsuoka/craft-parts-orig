@@ -16,10 +16,13 @@
 
 """Helpers to handle part environment setting."""
 
+import io
 import logging
 from typing import Dict
 
+from craft_parts import errors, plugins
 from craft_parts.parts import Part
+from craft_parts.plugins import Plugin
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils, os_utils
@@ -27,9 +30,53 @@ from craft_parts.utils import formatting_utils, os_utils
 logger = logging.getLogger(__name__)
 
 
-def get_part_environment(
-    part: Part, step: Step, *, step_info: StepInfo
-) -> Dict[str, str]:
+def generate_part_environment(
+    *, part: Part, step: Step, plugin: Plugin, step_info: StepInfo
+) -> str:
+    """Generate an environment suitable to run during a step.
+
+    :returns: str with the build step environment.
+    """
+    if not isinstance(plugin, plugins.PluginV2):
+        raise errors.InternalError("Plugin version not supported.")
+
+    # Craft parts' say.
+    our_build_environment = _basic_environment_for_part(part=part, step_info=step_info)
+
+    # Plugin's say.
+    if step == Step.BUILD:
+        plugin_environment = plugin.get_build_environment()
+    else:
+        plugin_environment = dict()
+
+    # Part's (user) say.
+    user_build_environment = part.data.get("build-environment", {})
+
+    # Create the script.
+    with io.StringIO() as run_environment:
+        print("#!/bin/sh", file=run_environment)
+        print("set -e", file=run_environment)
+
+        print("# Environment", file=run_environment)
+
+        print("## Part Environment", file=run_environment)
+        for key, val in our_build_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+
+        print("## Plugin Environment", file=run_environment)
+        for key, val in plugin_environment.items():
+            print(f'export {key}="{val}"', file=run_environment)
+
+        print("## User Environment", file=run_environment)
+        for env in user_build_environment:
+            for key, val in env.items():
+                print(f'export {key}="{val}"', file=run_environment)
+
+        # Return something suitable for Runner.
+        return run_environment.getvalue()
+
+
+def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str, str]:
     """Return the built-in part environment."""
 
     part_environment: Dict[str, str] = dict()

@@ -86,3 +86,10 @@ def get_pkg_config_paths(
     ]
 
     return [p for p in paths if os.path.exists(p)]
+
+
+# FIXME: investigate environment setting
+def reset_env() -> None:
+    """Reset the environment."""
+    # global env
+    # env = []

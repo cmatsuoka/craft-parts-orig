@@ -46,6 +46,7 @@ class Executor:
         logger.debug("execute action %s:%s", part.name, action)
 
         if action.type == ActionType.SKIP:
+            logger.debug("Skip execution of %s (because %s)", action, action.reason)
             return
 
         if part.name not in self._handler:
