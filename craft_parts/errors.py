@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Public error definitions."""
+"""The exceptions that can be raised when using craft_parts."""
 
 from abc import ABC, abstractmethod
 from typing import List, Optional
@@ -74,7 +74,10 @@ class InternalError(_ReportableError):
 
 
 class InvalidArchitecture(_Error):
-    """The machine architecture is not supported."""
+    """The machine architecture is not supported.
+
+    :param arch_name: the unsupported architecture name.
+    """
 
     def __init__(self, arch_name: str):
         super().__init__()
@@ -98,7 +101,10 @@ class PartDependencyCycle(_Error):
 
 
 class InvalidPartName(_Error):
-    """An operation was requested on a part that's in the parts specification."""
+    """An operation was requested on a part that's in the parts specification.
+
+    :param part_name: the invalid part name.
+    """
 
     def __init__(self, part_name: str):
         super().__init__()
@@ -111,8 +117,11 @@ class InvalidPartName(_Error):
         return "Check for typos in the part name or in the parts definition."
 
 
-class UnknownPluginVersion(_Error):
-    """A request was made to use a plugin version that's not defined."""
+class InvalidPluginAPIVersion(_Error):
+    """A request was made to use an unsupported plugin API version.
+
+    :param version: the invalid plugin API version.
+    """
 
     def __init__(self, version: str):
         super().__init__()
@@ -125,8 +134,11 @@ class UnknownPluginVersion(_Error):
         return "Check for typos in the plugin version."
 
 
-class UnknownPlugin(_Error):
-    """A request was made to use a plugin that's not defined."""
+class InvalidPlugin(_Error):
+    """A request was made to use a plugin that's not defined.
+
+    :param plugin_name: The invalid plugin name."
+    """
 
     def __init__(self, plugin_name: str):
         super().__init__()
@@ -142,7 +154,10 @@ class UnknownPlugin(_Error):
 
 
 class PluginBuildError(_ReportableError):
-    """An exception to raise when the PluginV2 build fails at runtime."""
+    """An exception to raise when the PluginV2 build fails at runtime.
+
+    :param part_name: the name of the part where the plugin build failed.
+    """
 
     def __init__(self, *, part_name: str) -> None:
         super().__init__()
@@ -156,7 +171,11 @@ class PluginBuildError(_ReportableError):
 
 
 class ScriptletRunError(_Error):
-    """A part scriptlet execution failed."""
+    """A part scriptlet execution failed.
+
+    :param scriptlet_name: the name of the scriptlet that failed to execute.
+    :param code: the execution error code.
+    """
 
     fmt = "Failed to run {scriptlet_name!r}: Exit code was {code}."
 
@@ -175,7 +194,10 @@ class ScriptletRunError(_Error):
 
 
 class SchemaValidation(_Error):
-    """The parts data failed schema validation."""
+    """The parts data failed schema validation.
+
+    :param message: the error message from the schema validator.
+    """
 
     def __init__(self, message: str):
         super().__init__()

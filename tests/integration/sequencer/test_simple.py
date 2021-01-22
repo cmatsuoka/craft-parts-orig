@@ -21,6 +21,8 @@ import yaml
 import craft_parts
 from craft_parts import Action, ActionType, Step
 
+# See https://gist.github.com/sergiusens/dcae19c301eb59e091f92ab29d7d03fc
+
 parts_yaml = textwrap.dedent(
     """\
     parts:

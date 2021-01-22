@@ -21,20 +21,20 @@ from typing import Any, Dict, List, Set
 
 
 class PluginV2(abc.ABC):
-    """The base class for V2 plugins."""
+    """The base class for plugins conforming to the plugin API version 2.
+
+    :param part_name: the name of the part this plugin is instantiated to.
+    :param options: an object representing part defined properties.
+    """
+
+    def __init__(self, *, part_name: str, options) -> None:
+        self.name = part_name
+        self.options = options
 
     @classmethod
     @abc.abstractmethod
     def get_schema(cls) -> Dict[str, Any]:
         """Return a jsonschema compatible dictionary for the plugin properties."""
-
-    def __init__(self, *, part_name: str, options) -> None:
-        """
-        :param str part_name: part names
-        :param options: an object representing part defined properties.
-        """
-        self.name = part_name
-        self.options = options
 
     @abc.abstractmethod
     def get_build_snaps(self) -> Set[str]:
@@ -52,9 +52,6 @@ class PluginV2(abc.ABC):
     def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
-
-        For consistency, the keys should be defined as SNAPCRAFT_<PLUGIN>_<KEY>.
-
         This method is called by the PluginHandler during the "build" step.
         """
 

@@ -37,18 +37,24 @@ def get_plugin(name: str, *, version: str) -> PluginType:
     """Obtain a plugin class given the name and plugin API version."""
 
     if version not in _PLUGINS:
-        raise errors.UnknownPluginVersion(version)
+        raise errors.InvalidPluginAPIVersion(version)
 
     if name not in _PLUGINS[version]:
-        raise errors.UnknownPlugin(name)
+        raise errors.InvalidPlugin(name)
 
     return _PLUGINS[version][name]
 
 
-def register_plugin(plugins: Dict[str, PluginType], *, version: str) -> None:
-    """Register part handler plugins."""
+def register(plugins: Dict[str, PluginType], *, version: str = "v2") -> None:
+    """Register part handler plugins.
+
+    :param plugins: a dictionary where the keys are plugin names and
+        values are plugin classes. Valid plugins must extend the base
+        class defined for each plugin API version.
+    :param version: the plugin API version. Defaults to "v2".
+    """
 
     if version not in _PLUGINS:
-        raise errors.UnknownPluginVersion(version)
+        raise errors.InvalidPluginAPIVersion(version)
 
     _PLUGINS[version].update(plugins)

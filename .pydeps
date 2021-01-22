@@ -4,11 +4,12 @@ exclude =
     craft_parts.actions
     craft_parts.errors
     craft_parts.parts
-    craft_parts.plugins.plugin_v2
+    craft_parts.plugins.*
     craft_parts.state_manager.states
     craft_parts.step_info
     craft_parts.steps
     craft_parts.utils
+    craft_parts.schemas
 
 rmprefix = craft_parts.
 
