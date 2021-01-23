@@ -149,4 +149,4 @@ test-units:
 	pytest -W ignore::DeprecationWarning tests/unit
 
 .PHONY: tests
-tests: lint test-integrations test-units
+tests: lint test-units test-integrations

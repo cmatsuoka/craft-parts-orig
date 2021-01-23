@@ -72,6 +72,15 @@ def test_actions_simple(tmpdir):
         Action("bar", Step.BUILD),
     ]
 
+    # Building bar again rebuilds it (explicit request)
+    actions = lf.actions(Step.BUILD, ["bar"])
+    assert actions == [
+        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action(
+            "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
+        ),
+    ]
+
     # Modifying foo’s source marks bar as dirty
     # command: build bar
     # TODO: add this test
