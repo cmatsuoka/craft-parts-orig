@@ -171,26 +171,57 @@ class PluginBuildError(_ReportableError):
 
 
 class ScriptletRunError(_Error):
-    """A part scriptlet execution failed.
+    """A scriptlet execution failed.
 
     :param scriptlet_name: the name of the scriptlet that failed to execute.
     :param code: the execution error code.
     """
 
-    fmt = "Failed to run {scriptlet_name!r}: Exit code was {code}."
-
     def __init__(self, scriptlet_name: str, code: int):
         super().__init__()
-        self._scriptlet_name = scriptlet_name
+        self._name = scriptlet_name
         self._code = code
 
     def get_brief(self) -> str:
-        return (
-            f"{self._scriptlet_name} scriptlet execution failed with code {self._code}."
-        )
+        return f"{self._name} scriptlet execution failed with code {self._code}."
 
     def get_resolution(self) -> str:
         return "Check the build logs and make sure the scriptlet is correct."
+
+
+class InvalidControlAPICall(_Error):
+    """A control API call was made with invalid parameters.
+
+    :param scriptlet_name: the name of the scriptlet that originated the call.
+    """
+
+    def __init__(self, scriptlet_name: str, message: str):
+        super().__init__()
+        self._name = scriptlet_name
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"{self._name} executed an invallid control API call: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Verify the scriptlet commands and make sure control calls are correct."
+
+
+class InvalidEnvironment(_Error):
+    """The environment is incorrect.
+
+    :param message: the error message.
+    """
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Environment error: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Check the environment and make sure it's correct."
 
 
 class SchemaValidation(_Error):

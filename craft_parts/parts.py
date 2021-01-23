@@ -90,7 +90,7 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
     """Obtain the part with the given name from the part list."""
 
     for part in part_list:
-        if part.name is name:
+        if part.name == name:
             return part
 
     raise errors.InvalidPartName(name)

@@ -24,14 +24,14 @@ from pathlib import Path
 from typing import Any, Dict
 
 from craft_parts import plugins, schemas
-from craft_parts.actions import Action
+from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
-from . import builtin, environment, scriptlets
+from .runner import Runner
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,16 @@ class PartHandler:
     def run_action(self, action: Action, step_info: StepInfo) -> None:
         """Run the given action for this part using a plugin."""
 
-        # TODO: handle action_type
+        if action.type == ActionType.UPDATE:
+            if action.step == Step.PULL:
+                self._update_pull()
+            elif action.step == Step.BUILD:
+                self._update_build()
+            return
+
+        if action.type == ActionType.RERUN:
+            # TODO: clean part
+            pass
 
         os_utils.reset_env()
 
@@ -80,20 +89,12 @@ class PartHandler:
 
         # TODO: handle part replacements
 
-        scriptlet = self._part.data.get("override-pull")
-        if scriptlet:
-            part_env = self._generate_environment(step=Step.PULL, step_info=step_info)
-            scriptlets.run(
-                scriptlet_name="override-pull",
-                scriptlet=scriptlet,
-                workdir=self._part.part_src_dir,
-                env=part_env,
-            )
-        else:
-            builtin.pull(part=self._part)
-        # TODO: implement source handlers
-        # elif self.source_handler:
-        #    self.source_handler.pull()
+        self._run_step(
+            Step.PULL,
+            scriptlet_name="override-pull",
+            step_info=step_info,
+            workdir=self._part.part_src_dir,
+        )
 
         _save_state_file(self._part, "pull")
 
@@ -111,17 +112,12 @@ class PartHandler:
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
         )
 
-        part_env = self._generate_environment(step=Step.BUILD, step_info=step_info)
-        scriptlet = self._part.data.get("override-build")
-        if scriptlet:
-            scriptlets.run(
-                scriptlet_name="override-build",
-                scriptlet=scriptlet,
-                workdir=self._part.part_build_dir,
-                env=part_env,
-            )
-        else:
-            builtin.build(part=self._part, plugin=self._plugin, env=part_env)
+        self._run_step(
+            Step.BUILD,
+            step_info=step_info,
+            scriptlet_name="override-build",
+            workdir=self._part.part_build_dir,
+        )
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
@@ -149,17 +145,12 @@ class PartHandler:
         # TODO: handle part replacements
         self._make_dirs()
 
-        scriptlet = self._part.data.get("override-stage")
-        if scriptlet:
-            part_env = self._generate_environment(step=Step.STAGE, step_info=step_info)
-            scriptlets.run(
-                scriptlet_name="override-stage",
-                scriptlet=scriptlet,
-                workdir=self._part.stage_dir,
-                env=part_env,
-            )
-        else:
-            builtin.stage(part=self._part)
+        self._run_step(
+            Step.STAGE,
+            step_info=step_info,
+            scriptlet_name="override-stage",
+            workdir=self._part.stage_dir,
+        )
 
         _save_state_file(self._part, "stage")
 
@@ -167,24 +158,34 @@ class PartHandler:
         # TODO: handle part replacements
         self._make_dirs()
 
-        scriptlet = self._part.data.get("override-prime")
-        if scriptlet:
-            part_env = self._generate_environment(step=Step.STAGE, step_info=step_info)
-            scriptlets.run(
-                scriptlet_name="override-prime",
-                scriptlet=scriptlet,
-                workdir=self._part.prime_dir,
-                env=part_env,
-            )
-        else:
-            builtin.prime(part=self._part)
+        self._run_step(
+            Step.PRIME,
+            step_info=step_info,
+            scriptlet_name="override-prime",
+            workdir=self._part.prime_dir,
+        )
 
         _save_state_file(self._part, "prime")
 
-    def _generate_environment(self, *, step: Step, step_info: StepInfo) -> str:
-        return environment.generate_part_environment(
-            part=self._part, step=step, plugin=self._plugin, step_info=step_info
-        )
+    def _run_step(
+        self, step: Step, *, step_info: StepInfo, scriptlet_name: str, workdir: Path
+    ):
+        runner = Runner(self._part, step, step_info=step_info, plugin=self._plugin)
+        scriptlet = self._part.data.get(scriptlet_name)
+        if scriptlet:
+            runner.run_scriptlet(
+                scriptlet, scriptlet_name=scriptlet_name, workdir=workdir
+            )
+        else:
+            runner.run_builtin()
+
+    def _update_pull(self):
+        # TODO: implement update pull
+        pass
+
+    def _update_build(self):
+        # TODO: implement update build
+        pass
 
     def _make_dirs(self):
         dirs = [
