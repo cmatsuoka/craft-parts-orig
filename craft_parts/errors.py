@@ -224,6 +224,23 @@ class InvalidEnvironment(_Error):
         return "Check the environment and make sure it's correct."
 
 
+class CallbackRegistration(_Error):
+    """Error in callback function registration.
+
+    :param message: the error message.
+    """
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Callback registration error: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "The same callback shouldn't be registered more than once."
+
+
 class SchemaValidation(_Error):
     """The parts data failed schema validation.
 

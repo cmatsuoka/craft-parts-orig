@@ -17,10 +17,12 @@
 """Definitions for the step information used by part handlers."""
 
 import logging
-import os
 import platform
+from pathlib import Path
+from typing import Optional, Union
 
 from craft_parts import errors
+from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
 
@@ -32,31 +34,30 @@ class StepInfo:
     def __init__(
         self,
         *,
-        work_dir: str,
         target_arch: str,
-        platform_id: str,
-        platform_version_id: str,
         parallel_build_count: int,
-        local_plugins_dir: str,
+        local_plugins_dir: Optional[Union[Path, str]],
         **custom_args,  # custom passthrough args
     ):
         self._set_machine(target_arch)
 
-        self._platform_id = platform_id
-        self._platform_version_id = platform_version_id
         self._parallel_build_count = parallel_build_count
-        self._local_plugins_dir = local_plugins_dir
 
-        self.part = ""  # part name to be filled by the part handler
-        self.step = ""  # step name to be filled by the part handler
+        if not local_plugins_dir:
+            self._local_plugins_dir = None
+        elif isinstance(local_plugins_dir, Path):
+            self._local_plugins_dir = local_plugins_dir
+        else:
+            self._local_plugins_dir = Path(local_plugins_dir)
 
-        if not work_dir:
-            work_dir = os.getcwd()
-
-        self.work_dir = work_dir
-        self.parts_dir = os.path.join(work_dir, "parts")
-        self.stage_dir = os.path.join(work_dir, "stage")
-        self.prime_dir = os.path.join(work_dir, "prime")
+        # Attributes set before step execution
+        self.step: Optional[Step] = None
+        self.part_src_dir = Path()
+        self.part_build_dir = Path()
+        self.part_install_dir = Path()
+        self.part_state_dir = Path()
+        self.stage_dir = Path()
+        self.prime_dir = Path()
 
         for key, value in custom_args.items():
             setattr(self, key, value)
@@ -80,7 +81,7 @@ class StepInfo:
         return self._parallel_build_count
 
     @property
-    def local_plugins_dir(self) -> str:
+    def local_plugins_dir(self) -> Optional[Path]:
         """The location of local plugins in the filesystem."""
 
         return self._local_plugins_dir
@@ -94,18 +95,15 @@ class StepInfo:
     def _set_machine(self, target_arch):
         self.__platform_arch = _get_platform_architecture()
         if not target_arch:
-            self.__target_machine = self.__platform_arch
-        else:
-            self.__target_machine = _find_machine(target_arch)
+            target_arch = self.__platform_arch
             logger.info("Setting target machine to %s", target_arch)
-        self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
+        machine = _ARCH_TRANSLATIONS.get(target_arch, None)
+        if not machine:
+            raise errors.InvalidArchitecture(target_arch)
 
-def _find_machine(target_arch):
-    machine = _ARCH_TRANSLATIONS.get(target_arch, None)
-    if not machine:
-        raise errors.InvalidArchitecture(target_arch)
-    return machine
+        self.__target_machine = target_arch
+        self.__machine_info = machine
 
 
 def _get_platform_architecture() -> str:

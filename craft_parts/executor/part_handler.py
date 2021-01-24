@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict
 
-from craft_parts import plugins, schemas
+from craft_parts import callbacks, plugins, schemas
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
@@ -72,6 +72,8 @@ class PartHandler:
 
         os_utils.reset_env()
 
+        callbacks.run_pre(self._part, action.step, step_info=step_info)
+
         if action.step == Step.PULL:
             self._run_pull(step_info)
         elif action.step == Step.BUILD:
@@ -80,6 +82,8 @@ class PartHandler:
             self._run_stage(step_info)
         elif action.step == Step.PRIME:
             self._run_prime(step_info)
+
+        callbacks.run_post(self._part, action.step, step_info=step_info)
 
     def _run_pull(self, step_info: StepInfo):
         _remove(self._part.part_src_dir)

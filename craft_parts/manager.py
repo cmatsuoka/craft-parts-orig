@@ -42,11 +42,7 @@ class LifecycleManager:
     :param build_packages: a list of additional build packages to install.
     :param work_dir: the toplevel directory for the Craft Parts work tree. The
         current directory will be used if none is specified.
-    :param target_arch: The target architecture to build for.
-    :param platform_id: The operating system identification as listed in
-        ``/etc/os-release``.
-    :param platform_version_id: The operating system release identification
-        as listed in ``/etc/os-release``.
+    :param target_arch: The target architecture to build for, if cross-compiling.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param local_plugins_dir: The directory where local plugins are, if any.
@@ -63,8 +59,6 @@ class LifecycleManager:
         build_packages: List[str] = None,
         work_dir: str = ".",
         target_arch: str = "",
-        platform_id: str = "",
-        platform_version_id: str = "",
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
@@ -86,13 +80,10 @@ class LifecycleManager:
         )
 
         self._step_info = StepInfo(
-            work_dir=work_dir,
             target_arch=target_arch,
-            platform_id=platform_id,
-            platform_version_id=platform_version_id,
             parallel_build_count=parallel_build_count,
             local_plugins_dir=local_plugins_dir,
-            custom_args=custom_args,
+            **custom_args,
         )
 
     def clean(self, part_names: List[str] = None) -> None:
@@ -104,7 +95,7 @@ class LifecycleManager:
 
         self._executor.clean(part_names)
 
-    def actions(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.
