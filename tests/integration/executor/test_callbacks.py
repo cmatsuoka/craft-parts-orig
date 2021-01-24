@@ -49,11 +49,8 @@ def _my_callback(info: StepInfo) -> bool:
     return True
 
 
-@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
-@pytest.mark.parametrize(
-    "action_type",
-    [ActionType.RUN, ActionType.RERUN, ActionType.SKIP, ActionType.UPDATE],
-)
+@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("action_type", list(ActionType))
 def test_callback_pre(tmpdir, capfd, step, action_type):
     callbacks.register_pre(_my_callback, step_list=[step])
 
@@ -69,11 +66,8 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
         assert out == f"callback\noverride {step!r}\n"
 
 
-@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
-@pytest.mark.parametrize(
-    "action_type",
-    [ActionType.RUN, ActionType.RERUN, ActionType.SKIP, ActionType.UPDATE],
-)
+@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("action_type", list(ActionType))
 def test_callback_post(tmpdir, capfd, step, action_type):
     callbacks.register_post(_my_callback, step_list=[step])
 

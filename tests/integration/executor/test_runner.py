@@ -23,11 +23,8 @@ import craft_parts
 from craft_parts import Action, ActionType, Step
 
 
-@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME])
-@pytest.mark.parametrize(
-    "action_type",
-    [ActionType.RUN, ActionType.RERUN, ActionType.SKIP, ActionType.UPDATE],
-)
+@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("action_type", list(ActionType))
 def test_override(tmpdir, capfd, step, action_type):
     parts_yaml = textwrap.dedent(
         """\

@@ -59,12 +59,16 @@ clean-test:
 	rm -rf htmlcov/
 	rm -rf .pytest_cache
 
+.PHONY: clean-coverage
+clean-coverage:
+	rm -rf htmlcov
+
 .PHONY: coverage
 coverage:
 	coverage run --source craft_parts -m pytest
 	coverage report -m
 	coverage html
-	$(BROWSER) htmlcov/index.html
+	#$(BROWSER) htmlcov/index.html
 
 .PHONY: docs
 docs:
@@ -93,7 +97,7 @@ install: clean
 	python setup.py install
 
 .PHONY: lint
-lint: clean-docs test-black test-codespell test-flake8 test-isort test-mypy test-pyright test-pylint
+lint: clean-docs clean-coverage test-black test-codespell test-flake8 test-isort test-mypy test-pyright test-pylint
 
 .PHONY: release
 release: dist
