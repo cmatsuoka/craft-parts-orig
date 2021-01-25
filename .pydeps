@@ -5,6 +5,7 @@ exclude =
     craft_parts.errors
     craft_parts.parts
     craft_parts.plugins.*
+    craft_parts.sources.*
     craft_parts.state_manager.states
     craft_parts.step_info
     craft_parts.steps

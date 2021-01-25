@@ -24,10 +24,12 @@ import tempfile
 import textwrap
 import time
 from pathlib import Path
+from typing import Optional
 
 from craft_parts import errors, plugins
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
+from craft_parts.sources import SourceHandler
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
@@ -46,12 +48,20 @@ class Runner:
     utility to communicate with the running instance.
     """
 
-    def __init__(self, part: Part, step: Step, *, step_info: StepInfo, plugin: Plugin):
+    def __init__(
+        self,
+        part: Part,
+        step: Step,
+        *,
+        step_info: StepInfo,
+        plugin: Plugin,
+        source_handler: Optional[SourceHandler],
+    ):
         self._part = part
         self._step = step
         self._step_info = step_info
         self._plugin = plugin
-        self._source_handler = None
+        self._source_handler = source_handler
         self._env = environment.generate_part_environment(
             part=part, step=step, plugin=plugin, step_info=step_info
         )
@@ -149,8 +159,7 @@ class Runner:
 
     def _builtin_pull(self):
         if self._source_handler:
-            pass
-            # self._source_handler.pull()
+            self._source_handler.pull()
 
     def _builtin_build(self):
         if not isinstance(self._plugin, plugins.PluginV2):
@@ -192,8 +201,7 @@ class Runner:
             self._builtin_prime()
         else:
             raise errors.InvalidControlAPICall(
-                self._part.name,
-                f"invalid function {function_name!r}",
+                self._part.name, f"invalid function {function_name!r}"
             )
 
 

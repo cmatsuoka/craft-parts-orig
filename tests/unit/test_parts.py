@@ -55,6 +55,17 @@ class TestPartBasics:
         assert p.part_build_dir == Path("./parts/foo/build")
         assert p.part_build_work_dir == Path("./parts/foo/build/foobar")
 
+    def test_part_source(self):
+        p = Part("foo", {})
+        assert p.source is None
+
+        p = Part("foo", {"source": "foobar"})
+        assert p.source == "foobar"
+
+    def test_part_properties(self):
+        p = Part("foo", {"foo": "bar"})
+        assert p.properties == {"foo": "bar"}
+
 
 class TestPartOrdering:
     """Test part ordering.

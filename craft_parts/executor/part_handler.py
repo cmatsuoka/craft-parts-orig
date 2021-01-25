@@ -21,12 +21,14 @@ import os
 import os.path
 import shutil
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-from craft_parts import callbacks, plugins
+from craft_parts import callbacks, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
+from craft_parts.sources import SourceHandler
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -47,6 +49,11 @@ class PartHandler:
 
         options = PluginOptions(properties=part.data, schema=plugin_schema)
         self._plugin = plugin_class(part_name=part.name, options=options)
+
+        part_properties = validator.expand_part_properties(part.properties)
+        self._source_handler = _get_source_handler(
+            part.source, part.part_src_dir, part_properties
+        )
 
     def run_action(self, action: Action, step_info: StepInfo) -> None:
         """Run the given action for this part using a plugin."""
@@ -166,7 +173,13 @@ class PartHandler:
     def _run_step(
         self, step: Step, *, step_info: StepInfo, scriptlet_name: str, workdir: Path
     ):
-        runner = Runner(self._part, step, step_info=step_info, plugin=self._plugin)
+        runner = Runner(
+            self._part,
+            step,
+            step_info=step_info,
+            plugin=self._plugin,
+            source_handler=self._source_handler,
+        )
         scriptlet = self._part.data.get(scriptlet_name)
         if scriptlet:
             runner.run_scriptlet(
@@ -195,6 +208,34 @@ class PartHandler:
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
+
+
+def _get_source_handler(
+    source: Optional[str], source_dir: Path, properties: Optional[Dict[str, Any]]
+) -> Optional[SourceHandler]:
+    """Returns a source_handler for the source in properties."""
+
+    if not properties:
+        properties = dict()
+
+    # TODO: we cannot pop source as it is used by plugins. We also make
+    # the default '.'
+    source_handler = None
+    if source:
+        handler_class = sources.get_source_handler(
+            source, source_type=properties["source-type"]
+        )
+        source_handler = handler_class(
+            source,
+            source_dir,
+            source_checksum=properties["source-checksum"],
+            source_branch=properties["source-branch"],
+            source_tag=properties["source-tag"],
+            source_depth=properties["source-depth"],
+            source_commit=properties["source-commit"],
+        )
+
+    return source_handler
 
 
 def _save_state_file(part: Part, name: str) -> None:

@@ -16,6 +16,7 @@
 
 """Schema validation helpers and definitions."""
 
+import copy
 import json
 from pathlib import Path
 from typing import Any, Dict, Union
@@ -88,6 +89,33 @@ class Validator:
         schema["definitions"].update(self.definitions_schema)
 
         return schema
+
+    def expand_part_properties(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Returns properties with all part schema properties included.
+
+        Any schema properties not set will contain their default value as defined
+        in the schema itself.
+
+        :param part_properties: the part properties to expand.
+
+        :return: a dictionary containing all part schema properties.
+        """
+
+        # First make a deep copy of the part schema. It contains nested mutables,
+        # and we'd rather not change them.
+        part_schema = copy.deepcopy(self.part_schema)
+
+        # Come up with a dictionary of part schema properties and their default
+        # values as defined in the schema.
+        properties = {}
+        for schema_property, subschema in part_schema.items():
+            properties[schema_property] = subschema.get("default")
+
+        # Now expand (overwriting if necessary) the default schema properties with
+        # the ones from the actual part.
+        properties.update(part_properties)
+
+        return properties
 
 
 def validate_schema(*, data: Dict[str, Any], schema: Dict[str, Any]) -> None:

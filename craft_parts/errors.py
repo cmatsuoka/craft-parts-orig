@@ -16,6 +16,7 @@
 
 """The exceptions that can be raised when using craft_parts."""
 
+import shlex
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -239,6 +240,79 @@ class CallbackRegistration(_Error):
 
     def get_resolution(self) -> str:
         return "The same callback shouldn't be registered more than once."
+
+
+class SourceUpdateUnsupported(_Error):
+    """Source don't support updating.
+
+    :param source: the source specification.
+    """
+
+    def __init__(self, source):
+        super().__init__()
+        self._source = source
+
+    def get_brief(self) -> str:
+        return f"Cannot update source: {self._source!r} sources don't support updating."
+
+    # TODO: add a resolution string
+    def get_resolution(self) -> str:
+        return ""
+
+
+class InvalidSourceType(_Error):
+    """Source type is unknown.
+
+    :param source: the source specification.
+    """
+
+    def __init__(self, source):
+        super().__init__()
+        self._source = source
+
+    def get_brief(self) -> str:
+        return f"Source {self._source!r} type is not recognized."
+
+    # TODO: add a resolution string
+    def get_resolution(self) -> str:
+        return "Verify the source specification and the supported source types."
+
+
+class PullError(_Error):
+    """Failed to pull source."""
+
+    def __init__(self, command, exit_code):
+        super().__init__()
+
+        if isinstance(command, list):
+            self._command = " ".join(shlex.quote(i) for i in command)
+        else:
+            self._command = command
+
+        self._code = exit_code
+
+    def get_brief(self) -> str:
+        return (
+            "Failed to pull source: command {self._command!r} exited with "
+            "code {self._code!r}."
+        )
+
+    def get_resolution(self) -> str:
+        return "Check the sources and try again."
+
+
+class CopyFileNotFound(_Error):
+    """An attempt was made to copy a file that doesn't exist."""
+
+    def __init__(self, name):
+        super().__init__()
+        self._name = name
+
+    def get_brief(self) -> str:
+        return "Failed to copy {self._name!r}: no such file or directory."
+
+    def get_resolution(self) -> str:
+        return "Check the path and try again."
 
 
 class SchemaValidation(_Error):

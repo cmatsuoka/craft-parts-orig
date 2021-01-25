@@ -17,7 +17,7 @@
 """Definitions and helpers to handle parts."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from craft_parts import errors
 
@@ -101,6 +101,20 @@ class Part:
     def prime_dir(self) -> Path:
         """The primed tree containing the artifacts to deploy."""
         return self._work_dir / "prime"
+
+    @property
+    def source(self) -> Optional[str]:
+        """This part's source property, if any."""
+        source = self._data.get("source")
+        if source:
+            return str(source)
+
+        return None
+
+    @property
+    def properties(self) -> Dict[str, Any]:
+        """This part's properties."""
+        return self._data
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
