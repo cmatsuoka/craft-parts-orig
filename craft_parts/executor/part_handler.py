@@ -21,11 +21,11 @@ import os
 import os.path
 import shutil
 from pathlib import Path
-from typing import Any, Dict
 
-from craft_parts import callbacks, plugins, schemas
+from craft_parts import callbacks, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
+from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
@@ -41,19 +41,11 @@ class PartHandler:
 
     def __init__(self, part: Part, *, plugin_version: str, validator: Validator):
         self._part = part
-        self._validator = validator
 
         plugin_class = plugins.get_plugin(part.data["plugin"], version=plugin_version)
+        plugin_schema = validator.merge_schema(plugin_class.get_schema())
 
-        plugin_schema = _merged_part_and_plugin_schemas(
-            validator.part_schema,
-            validator.definitions_schema,
-            plugin_class.get_schema(),
-        )
-
-        schemas.validate_schema(data=part.data, schema=plugin_schema)
-
-        options = _make_options(properties=part.data, schema=plugin_schema)
+        options = PluginOptions(properties=part.data, schema=plugin_schema)
         self._plugin = plugin_class(part_name=part.name, options=options)
 
     def run_action(self, action: Action, step_info: StepInfo) -> None:
@@ -218,38 +210,3 @@ def _remove(filename: Path) -> None:
     elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
-
-
-def _merged_part_and_plugin_schemas(
-    part_schema, definitions_schema, plugin_schema
-) -> Dict[str, Any]:
-    plugin_schema = plugin_schema.copy()
-    if "properties" not in plugin_schema:
-        plugin_schema["properties"] = {}
-
-    if "definitions" not in plugin_schema:
-        plugin_schema["definitions"] = {}
-
-    # The part schema takes precedence over the plugin's schema.
-    plugin_schema["properties"].update(part_schema)
-    plugin_schema["definitions"].update(definitions_schema)
-
-    return plugin_schema
-
-
-# pylint: disable=too-few-public-methods
-class _Options:
-    pass
-
-
-def _make_options(*, properties, schema) -> _Options:
-    options = _Options()
-
-    schema_properties = schema.get("properties", {})
-    for key in schema_properties:
-        attr_name = key.replace("-", "_")
-        default_value = schema_properties[key].get("default")
-        attr_value = properties.get(key, default_value)
-        setattr(options, attr_name, attr_value)
-
-    return options

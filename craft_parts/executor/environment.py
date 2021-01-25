@@ -41,7 +41,9 @@ def generate_part_environment(
         raise errors.InternalError("Plugin version not supported.")
 
     # Craft parts' say.
-    our_build_environment = _basic_environment_for_part(part=part, step_info=step_info)
+    our_build_environment = _basic_environment_for_part(
+        part=part, step=step, step_info=step_info
+    )
 
     # Plugin's say.
     if step == Step.BUILD:
@@ -76,10 +78,12 @@ def generate_part_environment(
         return run_environment.getvalue()
 
 
-def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str, str]:
+def _basic_environment_for_part(
+    part: Part, step: Step, *, step_info: StepInfo
+) -> Dict[str, str]:
     """Return the built-in part environment."""
 
-    part_environment: Dict[str, str] = dict()
+    part_environment = _part_directory_environment(part, step)
     paths = [part.part_install_dir, part.stage_dir]
 
     bin_paths = list()
@@ -129,3 +133,21 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> Dict[str,
         )
 
     return part_environment
+
+
+def _part_directory_environment(part: Part, step: Step) -> Dict[str, str]:
+    env = {
+        "CRAFT_PARTS_PART_SRC": str(part.part_src_dir),
+        "CRAFT_PARTS_PART_SRC_WORK": str(part.part_src_work_dir),
+    }
+
+    if step == Step.BUILD:
+        env.update(
+            {
+                "CRAFT_PARTS_PART_BUILD": str(part.part_build_dir),
+                "CRAFT_PARTS_PART_BUILD_WORK": str(part.part_build_work_dir),
+                "CRAFT_PARTS_PART_INSTALL": str(part.part_install_dir),
+            }
+        )
+
+    return env

@@ -54,8 +54,11 @@ def determine_cause(error: jsonschema.ValidationError) -> str:
     # error.validator_value may contain a custom validation error message.
     # If so, use it instead of the garbage message jsonschema gives us.
     #
-    # Note: pyright is unhappy with contextlib.suppress(TypeError, KeyError) here.
-    if "validation-failure" in error.validator_value:
+    # FIXME: pyright is unhappy with contextlib.suppress(TypeError, KeyError) here.
+    if (
+        hasattr(error.validator_value, "__iter__")
+        and "validation-failure" in error.validator_value
+    ):
         msg: str = error.validator_value["validation-failure"].format(error)
         messages.append(msg)
 

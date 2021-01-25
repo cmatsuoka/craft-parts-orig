@@ -19,6 +19,8 @@
 import abc
 from typing import Any, Dict, List, Set
 
+from .options import PluginOptions
+
 
 class PluginV2(abc.ABC):
     """The base class for plugins conforming to the plugin API version 2.
@@ -27,7 +29,7 @@ class PluginV2(abc.ABC):
     :param options: an object representing part defined properties.
     """
 
-    def __init__(self, *, part_name: str, options) -> None:
+    def __init__(self, *, part_name: str, options: PluginOptions) -> None:
         self.name = part_name
         self.options = options
 

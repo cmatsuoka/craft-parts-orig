@@ -50,9 +50,9 @@ class Validator:
         """Return sub-schema that describes definitions used within schema."""
         return self._schema["definitions"].copy()
 
-    def _load_schema(self, schema: Union[str, Path]):
+    def _load_schema(self, filename: Union[str, Path]):
         try:
-            with open(schema) as schema_file:
+            with open(filename) as schema_file:
                 self._schema = json.load(schema_file)
         except FileNotFoundError as err:
             raise errors.SchemaValidation(
@@ -60,12 +60,42 @@ class Validator:
             ) from err
 
     def validate(self, data: Dict[str, Any]) -> None:
-        """Validate the given data against the validator's schema."""
+        """Validate the given data against the validator's schema.
+
+        :param data: the structured data to validate against the schema.
+        """
+
         validate_schema(data=data, schema=self._schema)
+
+    def merge_schema(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Update the supplied schema with data from the validator schema.
+
+        :param schema: the schema to update.
+
+        :return: the updated schema.
+        """
+
+        schema = schema.copy()
+
+        if "properties" not in schema:
+            schema["properties"] = {}
+
+        if "definitions" not in schema:
+            schema["definitions"] = {}
+
+        # The part schema takes precedence over the plugin's schema.
+        schema["properties"].update(self.part_schema)
+        schema["definitions"].update(self.definitions_schema)
+
+        return schema
 
 
 def validate_schema(*, data: Dict[str, Any], schema: Dict[str, Any]) -> None:
-    """Validate properties according to the given schema."""
+    """Validate properties according to the given schema.
+
+    :param data: the structured data to validate against the schema.
+    :param schema: the validation schema.
+    """
 
     format_check = jsonschema.FormatChecker()
     try:

@@ -56,9 +56,21 @@ class Part:
         return self._part_dir / "src"
 
     @property
+    def part_src_work_dir(self) -> Path:
+        """The subdirectory in source containing the source subtree (if any)."""
+        source_subdir = self._data.get("source-subdir", "")
+        return self.part_src_dir / source_subdir
+
+    @property
     def part_build_dir(self) -> Path:
         """The subdirectory containing this part's build tree."""
         return self._part_dir / "build"
+
+    @property
+    def part_build_work_dir(self) -> Path:
+        """The subdirectory in build containing the source subtree (if any)."""
+        source_subdir = self._data.get("source-subdir", "")
+        return self.part_build_dir / source_subdir
 
     @property
     def part_install_dir(self) -> Path:

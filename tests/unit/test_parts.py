@@ -48,6 +48,13 @@ class TestPartBasics:
         assert p.stage_dir == Path("foobar/stage")
         assert p.prime_dir == Path("foobar/prime")
 
+    def test_part_src_build_work_dir(self):
+        p = Part("foo", {"source-subdir": "foobar"})
+        assert p.part_src_dir == Path("./parts/foo/src")
+        assert p.part_src_work_dir == Path("./parts/foo/src/foobar")
+        assert p.part_build_dir == Path("./parts/foo/build")
+        assert p.part_build_work_dir == Path("./parts/foo/build/foobar")
+
 
 class TestPartOrdering:
     """Test part ordering.

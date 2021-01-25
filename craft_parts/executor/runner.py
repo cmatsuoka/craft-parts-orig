@@ -213,10 +213,9 @@ def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
 
         run_file.flush()
 
-    source_subdir = part.data.get("source-subdir", "")
-    build_work_dir = part.part_build_dir / source_subdir
+    build_script_path.chmod(0o755)
 
     try:
-        subprocess.run([build_script_path], check=True, cwd=build_work_dir)
+        subprocess.run([build_script_path], check=True, cwd=part.part_build_work_dir)
     except subprocess.CalledProcessError as process_error:
         raise errors.PluginBuildError(part_name=part.name) from process_error
