@@ -44,10 +44,10 @@ class PartHandler:
     def __init__(self, part: Part, *, plugin_version: str, validator: Validator):
         self._part = part
 
-        plugin_class = plugins.get_plugin(part.data["plugin"], version=plugin_version)
+        plugin_class = plugins.get_plugin(part.plugin, version=plugin_version)
         plugin_schema = validator.merge_schema(plugin_class.get_schema())
 
-        options = PluginOptions(properties=part.data, schema=plugin_schema)
+        options = PluginOptions(properties=part.properties, schema=plugin_schema)
         self._plugin = plugin_class(part_name=part.name, options=options)
 
         part_properties = validator.expand_part_properties(part.properties)
@@ -180,7 +180,7 @@ class PartHandler:
             plugin=self._plugin,
             source_handler=self._source_handler,
         )
-        scriptlet = self._part.data.get(scriptlet_name)
+        scriptlet = self._part.get_scriptlet(step)
         if scriptlet:
             runner.run_scriptlet(
                 scriptlet, scriptlet_name=scriptlet_name, workdir=workdir

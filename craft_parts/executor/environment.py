@@ -52,7 +52,7 @@ def generate_part_environment(
         plugin_environment = dict()
 
     # Part's (user) say.
-    user_build_environment = part.data.get("build-environment", {})
+    user_build_environment = part.build_environment
 
     # Create the script.
     with io.StringIO() as run_environment:

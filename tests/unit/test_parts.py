@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import namedtuple
 from pathlib import Path
 
 import pytest
 
 from craft_parts import errors, parts
 from craft_parts.parts import Part
+from craft_parts.steps import Step
 
 
 class TestPartBasics:
@@ -29,7 +31,7 @@ class TestPartBasics:
         p = Part("foo", {"bar": "baz"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
-        assert p.data == {"bar": "baz"}
+        assert p.properties == {"bar": "baz"}
         assert p.part_src_dir == Path("./parts/foo/src")
         assert p.part_build_dir == Path("./parts/foo/build")
         assert p.part_state_dir == Path("./parts/foo/state")
@@ -64,7 +66,84 @@ class TestPartBasics:
 
     def test_part_properties(self):
         p = Part("foo", {"foo": "bar"})
+        x = p.properties
+        assert x == {"foo": "bar"}
+
+        # should be immutable
+        x["foo"] = "something else"
         assert p.properties == {"foo": "bar"}
+
+    def test_part_stage_fileset(self):
+        p = Part("foo", {"stage": ["a", "b", "c"]})
+        x = p.stage_fileset
+        assert x == ["a", "b", "c"]
+
+        # should be immutable
+        x.append("extra")
+        assert p.stage_fileset == ["a", "b", "c"]
+
+    def test_part_prime_fileset(self):
+        p = Part("foo", {"prime": ["a", "b", "c"]})
+        x = p.prime_fileset
+        assert x == ["a", "b", "c"]
+
+        # should be immutable
+        x.append("extra")
+        assert p.prime_fileset == ["a", "b", "c"]
+
+    def test_part_dependencies(self):
+        p = Part("foo", {"after": ["bar"]})
+        x = p.dependencies
+        assert x == ["bar"]
+
+        # should be immutable
+        x.append("extra")
+        assert p.dependencies == ["bar"]
+
+    def test_part_plugin(self):
+        p = Part("foo", {"plugin": "nil"})
+        assert p.plugin == "nil"
+
+    def test_part_build_environment(self):
+        p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
+        x = p.build_environment
+        assert x == [{"BAR": "bar"}]
+
+        # should be immutable
+        x[0]["BAR"] = "something else"
+        x.append({"FOOBAR": "foobar"})
+        assert p.build_environment == [{"BAR": "bar"}]
+
+    ScriptletTC = namedtuple("ScriptletTC", ["step", "content"])
+
+    @pytest.mark.parametrize(
+        "tc",
+        [
+            ScriptletTC(Step.PULL, "pull"),
+            ScriptletTC(Step.BUILD, "build"),
+            ScriptletTC(Step.STAGE, "stage"),
+            ScriptletTC(Step.PRIME, "prime"),
+        ],
+    )
+    def test_part_get_scriptlet(self, tc):
+        p = Part(
+            "foo",
+            {
+                "override-pull": "pull",
+                "override-build": "build",
+                "override-stage": "stage",
+                "override-prime": "prime",
+            },
+        )
+        assert p.get_scriptlet(tc.step) == tc.content
+
+    @pytest.mark.parametrize(
+        "step",
+        [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME],
+    )
+    def test_part_get_scriptlet_none(self, step):
+        p = Part("foo", {})
+        assert p.get_scriptlet(step) is None
 
 
 class TestPartOrdering:

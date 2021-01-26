@@ -26,7 +26,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from craft_parts import errors, plugins
+from craft_parts import errors, filesets, plugins
+from craft_parts.filesets import Fileset
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources import SourceHandler
@@ -65,6 +66,58 @@ class Runner:
         self._env = environment.generate_part_environment(
             part=part, step=step, plugin=plugin, step_info=step_info
         )
+
+    def run_builtin(self):
+        """Run the built-in commands for the current step."""
+
+        if self._step == Step.PULL:
+            self._builtin_pull()
+        elif self._step == Step.BUILD:
+            self._builtin_build()
+        elif self._step == Step.STAGE:
+            self._builtin_stage()
+        elif self._step == Step.PRIME:
+            self._builtin_prime()
+
+    def _builtin_pull(self):
+        if self._source_handler:
+            self._source_handler.pull()
+
+    def _builtin_build(self):
+        if not isinstance(self._plugin, plugins.PluginV2):
+            raise errors.InternalError("Plugin version not supported.")
+
+        _do_v2_build(part=self._part, plugin=self._plugin, env=self._env)
+
+    def _builtin_stage(self):
+        stage_fileset = Fileset(self._part.stage_fileset)
+        srcdir = str(self._part.part_install_dir)
+        files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
+        _migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=self._part.part_install_dir,
+            destdir=self._part.stage_dir,
+        )
+
+    def _builtin_prime(self):
+        prime_fileset = Fileset(self._part.prime_fileset)
+
+        # If we're priming and we don't have an explicit set of files to prime
+        # include the files from the stage step
+        if prime_fileset.entries == ["*"] or len(prime_fileset.includes) == 0:
+            stage_fileset = Fileset(self._part.stage_fileset)
+            prime_fileset.combine(stage_fileset)
+
+        srcdir = str(self._part.part_install_dir)
+        files, dirs = filesets.migratable_filesets(prime_fileset, srcdir)
+        _migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=self._part.stage_dir,
+            destdir=self._part.prime_dir,
+        )
+        # TODO: handle elf dependencies
 
     def run_scriptlet(
         self, scriptlet: str, *, scriptlet_name: str, workdir: Path
@@ -145,34 +198,6 @@ class Runner:
                     scriptlet_name=scriptlet_name, code=status
                 )
 
-    def run_builtin(self):
-        """Run the built-in commands for the current step."""
-
-        if self._step == Step.PULL:
-            self._builtin_pull()
-        elif self._step == Step.BUILD:
-            self._builtin_build()
-        elif self._step == Step.STAGE:
-            self._builtin_stage()
-        elif self._step == Step.PRIME:
-            self._builtin_prime()
-
-    def _builtin_pull(self):
-        if self._source_handler:
-            self._source_handler.pull()
-
-    def _builtin_build(self):
-        if not isinstance(self._plugin, plugins.PluginV2):
-            raise errors.InternalError("Plugin version not supported.")
-
-        _do_v2_build(part=self._part, plugin=self._plugin, env=self._env)
-
-    def _builtin_stage(self):
-        pass
-
-    def _builtin_prime(self):
-        pass
-
     def _handle_control_api(self, scriptlet_name, function_call) -> None:
         try:
             function_json = json.loads(function_call)
@@ -227,3 +252,39 @@ def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
         subprocess.run([build_script_path], check=True, cwd=part.part_build_work_dir)
     except subprocess.CalledProcessError as process_error:
         raise errors.PluginBuildError(part_name=part.name) from process_error
+
+
+def _migrate_files(
+    *,
+    files,
+    dirs,
+    srcdir,
+    destdir,
+    missing_ok=False,
+    follow_symlinks=False,
+    fixup_func=lambda *args: None,
+):
+    for dirname in sorted(dirs):
+        src = os.path.join(srcdir, dirname)
+        dst = os.path.join(destdir, dirname)
+
+        file_utils.create_similar_directory(src, dst)
+
+    for filename in sorted(files):
+        src = os.path.join(srcdir, filename)
+        dst = os.path.join(destdir, filename)
+
+        if missing_ok and not os.path.exists(src):
+            continue
+
+        # If the file is already here and it's a symlink, leave it alone.
+        if os.path.islink(dst):
+            continue
+
+        # Otherwise, remove and re-link it.
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
+
+        fixup_func(dst)

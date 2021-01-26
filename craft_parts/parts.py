@@ -16,10 +16,12 @@
 
 """Definitions and helpers to handle parts."""
 
+import copy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from craft_parts import errors
+from craft_parts.steps import Step
 
 
 class Part:
@@ -46,9 +48,9 @@ class Part:
         return self._name
 
     @property
-    def data(self) -> Dict[str, Any]:
+    def properties(self) -> Dict[str, Any]:
         """The part properties."""
-        return self._data
+        return self._data.copy()
 
     @property
     def part_src_dir(self) -> Path:
@@ -112,9 +114,38 @@ class Part:
         return None
 
     @property
-    def properties(self) -> Dict[str, Any]:
-        """This part's properties."""
-        return self._data
+    def stage_fileset(self) -> List[str]:
+        """The list of files to stage."""
+        return self._data.get("stage", ["*"]).copy()
+
+    @property
+    def prime_fileset(self) -> List[str]:
+        """The list of files to prime."""
+        return self._data.get("prime", ["*"]).copy()
+
+    @property
+    def dependencies(self) -> List[str]:
+        """The list of parts this parts depends on."""
+        return self._data.get("after", []).copy()
+
+    @property
+    def plugin(self) -> str:
+        """The name of this part's plugin."""
+        return str(self._data.get("plugin"))
+
+    @property
+    def build_environment(self) -> List[Dict[str, str]]:
+        """The part's build environment."""
+        return copy.deepcopy(self._data.get("build-environment", {}))
+
+    def get_scriptlet(self, step: Step) -> Optional[str]:
+        scr = {
+            Step.PULL: "override-pull",
+            Step.BUILD: "override-build",
+            Step.STAGE: "override-stage",
+            Step.PRIME: "override-prime",
+        }
+        return self._data.get(scr[step])
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
@@ -141,7 +172,7 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
         for part in all_parts:
             mentioned = False
             for other in all_parts:
-                if part.name in other.data.get("after", []):
+                if part.name in other.dependencies:
                     mentioned = True
                     break
             if not mentioned:
@@ -165,7 +196,7 @@ def part_dependencies(
     if not part:
         raise errors.InvalidPartName(part_name)
 
-    dependency_names = set(part.data.get("after", []))
+    dependency_names = set(part.dependencies)
     dependencies = {p for p in part_list if p.name in dependency_names}
 
     if recursive:
