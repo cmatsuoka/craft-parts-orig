@@ -17,7 +17,9 @@
 """The local source handler and helpers."""
 
 import functools
+import glob
 import os
+from typing import List
 
 from craft_parts.utils import file_utils
 
@@ -99,21 +101,21 @@ class Local(SourceHandlerBase):
             self.copy_function(os.path.join(self.source, file_path))
 
 
-# FIXME: handle ignored files
-def _ignore(source, current_directory, directory, files, check=False):
-    return []
+_CRAFT_PARTS_IGNORED_FILES = ["parts", "stage", "prime", "*.snap"]
 
 
-#    if directory == source or directory == current_directory:
-#        ignored = copy.copy(common.SNAPCRAFT_FILES)
-#        if check:
-#            # TODO: We hardcode the snap directory here, but we really need
-#            # to ignore the directory where snapcraft.yaml is hosted.
-#            ignored.extend(["snap", "snapcraft.yaml", ".snapcraft.yaml"])
-#        snaps = glob.glob(os.path.join(directory, "*.snap"))
-#        if snaps:
-#            snaps = [os.path.basename(s) for s in snaps]
-#            ignored += snaps
-#        return ignored
-#    else:
-#        return []
+# FIXME: handle externally defined ignore list (e.g. for snapcraft files)
+def _ignore(source, current_directory, directory, files, check=False) -> List[str]:
+    ignored = []
+    if directory in (source, current_directory):
+        if check:
+            # TODO: We hardcode the snap directory here, but we really need
+            # to ignore the directory where snapcraft.yaml is hosted.
+            ignored.extend(["snap", "snapcraft.yaml", ".snapcraft.yaml"])
+        for pattern in _CRAFT_PARTS_IGNORED_FILES:
+            files = glob.glob(os.path.join(directory, pattern))
+            if files:
+                files = [os.path.basename(f) for f in files]
+                ignored += files
+
+    return ignored
