@@ -34,8 +34,16 @@ class PluginOptions:
         schema_properties = schema.get("properties", {})
         schemas.validate_schema(data=properties, schema=schema)
 
+        self._properties: Dict[str, Any] = {}
+
         for key in schema_properties:
-            attr_name = key.replace("-", "_")
             default_value = schema_properties[key].get("default")
             attr_value = properties.get(key, default_value)
-            setattr(self, attr_name, attr_value)
+            self._properties[key] = attr_value
+
+    def get(self, name: str) -> Any:
+        """Return the value of the given property.
+
+        :param name: the property name.
+        """
+        return self._properties.get(name)

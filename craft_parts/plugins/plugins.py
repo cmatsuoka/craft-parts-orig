@@ -29,7 +29,7 @@ PluginType = Type[Plugin]
 
 # Plugin registry by plugin API version
 _PLUGINS: Dict[str, Dict[str, PluginType]] = {
-    "v2": {"nil": v2.NilPlugin, "dump": v2.DumpPlugin}
+    "v2": {"nil": v2.NilPlugin, "dump": v2.DumpPlugin, "make": v2.MakePlugin}
 }
 
 
