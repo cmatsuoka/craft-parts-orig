@@ -49,6 +49,14 @@ def _my_callback(info: StepInfo) -> bool:
     return True
 
 
+def _info_callback(info: StepInfo) -> bool:
+    print(f"step = {info.step!r}")
+    print(f"part_src_dir = {info.part_src_dir}")
+    print(f"part_build_dir = {info.part_build_dir}")
+    print(f"part_install_dir = {info.part_install_dir}")
+    return True
+
+
 @pytest.mark.parametrize("step", list(Step))
 @pytest.mark.parametrize("action_type", list(ActionType))
 def test_callback_pre(tmpdir, capfd, step, action_type):
@@ -81,3 +89,22 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         assert not out
     else:
         assert out == f"override {step!r}\ncallback\n"
+
+
+@pytest.mark.parametrize("step", list(Step))
+def test_callback_step_info(tmpdir, capfd, step):
+    callbacks.register_pre(_info_callback, step_list=[step])
+
+    parts = yaml.safe_load(_parts_yaml)
+    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+
+    lf.execute(Action("foo", step))
+    out, err = capfd.readouterr()
+    assert not err
+    assert out == (
+        f"step = {step!r}\n"
+        f"part_src_dir = {tmpdir}/parts/foo/src\n"
+        f"part_build_dir = {tmpdir}/parts/foo/build\n"
+        f"part_install_dir = {tmpdir}/parts/foo/install\n"
+        f"override {step!r}\n"
+    )

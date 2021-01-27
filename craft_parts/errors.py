@@ -376,6 +376,20 @@ class InvalidSourceOption(_Error):
         return "Make sure source options are correct and try again."
 
 
+class FilesetError(_Error):
+    """The specified options are invalid for the chosen source type."""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"File specification error: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Make sure files are correctly specified and try again."
+
+
 class SchemaValidation(_Error):
     """The parts data failed schema validation.
 

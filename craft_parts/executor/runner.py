@@ -230,7 +230,7 @@ class Runner:
 
 def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
     # Save script to execute.
-    build_script_path = part.part_run_dir / "build.sh"
+    build_script_path = part.part_run_dir.absolute() / "build.sh"
 
     # Plugin commands.
     plugin_build_commands = plugin.get_build_commands()

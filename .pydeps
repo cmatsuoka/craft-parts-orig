@@ -1,11 +1,14 @@
 [pydeps]
 
+max_bacon = 1
+
 exclude =
     craft_parts.actions
     craft_parts.errors
     craft_parts.parts
     craft_parts.plugins.*
     craft_parts.sources.*
+    craft_parts.cache*
     craft_parts.state_manager.states
     craft_parts.step_info
     craft_parts.steps

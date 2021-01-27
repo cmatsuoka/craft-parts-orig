@@ -20,6 +20,7 @@ import os
 from glob import iglob
 from typing import List, Set, Tuple
 
+from craft_parts import errors
 from craft_parts.utils import file_utils
 
 
@@ -40,7 +41,6 @@ class Fileset:
     @property
     def includes(self) -> List[str]:
         """Return the list of files to be included."""
-        print("====", self._list)
         return [x for x in self._list if x[0] != "-"]
 
     @property
@@ -84,8 +84,10 @@ class Fileset:
 def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[str]]:
     """Return the list of files and directories that can be migrated."""
 
-    include_files = _generate_include_set(srcdir, fileset.includes)
-    exclude_files, exclude_dirs = _generate_exclude_set(srcdir, fileset.excludes)
+    includes, excludes = _get_file_list(fileset)
+
+    include_files = _generate_include_set(srcdir, includes)
+    exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
     files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
@@ -124,8 +126,31 @@ def migratable_filesets(fileset: Fileset, srcdir: str) -> Tuple[Set[str], Set[st
     return resolved_files, resolved_dirs
 
 
+def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
+    includes: List[str] = []
+    excludes: List[str] = []
+
+    for item in fileset.entries:
+        if item.startswith("-"):
+            excludes.append(item[1:])
+        elif item.startswith("\\"):
+            includes.append(item[1:])
+        else:
+            includes.append(item)
+
+    # paths must be relative
+    for d in includes + excludes:
+        if os.path.isabs(d):
+            raise errors.FilesetError(f"path {d!r} must be relative.")
+
+    includes = includes or ["*"]
+
+    return includes, excludes
+
+
 def _generate_include_set(directory: str, includes: List[str]) -> Set[str]:
     include_files = set()
+
     for include in includes:
         if "*" in include:
             pattern = os.path.join(directory, include)

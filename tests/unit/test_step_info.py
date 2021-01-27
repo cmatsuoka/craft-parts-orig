@@ -88,13 +88,14 @@ def test_update_part_data():
     info = StepInfo()
     part = Part("foo", {})
     x = info.for_part(part)
-    assert x.part_src_dir == Path("parts/foo/src")
-    assert x.part_src_work_dir == Path("parts/foo/src")
-    assert x.part_build_dir == Path("parts/foo/build")
-    assert x.part_build_work_dir == Path("parts/foo/build")
-    assert x.part_install_dir == Path("parts/foo/install")
-    assert x.stage_dir == Path("stage")
-    assert x.prime_dir == Path("prime")
+    cwd = Path().absolute()
+    assert x.part_src_dir == cwd / "parts/foo/src"
+    assert x.part_src_work_dir == cwd / "parts/foo/src"
+    assert x.part_build_dir == cwd / "parts/foo/build"
+    assert x.part_build_work_dir == cwd / "parts/foo/build"
+    assert x.part_install_dir == cwd / "parts/foo/install"
+    assert x.stage_dir == cwd / "stage"
+    assert x.prime_dir == cwd / "prime"
 
     # The original info shouldn't change
     assert info.part_src_dir == Path()
