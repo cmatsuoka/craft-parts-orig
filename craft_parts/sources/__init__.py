@@ -90,14 +90,15 @@ if sys.platform == "linux":
     # from .mercurial import Mercurial  # noqa: F401
     # from .script import Script  # noqa: F401
     # from .subversion import Subversion  # noqa: F401
-    # from .tar import Tar  # noqa: F401
+    from .tar import Tar  # noqa: F401
+
     # from .zip import Zip  # noqa: F401
     # from .7z import SevenZip  # noqa: F401
     # from .deb import Deb  # noqa: F401
     # from .rpm import Rpm  # noqa: F401
     # from .snap import Snap  # noqa: F401
 
-    SourceHandler = Union[Local]
+    SourceHandler = Union[Local, Tar]
     SourceHandlerType = Type[SourceHandler]
 
     _source_handler: Dict[str, SourceHandlerType] = {
@@ -107,7 +108,7 @@ if sys.platform == "linux":
         # "mercurial": Mercurial,
         # "subversion": Subversion,
         # "svn": Subversion,
-        # "tar": Tar,
+        "tar": Tar,
         # "zip": Zip,
         # "7z": SevenZip,
         "local": Local,
@@ -128,7 +129,7 @@ else:
     _source_handler: Dict[str, SourceHandlerType] = {
         # "git": Git,
         "local": Local,
-        # "tar": Tar,
+        "tar": Tar,
         "": Local,
     }
 

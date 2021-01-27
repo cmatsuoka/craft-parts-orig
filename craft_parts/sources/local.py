@@ -23,10 +23,10 @@ from typing import List
 
 from craft_parts.utils import file_utils
 
-from .sources import SourceHandlerBase
+from .base import Base
 
 
-class Local(SourceHandlerBase):
+class Local(Base):
     """The local source handler."""
 
     def __init__(self, *args, copy_function=file_utils.link_or_copy, **kwargs):

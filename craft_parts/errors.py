@@ -315,6 +315,64 @@ class CopyFileNotFound(_Error):
         return "Check the path and try again."
 
 
+class ChecksumMismatch(_Error):
+    """A checksum doesn't match the expected value."""
+
+    def __init__(self, expected: str, actual: str):
+        super().__init__()
+        self._expected = expected
+        self._actual = actual
+
+    def get_brief(self) -> str:
+        return f"Expected the digest to be {self._expected}, but it was {self._actual}"
+
+    def get_resolution(self) -> str:
+        return "Make sure the source file has not been modified or corrupt."
+
+
+class NetworkError(_Error):
+    """A network request failed."""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Network operation failed: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Make sure network is available and properly configured."
+
+
+class SourceNotFound(_Error):
+    """The source could not be pulled."""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Failed to pull source: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Make sure source path is correct and that it is accessible."
+
+
+class InvalidSourceOption(_Error):
+    """The specified options are invalid for the chosen source type."""
+
+    def __init__(self, source_type: str, option: str):
+        super().__init__()
+        self._source_type = source_type
+        self._option = option
+
+    def get_brief(self) -> str:
+        return f"{self._option!r} cannot be used with a {self._source_type} source."
+
+    def get_resolution(self) -> str:
+        return "Make sure source options are correct and try again."
+
+
 class SchemaValidation(_Error):
     """The parts data failed schema validation.
 

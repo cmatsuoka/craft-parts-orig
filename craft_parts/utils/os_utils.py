@@ -16,7 +16,7 @@
 
 """Utilities related to the operating system."""
 
-import os.path
+import os
 import pathlib
 from typing import List, Union
 
@@ -93,3 +93,10 @@ def reset_env() -> None:
     """Reset the environment."""
     # global env
     # env = []
+
+
+def is_dumb_terminal() -> bool:
+    """Return True if on a dumb terminal."""
+    is_stdout_tty = os.isatty(1)
+    is_term_dumb = os.environ.get("TERM", "") == "dumb"
+    return not is_stdout_tty or is_term_dumb

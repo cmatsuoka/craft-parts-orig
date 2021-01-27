@@ -18,6 +18,7 @@
 
 import contextlib
 import errno
+import hashlib
 import logging
 import os
 import shutil
@@ -280,3 +281,21 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     filename_relpath = os.path.relpath(filename_abspath, base_directory)
 
     return filename_relpath
+
+
+def calculate_hash(path: str, *, algorithm: str) -> str:
+    """Calculate the hash for path with algorithm."""
+    # This will raise an AttributeError if algorithm is unsupported
+    hasher = getattr(hashlib, algorithm)()
+
+    for block in _file_reader_iter(path):
+        hasher.update(block)
+    return hasher.hexdigest()
+
+
+def _file_reader_iter(path: str, block_size=2 ** 20):
+    with open(path, "rb") as fin:
+        block = fin.read(block_size)
+        while len(block) > 0:
+            yield block
+            block = fin.read(block_size)

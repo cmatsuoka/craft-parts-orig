@@ -10,7 +10,7 @@ line_length = 88
 disable = "C0330, C0326"
 
 [tool.pylint.similarities]
-min-similarity-lines=8
+min-similarity-lines=10
 
 [tool.pylint.format]
 max-line-length = "88"

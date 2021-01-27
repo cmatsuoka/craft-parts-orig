@@ -69,6 +69,7 @@ def clear() -> None:
     global _PRE_HOOKS, _POST_HOOKS
     _PRE_HOOKS = []
     _POST_HOOKS = []
+    # pylint: enable=global-statement
 
 
 def run_pre(part: Part, step: Step, *, step_info: StepInfo) -> None:
