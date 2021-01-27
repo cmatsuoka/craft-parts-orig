@@ -14,24 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The make plugin is useful for building make based parts.
-
-Make based projects are projects that have a Makefile that drives the
-build.
-
-This plugin always runs 'make' followed by 'make install', except when
-the 'artifacts' keyword is used.
-
-This plugin uses the common plugin keywords as well as those for "sources".
-For more information check the 'plugins' topic for the former and the
-'sources' topic for the latter.
-
-Additionally, this plugin uses the following plugin-specific keywords:
-
-    - make-parameters
-      (list of strings)
-      Pass the given parameters to the make command.
-"""
+"""The make plugin implementation."""
 
 from typing import Any, Dict, List, Set
 
@@ -39,6 +22,25 @@ from ..plugin_v2 import PluginV2
 
 
 class MakePlugin(PluginV2):
+    """A plugin useful for building make based parts.
+
+    Make based projects are projects that have a Makefile that drives the
+    build.
+
+    This plugin always runs 'make' followed by 'make install', except when
+    the 'artifacts' keyword is used.
+
+    This plugin uses the common plugin keywords as well as those for "sources".
+    For more information check the 'plugins' topic for the former and the
+    'sources' topic for the latter.
+
+    Additionally, this plugin uses the following plugin-specific keywords:
+
+        - make-parameters
+          (list of strings)
+          Pass the given parameters to the make command.
+    """
+
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
@@ -65,19 +67,20 @@ class MakePlugin(PluginV2):
         return dict()
 
     def _get_make_command(self, target: str = "") -> str:
-        cmd = ["make", '-j"${CRAFT_PARTS_PARALLEL_BUILD_COUNT}"']
+        cmd = ["make", f'-j"{self._step_info.parallel_build_count}"']
 
         if target:
             cmd.append(target)
 
-        cmd.extend(self.options.get("make-parameters"))
+        cmd.extend(self._options.get("make-parameters"))
 
         return " ".join(cmd)
 
     def get_build_commands(self) -> List[str]:
         return [
             self._get_make_command(),
-            '{} DESTDIR="$CRAFT_PARTS_PART_INSTALL"'.format(
-                self._get_make_command(target="install")
+            '{} DESTDIR="{}"'.format(
+                self._get_make_command(target="install"),
+                self._step_info.part_install_dir,
             ),
         ]

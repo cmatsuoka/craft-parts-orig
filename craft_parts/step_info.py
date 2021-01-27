@@ -16,12 +16,14 @@
 
 """Definitions for the step information used by part handlers."""
 
+import copy
 import logging
 import platform
 from pathlib import Path
 from typing import Optional, Union
 
 from craft_parts import errors
+from craft_parts.parts import Part
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
@@ -34,9 +36,9 @@ class StepInfo:
     def __init__(
         self,
         *,
-        target_arch: str,
-        parallel_build_count: int,
-        local_plugins_dir: Optional[Union[Path, str]],
+        target_arch: str = "",
+        parallel_build_count: int = 1,
+        local_plugins_dir: Optional[Union[Path, str]] = None,
         **custom_args,  # custom passthrough args
     ):
         self._set_machine(target_arch)
@@ -53,7 +55,9 @@ class StepInfo:
         # Attributes set before step execution
         self.step: Optional[Step] = None
         self.part_src_dir = Path()
+        self.part_src_work_dir = Path()
         self.part_build_dir = Path()
+        self.part_build_work_dir = Path()
         self.part_install_dir = Path()
         self.part_state_dir = Path()
         self.stage_dir = Path()
@@ -91,6 +95,35 @@ class StepInfo:
         """The architecture used for deb packages."""
 
         return self.__machine_info["deb"]
+
+    def for_part(self, part: Part) -> "StepInfo":
+        """Return a copy of this object adding part-specific fields.
+
+        :param part: the part containing the information to add.
+        """
+
+        info = copy.deepcopy(self)
+        info.part_src_dir = part.part_src_dir
+        info.part_src_work_dir = part.part_src_work_dir
+        info.part_build_dir = part.part_build_dir
+        info.part_build_work_dir = part.part_build_work_dir
+        info.part_install_dir = part.part_install_dir
+        info.part_state_dir = part.part_state_dir
+        info.stage_dir = part.stage_dir
+        info.prime_dir = part.prime_dir
+
+        return info
+
+    def for_step(self, step: Step) -> "StepInfo":
+        """Return a copy of this object adding step-specific fields.
+
+        :param step: the step information to add.
+        """
+
+        info = copy.deepcopy(self)
+        info.step = step
+
+        return info
 
     def _set_machine(self, target_arch):
         self.__platform_arch = _get_platform_architecture()

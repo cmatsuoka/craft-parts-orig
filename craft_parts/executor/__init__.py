@@ -50,12 +50,16 @@ class Executor:
             return
 
         if part.name not in self._handler:
+            # create the part handler for a new part
             self._handler[part.name] = PartHandler(
-                part, plugin_version=self._plugin_version, validator=self._validator
+                part,
+                plugin_version=self._plugin_version,
+                step_info=step_info.for_part(part),
+                validator=self._validator,
             )
 
         handler = self._handler[part.name]
-        handler.run_action(action, step_info)
+        handler.run_action(action)
 
     def clean(self, part_names: List[str] = None):
         """Clean the given parts, or all parts if none is specified."""

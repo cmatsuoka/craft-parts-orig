@@ -52,31 +52,30 @@ class Runner:
     def __init__(
         self,
         part: Part,
-        step: Step,
         *,
         step_info: StepInfo,
         plugin: Plugin,
         source_handler: Optional[SourceHandler],
     ):
         self._part = part
-        self._step = step
         self._step_info = step_info
         self._plugin = plugin
         self._source_handler = source_handler
         self._env = environment.generate_part_environment(
-            part=part, step=step, plugin=plugin, step_info=step_info
+            part=part, plugin=plugin, step_info=step_info
         )
 
     def run_builtin(self):
         """Run the built-in commands for the current step."""
 
-        if self._step == Step.PULL:
+        step = self._step_info.step
+        if step == Step.PULL:
             self._builtin_pull()
-        elif self._step == Step.BUILD:
+        elif step == Step.BUILD:
             self._builtin_build()
-        elif self._step == Step.STAGE:
+        elif step == Step.STAGE:
             self._builtin_stage()
-        elif self._step == Step.PRIME:
+        elif step == Step.PRIME:
             self._builtin_prime()
 
     def _builtin_pull(self):
@@ -138,7 +137,6 @@ class Runner:
 
             env = environment.generate_part_environment(
                 part=self._part,
-                step=self._step,
                 plugin=self._plugin,
                 step_info=self._step_info,
             )

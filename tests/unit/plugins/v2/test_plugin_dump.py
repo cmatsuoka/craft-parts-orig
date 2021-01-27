@@ -21,6 +21,7 @@ import pytest
 from craft_parts import errors, schemas
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.plugins.v2 import DumpPlugin
+from craft_parts.step_info import StepInfo
 
 _SCHEMA_DIR = Path(__file__).parents[4] / "craft_parts" / "data" / "schema"
 
@@ -38,7 +39,8 @@ class TestPluginDump:
         options = PluginOptions(
             properties={"source": "of all evil"}, schema=self._schema
         )
-        p = DumpPlugin(part_name="foo", options=options)
+        step_info = StepInfo()
+        p = DumpPlugin(part_name="foo", options=options, step_info=step_info)
         assert p.get_build_snaps() == set()
         assert p.get_build_packages() == set()
         assert p.get_build_environment() == dict()

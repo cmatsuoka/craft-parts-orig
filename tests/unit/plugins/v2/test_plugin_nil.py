@@ -19,12 +19,14 @@ import pytest
 from craft_parts import errors
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.plugins.v2 import NilPlugin
+from craft_parts.step_info import StepInfo
 
 
 def test_plugin_nil():
     schema = NilPlugin.get_schema()
     options = PluginOptions(properties={}, schema=schema)
-    p = NilPlugin(part_name="foo", options=options)
+    step_info = StepInfo()
+    p = NilPlugin(part_name="foo", options=options, step_info=step_info)
     assert p.get_build_snaps() == set()
     assert p.get_build_packages() == set()
     assert p.get_build_environment() == dict()

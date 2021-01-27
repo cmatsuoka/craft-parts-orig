@@ -60,6 +60,9 @@ class _ReportableError(_Error, ABC):
         return True
 
 
+# pylint: enable=no-self-use
+
+
 class InternalError(_ReportableError):
     """Internal error."""
 

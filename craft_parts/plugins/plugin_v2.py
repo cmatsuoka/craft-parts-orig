@@ -19,6 +19,8 @@
 import abc
 from typing import Any, Dict, List, Set
 
+from craft_parts.step_info import StepInfo
+
 from .options import PluginOptions
 
 
@@ -29,9 +31,12 @@ class PluginV2(abc.ABC):
     :param options: an object representing part defined properties.
     """
 
-    def __init__(self, *, part_name: str, options: PluginOptions) -> None:
-        self.name = part_name
-        self.options = options
+    def __init__(
+        self, *, part_name: str, options: PluginOptions, step_info: StepInfo
+    ) -> None:
+        self._name = part_name
+        self._options = options
+        self._step_info = step_info
 
     @classmethod
     @abc.abstractmethod

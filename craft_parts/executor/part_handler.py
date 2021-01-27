@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from craft_parts import callbacks, plugins, sources
+from craft_parts import callbacks, errors, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
@@ -41,21 +41,31 @@ logger = logging.getLogger(__name__)
 class PartHandler:
     """Handle steps for a part using the appropriate plugins."""
 
-    def __init__(self, part: Part, *, plugin_version: str, validator: Validator):
+    def __init__(
+        self,
+        part: Part,
+        *,
+        plugin_version: str,
+        step_info: StepInfo,
+        validator: Validator
+    ):
         self._part = part
+        self._step_info = step_info
 
         plugin_class = plugins.get_plugin(part.plugin, version=plugin_version)
         plugin_schema = validator.merge_schema(plugin_class.get_schema())
 
         options = PluginOptions(properties=part.properties, schema=plugin_schema)
-        self._plugin = plugin_class(part_name=part.name, options=options)
+        self._plugin = plugin_class(
+            part_name=part.name, options=options, step_info=step_info
+        )
 
         part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = _get_source_handler(
             part.source, part.part_src_dir, part_properties
         )
 
-    def run_action(self, action: Action, step_info: StepInfo) -> None:
+    def run_action(self, action: Action) -> None:
         """Run the given action for this part using a plugin."""
 
         if action.type == ActionType.UPDATE:
@@ -70,6 +80,8 @@ class PartHandler:
             pass
 
         os_utils.reset_env()
+
+        step_info = self._step_info.for_step(action.step)
 
         callbacks.run_pre(self._part, action.step, step_info=step_info)
 
@@ -93,9 +105,8 @@ class PartHandler:
         # TODO: handle part replacements
 
         self._run_step(
-            Step.PULL,
-            scriptlet_name="override-pull",
             step_info=step_info,
+            scriptlet_name="override-pull",
             workdir=self._part.part_src_dir,
         )
 
@@ -116,7 +127,6 @@ class PartHandler:
         )
 
         self._run_step(
-            Step.BUILD,
             step_info=step_info,
             scriptlet_name="override-build",
             workdir=self._part.part_build_dir,
@@ -149,7 +159,6 @@ class PartHandler:
         self._make_dirs()
 
         self._run_step(
-            Step.STAGE,
             step_info=step_info,
             scriptlet_name="override-stage",
             workdir=self._part.stage_dir,
@@ -162,7 +171,6 @@ class PartHandler:
         self._make_dirs()
 
         self._run_step(
-            Step.PRIME,
             step_info=step_info,
             scriptlet_name="override-prime",
             workdir=self._part.prime_dir,
@@ -170,17 +178,19 @@ class PartHandler:
 
         _save_state_file(self._part, "prime")
 
-    def _run_step(
-        self, step: Step, *, step_info: StepInfo, scriptlet_name: str, workdir: Path
-    ):
+    def _run_step(self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path):
+        """Run the scriptlet if overriding, otherwise run the built-in handler."""
+
+        if not step_info.step:
+            raise errors.InternalError("undefined step")
+
         runner = Runner(
             self._part,
-            step,
             step_info=step_info,
             plugin=self._plugin,
             source_handler=self._source_handler,
         )
-        scriptlet = self._part.get_scriptlet(step)
+        scriptlet = self._part.get_scriptlet(step_info.step)
         if scriptlet:
             runner.run_scriptlet(
                 scriptlet, scriptlet_name=scriptlet_name, workdir=workdir

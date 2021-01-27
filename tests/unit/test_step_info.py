@@ -20,7 +20,9 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors
+from craft_parts.parts import Part
 from craft_parts.step_info import StepInfo
+from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"
 
@@ -80,3 +82,32 @@ def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as ei:
         StepInfo(target_arch="invalid", parallel_build_count=1, local_plugins_dir=None)
     assert ei.value.get_brief() == "Architecture 'invalid' is invalid."
+
+
+def test_update_part_data():
+    info = StepInfo()
+    part = Part("foo", {})
+    x = info.for_part(part)
+    assert x.part_src_dir == Path("parts/foo/src")
+    assert x.part_src_work_dir == Path("parts/foo/src")
+    assert x.part_build_dir == Path("parts/foo/build")
+    assert x.part_build_work_dir == Path("parts/foo/build")
+    assert x.part_install_dir == Path("parts/foo/install")
+    assert x.stage_dir == Path("stage")
+    assert x.prime_dir == Path("prime")
+
+    # The original info shouldn't change
+    assert info.part_src_dir == Path()
+    assert info.part_src_work_dir == Path()
+    assert info.part_build_dir == Path()
+    assert info.part_build_work_dir == Path()
+    assert info.part_install_dir == Path()
+    assert info.stage_dir == Path()
+    assert info.prime_dir == Path()
+
+
+def test_update_step_data():
+    info = StepInfo()
+    x = info.for_step(Step.BUILD)
+    assert x.step == Step.BUILD
+    assert info.step is None

@@ -16,6 +16,7 @@
 
 """Plugins conforming to the plugin API version 2."""
 
+from .autotools import AutotoolsPlugin  # noqa: F401
 from .dump import DumpPlugin  # noqa: F401
 from .make import MakePlugin  # noqa: F401
 from .nil import NilPlugin  # noqa: F401

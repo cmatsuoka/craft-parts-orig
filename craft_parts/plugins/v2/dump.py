@@ -47,4 +47,5 @@ class DumpPlugin(PluginV2):
         return dict()
 
     def get_build_commands(self) -> List[str]:
-        return ['cp --archive --link --no-dereference . "${CRAFT_PARTS_PART_INSTALL}"']
+        install_dir = self._step_info.part_install_dir
+        return [f'cp --archive --link --no-dereference . "{install_dir}"']
