@@ -180,7 +180,7 @@ def populate(sourcedir, builddir, options) -> None:
 #     return _source_handler.get(source_type, Local)
 
 
-def get_source_handler(source, *, source_type="") -> SourceHandlerType:
+def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
     """Return the appropriate handler for the given source.
 
     :param source: the source specification.
@@ -200,7 +200,9 @@ def get_source_handler(source, *, source_type="") -> SourceHandlerType:
 _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
-def _get_source_type_from_uri(source, ignore_errors=False) -> str:  # noqa: C901
+def _get_source_type_from_uri(
+    source: str, ignore_errors: bool = False
+) -> str:  # noqa: C901
     for extension in ["zip", "deb", "rpm", "7z", "snap"]:
         if source.endswith(".{}".format(extension)):
             return extension

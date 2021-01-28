@@ -31,6 +31,7 @@ def handler(mocker) -> Local:
     mocker.patch("os.getcwd", return_value="current_dir")
 
     return Local(
+        application_name="test",
         source="source",
         source_dir="source_dir",
         source_checksum="source-checksum",

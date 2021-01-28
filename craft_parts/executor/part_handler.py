@@ -62,7 +62,7 @@ class PartHandler:
 
         part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = _get_source_handler(
-            part.source, part.part_src_dir, part_properties
+            step_info.application_name, part.source, part.part_src_dir, part_properties
         )
 
     def run_action(self, action: Action) -> None:
@@ -221,7 +221,10 @@ class PartHandler:
 
 
 def _get_source_handler(
-    source: Optional[str], source_dir: Path, properties: Optional[Dict[str, Any]]
+    application_name: str,
+    source: Optional[str],
+    source_dir: Path,
+    properties: Optional[Dict[str, Any]],
 ) -> Optional[SourceHandler]:
     """Returns a source_handler for the source in properties."""
 
@@ -233,11 +236,13 @@ def _get_source_handler(
     source_handler = None
     if source:
         handler_class = sources.get_source_handler(
-            source, source_type=properties["source-type"]
+            source,
+            source_type=properties["source-type"],
         )
         source_handler = handler_class(
-            source,
-            source_dir,
+            application_name=application_name,
+            source=source,
+            source_dir=source_dir,
             source_checksum=properties["source-checksum"],
             source_branch=properties["source-branch"],
             source_tag=properties["source-tag"],

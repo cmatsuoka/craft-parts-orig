@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 class FileCache(Cache):
     """Generic file cache."""
 
-    def __init__(self, *, namespace: str = "files") -> None:
+    def __init__(self, name: str, *, namespace: str = "files") -> None:
         """Create a FileCache under namespace.
 
         :param str namespace: set the namespace for the cache
                               (default: "files").
         """
-        super().__init__()
+        super().__init__(name)
         self.file_cache = os.path.join(self.cache_root, namespace)
 
     def cache(self, *, filename: str, algorithm: str, digest: str) -> Optional[str]:

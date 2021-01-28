@@ -139,6 +139,11 @@ class Part:
         return copy.deepcopy(self._data.get("build-environment", {}))
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
+        """Return the scriptlet contents, if any, for the given step.
+
+        :param step: the step corresponding to the scriptlet to be retrieved.
+        """
+
         scr = {
             Step.PULL: "override-pull",
             Step.BUILD: "override-build",

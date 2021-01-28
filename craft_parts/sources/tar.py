@@ -35,6 +35,8 @@ class Tar(FileBase):
         self,
         source,
         source_dir,
+        *,
+        application_name,
         source_tag=None,
         source_commit=None,
         source_branch=None,
@@ -44,11 +46,12 @@ class Tar(FileBase):
         super().__init__(
             source,
             source_dir,
-            source_tag,
-            source_commit,
-            source_branch,
-            source_depth,
-            source_checksum,
+            application_name=application_name,
+            source_tag=source_tag,
+            source_commit=source_commit,
+            source_branch=source_branch,
+            source_depth=source_depth,
+            source_checksum=source_checksum,
         )
         if source_tag:
             raise errors.InvalidSourceOption("tar", "source-tag")

@@ -20,6 +20,7 @@ import abc
 import os
 import shutil
 import subprocess
+from typing import List, Optional
 
 import requests
 
@@ -37,15 +38,18 @@ class Base:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source,
-        source_dir,
-        source_tag=None,
-        source_commit=None,
-        source_branch=None,
-        source_depth=None,
-        source_checksum=None,
-        command=None,
+        source: str,
+        source_dir: str,
+        *,
+        application_name: str,
+        source_tag: Optional[str] = None,
+        source_commit: Optional[str] = None,
+        source_branch: Optional[str] = None,
+        source_depth: Optional[str] = None,
+        source_checksum: Optional[str] = None,
+        command: Optional[List[str]] = None,
     ):
+        self._application_name = application_name
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
@@ -116,24 +120,27 @@ class FileBase(Base):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source,
-        source_dir,
-        source_tag=None,
-        source_commit=None,
-        source_branch=None,
-        source_depth=None,
-        source_checksum=None,
-        command=None,
+        source: str,
+        source_dir: str,
+        *,
+        application_name: str,
+        source_tag: Optional[str] = None,
+        source_commit: Optional[str] = None,
+        source_branch: Optional[str] = None,
+        source_depth: Optional[str] = None,
+        source_checksum: Optional[str] = None,
+        command: Optional[List[str]] = None,
     ):
         super().__init__(
             source,
             source_dir,
-            source_tag,
-            source_commit,
-            source_branch,
-            source_depth,
-            source_checksum,
-            command,
+            application_name=application_name,
+            source_tag=source_tag,
+            source_commit=source_commit,
+            source_branch=source_branch,
+            source_depth=source_depth,
+            source_checksum=source_checksum,
+            command=command,
         )
         self._file = ""
 
@@ -181,7 +188,7 @@ class FileBase(Base):
         digest: str = ""
 
         # First check if we already have the source file cached.
-        file_cache = FileCache()
+        file_cache = FileCache(self._application_name)
         if self.source_checksum:
             algorithm, digest = split_checksum(self.source_checksum)
             cache_file = file_cache.get(algorithm=algorithm, digest=digest)

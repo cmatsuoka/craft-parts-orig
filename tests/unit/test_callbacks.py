@@ -99,6 +99,7 @@ class TestCallbackExecution:
     def setup_method(self):
         self._part = Part("foo", {})
         self._info = StepInfo(
+            application_name="test",
             target_arch="x86_64",
             parallel_build_count=4,
             local_plugins_dir=None,

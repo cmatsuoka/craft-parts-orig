@@ -22,7 +22,7 @@ import platform
 from pathlib import Path
 from typing import Optional, Union
 
-from craft_parts import errors
+from craft_parts import errors, utils
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -36,11 +36,13 @@ class StepInfo:
     def __init__(
         self,
         *,
+        application_name: str = utils.package_name(),
         target_arch: str = "",
         parallel_build_count: int = 1,
         local_plugins_dir: Optional[Union[Path, str]] = None,
         **custom_args,  # custom passthrough args
     ):
+        self._application_name = application_name
         self._set_machine(target_arch)
 
         self._parallel_build_count = parallel_build_count
@@ -67,33 +69,33 @@ class StepInfo:
             setattr(self, key, value)
 
     @property
+    def application_name(self) -> str:
+        """The name of the application using craft-parts."""
+        return self._application_name
+
+    @property
     def arch_triplet(self) -> str:
         """The machine-vendor-os platform triplet definition."""
-
         return self.__machine_info["triplet"]
 
     @property
     def is_cross_compiling(self) -> bool:
         """Whether the target and host architectures are different."""
-
         return self.__target_machine != self.__platform_arch
 
     @property
     def parallel_build_count(self) -> int:
         """The maximum allowable number of concurrent build jobs."""
-
         return self._parallel_build_count
 
     @property
     def local_plugins_dir(self) -> Optional[Path]:
         """The location of local plugins in the filesystem."""
-
         return self._local_plugins_dir
 
     @property
     def deb_arch(self) -> str:
         """The architecture used for deb packages."""
-
         return self.__machine_info["deb"]
 
     def for_part(self, part: Part) -> "StepInfo":

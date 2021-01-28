@@ -46,6 +46,7 @@ def test_step_info(mocker, tc):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
     info = StepInfo(
+        application_name="test",
         target_arch=tc.arch,
         parallel_build_count=16,
         local_plugins_dir="/some/path",
@@ -53,6 +54,7 @@ def test_step_info(mocker, tc):
         bar=["bar"],
     )
 
+    assert info.application_name == "test"
     assert info.arch_triplet == tc.triplet
     assert info.is_cross_compiling == tc.cross
     assert info.parallel_build_count == 16
@@ -61,6 +63,11 @@ def test_step_info(mocker, tc):
 
 
 PluginPathTC = namedtuple("PluginPathTC", ["param", "result"])
+
+
+def test_step_info_application_name():
+    info = StepInfo()
+    assert info.application_name == "craft_parts"
 
 
 @pytest.mark.parametrize(
@@ -73,14 +80,17 @@ PluginPathTC = namedtuple("PluginPathTC", ["param", "result"])
 )
 def test_local_plugin_dir(tc):
     info = StepInfo(
-        target_arch="x86_64", parallel_build_count=1, local_plugins_dir=tc.param
+        target_arch="x86_64",
+        local_plugins_dir=tc.param,
     )
     assert info.local_plugins_dir == tc.result
 
 
 def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as ei:
-        StepInfo(target_arch="invalid", parallel_build_count=1, local_plugins_dir=None)
+        StepInfo(
+            target_arch="invalid",
+        )
     assert ei.value.get_brief() == "Architecture 'invalid' is invalid."
 
 

@@ -28,13 +28,17 @@ class Cache:
     This class is responsible for cache location, notification and pruning.
     """
 
-    def __init__(self):
-        self.cache_root = os.path.join(BaseDirectory.xdg_cache_home, "craft-parts")
+    def __init__(self, name: str):
+        self.cache_root = os.path.join(
+            BaseDirectory.xdg_cache_home, name, "craft-parts"
+        )
 
 
 class StagePackageCache(Cache):
     """Cache specific to stage-packages."""
 
-    def __init__(self):
-        super().__init__()
-        self.stage_package_cache_root = os.path.join(self.cache_root, "stage-packages")
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.stage_package_cache_root = os.path.join(
+            self.cache_root, name, "stage-packages"
+        )
