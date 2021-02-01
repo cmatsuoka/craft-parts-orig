@@ -14,28 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
-
 import pytest
 
 from craft_parts.filesets import Fileset
 
-FilesetTC = namedtuple("FilesetTC", ["entries", "includes", "excludes"])
-
 
 @pytest.mark.parametrize(
-    "tc",
+    "tc_entries,tc_includes,tc_excludes",
     [
-        FilesetTC([], [], []),
-        FilesetTC(["a", "b"], ["a", "b"], []),
-        FilesetTC(["a", "-b"], ["a"], ["b"]),
+        ([], [], []),
+        (["a", "b"], ["a", "b"], []),
+        (["a", "-b"], ["a"], ["b"]),
     ],
 )
-def test_fileset(tc):
-    fs = Fileset(tc.entries)
-    assert fs.entries == tc.entries
-    assert fs.includes == tc.includes
-    assert fs.excludes == tc.excludes
+def test_fileset(tc_entries, tc_includes, tc_excludes):
+    fs = Fileset(tc_entries)
+    assert fs.entries == tc_entries
+    assert fs.includes == tc_includes
+    assert fs.excludes == tc_excludes
 
 
 def test_representation():
@@ -55,30 +51,27 @@ def test_remove():
     assert fs.entries == ["foo", "baz"]
 
 
-CombineTC = namedtuple("CombineTC", ["fs1", "fs2", "result"])
-
-
 @pytest.mark.parametrize(
-    "tc",
+    "tc_fs1,tc_fs2,tc_result",
     [
-        CombineTC([], [], []),
-        CombineTC(["foo"], ["bar"], ["bar"]),
+        ([], [], []),
+        (["foo"], ["bar"], ["bar"]),
         # combine if fs2 has a wildcard
-        CombineTC(["foo"], ["bar", "*"], ["foo", "bar"]),
+        (["foo"], ["bar", "*"], ["foo", "bar"]),
         # combine if fs2 is only excludes
-        CombineTC(["foo"], ["-bar"], ["foo", "-bar"]),
-        CombineTC(["foo", "*"], ["bar"], ["bar"]),
-        CombineTC(["-foo"], ["-bar"], ["-foo", "-bar"]),
-        CombineTC(["-foo"], ["bar"], ["bar"]),
-        CombineTC(["foo"], ["-bar", "baz"], ["-bar", "baz"]),
-        CombineTC(["-foo", "bar"], ["bar"], ["bar"]),
+        (["foo"], ["-bar"], ["foo", "-bar"]),
+        (["foo", "*"], ["bar"], ["bar"]),
+        (["-foo"], ["-bar"], ["-foo", "-bar"]),
+        (["-foo"], ["bar"], ["bar"]),
+        (["foo"], ["-bar", "baz"], ["-bar", "baz"]),
+        (["-foo", "bar"], ["bar"], ["bar"]),
     ],
 )
-def test_combine(tc):
-    fs1 = Fileset(tc.fs1)
-    fs2 = Fileset(tc.fs2)
+def test_combine(tc_fs1, tc_fs2, tc_result):
+    fs1 = Fileset(tc_fs1)
+    fs2 = Fileset(tc_fs2)
     fs1.combine(fs2)
-    assert sorted(fs1.entries) == sorted(tc.result)
+    assert sorted(fs1.entries) == sorted(tc_result)
 
 
 # TODO: test migratable_filesets

@@ -14,19 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
-
 import pytest
 
 from craft_parts import errors, sources
 
-HandlerTC = namedtuple("HandlerTC", ["uri", "handler"])
 
-
-@pytest.mark.parametrize("tc", [HandlerTC(".", sources.Local)])
-def test_get_source_handler(tc):
-    h = sources.get_source_handler(tc.uri)
-    assert h == tc.handler
+@pytest.mark.parametrize("tc_url,tc_handler", [(".", sources.Local)])
+def test_get_source_handler(tc_url, tc_handler):
+    h = sources.get_source_handler(tc_url)
+    assert h == tc_handler
 
 
 def test_get_source_handler_with_invalid_type():

@@ -122,7 +122,7 @@ class AptSourcesManager:
         """Install sources list configuration.
 
         Write config to:
-        /etc/apt/sources.list.d/snapcraft-<name>.sources
+        /etc/apt/sources.list.d/craft_parts-<name>.sources
 
         :returns: True if configuration was changed.
         """
@@ -135,7 +135,7 @@ class AptSourcesManager:
         )
 
         if name not in ["default", "default-security"]:
-            name = "snapcraft-" + name
+            name = "craft_parts-" + name
 
         config_path = self._sources_list_d / f"{name}.sources"
         if config_path.exists() and config_path.read_text() == config:

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
 from pathlib import Path
 
 import pytest
@@ -118,18 +117,16 @@ class TestPartBasics:
         x.append({"FOOBAR": "foobar"})
         assert p.build_environment == [{"BAR": "bar"}]
 
-    ScriptletTC = namedtuple("ScriptletTC", ["step", "content"])
-
     @pytest.mark.parametrize(
-        "tc",
+        "tc_step,tc_content",
         [
-            ScriptletTC(Step.PULL, "pull"),
-            ScriptletTC(Step.BUILD, "build"),
-            ScriptletTC(Step.STAGE, "stage"),
-            ScriptletTC(Step.PRIME, "prime"),
+            (Step.PULL, "pull"),
+            (Step.BUILD, "build"),
+            (Step.STAGE, "stage"),
+            (Step.PRIME, "prime"),
         ],
     )
-    def test_part_get_scriptlet(self, tc):
+    def test_part_get_scriptlet(self, tc_step, tc_content):
         p = Part(
             "foo",
             {
@@ -139,7 +136,7 @@ class TestPartBasics:
                 "override-prime": "prime",
             },
         )
-        assert p.get_scriptlet(tc.step) == tc.content
+        assert p.get_scriptlet(tc_step) == tc_content
 
     @pytest.mark.parametrize(
         "step",

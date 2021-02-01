@@ -22,7 +22,7 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-from craft_parts import errors
+from . import errors
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class PackageRepositoryAptPpa(PackageRepository):
                 url=ppa,
                 brief=f"Found unsupported package repository properties {keys}.",
                 resolution=(
-                    "Verify repository configuration and ensure that it is correct."
+                    "Verify the repository configuration and ensure that it is correct."
                 ),
             )
 
@@ -428,7 +428,7 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=url,
                 brief=f"Found unsupported package repository properties {keys}.",
-                resolution="Verify repository configuration and ensure it is correct.",
+                resolution="Verify the repository configuration and ensure it is correct.",
             )
 
         return cls(

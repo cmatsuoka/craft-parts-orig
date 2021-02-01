@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
 from pathlib import Path
 
 import pytest
@@ -26,28 +25,26 @@ from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"
 
-ArchTC = namedtuple("ArchTC", ["arch", "deb_arch", "triplet", "cross"])
-
 
 @pytest.mark.parametrize(
-    "tc",
+    "tc_arch,tc_deb_arch,tc_triplet,tc_cross",
     [
-        ArchTC("aarch64", "arm64", "aarch64-linux-gnu", False),
-        ArchTC("armv7l", "armhf", "arm-linux-gnueabihf", True),
-        ArchTC("i686", "i386", "i386-linux-gnu", True),
-        ArchTC("ppc", "powerpc", "powerpc-linux-gnu", True),
-        ArchTC("ppc64le", "ppc64el", "powerpc64le-linux-gnu", True),
-        ArchTC("riscv64", "riscv64", "riscv64-linux-gnu", True),
-        ArchTC("s390x", "s390x", "s390x-linux-gnu", True),
-        ArchTC("x86_64", "amd64", "x86_64-linux-gnu", True),
+        ("aarch64", "arm64", "aarch64-linux-gnu", False),
+        ("armv7l", "armhf", "arm-linux-gnueabihf", True),
+        ("i686", "i386", "i386-linux-gnu", True),
+        ("ppc", "powerpc", "powerpc-linux-gnu", True),
+        ("ppc64le", "ppc64el", "powerpc64le-linux-gnu", True),
+        ("riscv64", "riscv64", "riscv64-linux-gnu", True),
+        ("s390x", "s390x", "s390x-linux-gnu", True),
+        ("x86_64", "amd64", "x86_64-linux-gnu", True),
     ],
 )
-def test_step_info(mocker, tc):
+def test_step_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
     info = StepInfo(
         application_name="test",
-        target_arch=tc.arch,
+        target_arch=tc_arch,
         parallel_build_count=16,
         local_plugins_dir="/some/path",
         foo="foo",
@@ -55,14 +52,11 @@ def test_step_info(mocker, tc):
     )
 
     assert info.application_name == "test"
-    assert info.arch_triplet == tc.triplet
-    assert info.is_cross_compiling == tc.cross
+    assert info.arch_triplet == tc_triplet
+    assert info.is_cross_compiling == tc_cross
     assert info.parallel_build_count == 16
     assert info.local_plugins_dir == Path("/some/path")
-    assert info.deb_arch == tc.deb_arch
-
-
-PluginPathTC = namedtuple("PluginPathTC", ["param", "result"])
+    assert info.deb_arch == tc_deb_arch
 
 
 def test_step_info_application_name():
@@ -71,19 +65,19 @@ def test_step_info_application_name():
 
 
 @pytest.mark.parametrize(
-    "tc",
+    "tc_param,tc_result",
     [
-        PluginPathTC(Path("/some/path"), Path("/some/path")),
-        PluginPathTC("/some/path", Path("/some/path")),
-        PluginPathTC(None, None),
+        (Path("/some/path"), Path("/some/path")),
+        ("/some/path", Path("/some/path")),
+        (None, None),
     ],
 )
-def test_local_plugin_dir(tc):
+def test_local_plugin_dir(tc_param, tc_result):
     info = StepInfo(
         target_arch="x86_64",
-        local_plugins_dir=tc.param,
+        local_plugins_dir=tc_param,
     )
-    assert info.local_plugins_dir == tc.result
+    assert info.local_plugins_dir == tc_result
 
 
 def test_invalid_arch():

@@ -209,14 +209,6 @@ class SnapdConnectionError(RepoError):
         super().__init__(snap_name=snap_name, url=url)
 
 
-class AptPPAInstallError(RepoError):
-
-    fmt = "Failed to install PPA {ppa!r}: {reason}"
-
-    def __init__(self, *, ppa: str, reason: str) -> None:
-        super().__init__(ppa=ppa, reason=reason)
-
-
 class AptGPGKeyInstallError(RepoError):
 
     fmt = "Failed to install GPG key: {message}"
@@ -266,3 +258,42 @@ class AptGPGKeyInstallError(RepoError):
             message = f"unable to establish connection to key server {self._key_server!r} (connection timed out)"
 
         return message
+
+
+class AptPPAInstallError(errors._Error):
+    def __init__(self, *, ppa: str, reason: str) -> None:
+        self._ppa = ppa
+        self._reason = reason
+
+    def get_brief(self) -> str:
+        return f"Failed to install PPA {self._ppa!r}: {self._reason}"
+
+    def get_resolution(self) -> str:
+        return "Verify PPA is correct and try again."
+
+
+class PackageRepositoryValidationError(errors._Error):
+    def __init__(
+        self,
+        *,
+        url: str,
+        brief: str,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
+    ) -> None:
+        self.url = url
+        self.brief = brief
+        self.details = details
+        self.resolution = resolution
+
+    def get_brief(self) -> str:
+        return f"Invalid package-repository for {self.url!r}: {self.brief}"
+
+    def get_resolution(self) -> str:
+        if self.resolution:
+            return self.resolution
+
+        return (
+            "You can verify package repository configuration according to the "
+            "referenced documentation."
+        )
