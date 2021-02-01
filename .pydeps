@@ -14,6 +14,7 @@ exclude =
     craft_parts.steps
     craft_parts.utils
     craft_parts.schemas
+    craft_parts.repo.errors
 
 rmprefix = craft_parts.
 

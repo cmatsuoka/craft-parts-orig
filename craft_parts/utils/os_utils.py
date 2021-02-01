@@ -16,9 +16,13 @@
 
 """Utilities related to the operating system."""
 
+import contextlib
 import os
 import pathlib
-from typing import List, Union
+import shutil
+from typing import Dict, List, Union
+
+from craft_parts import errors
 
 
 def get_bin_paths(*, root: Union[str, pathlib.Path], existing_only=True) -> List[str]:
@@ -100,3 +104,115 @@ def is_dumb_terminal() -> bool:
     is_stdout_tty = os.isatty(1)
     is_term_dumb = os.environ.get("TERM", "") == "dumb"
     return not is_stdout_tty or is_term_dumb
+
+
+def get_build_base() -> str:
+    """Guess the built base to use."""
+    # FIXME: implement get_build_base
+
+
+def get_snap_tool_path(command_name: str) -> str:
+    """Return the path command found in the snap.
+
+    If snapcraft is not running as a snap, shutil.which() is used
+    to resolve the command using PATH.
+
+    :param command_name: the name of the command to resolve a path for.
+    :raises MissingTool: if command_name was not found.
+    :return: Path to command
+    """
+    # FIXME: handle the snap case
+
+    # if os_utils.is_snap():
+    #     snap_path = os.getenv("SNAP")
+    #     if snap_path is None:
+    #         raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
+    #
+    #     command_path = _find_command_path_in_root(snap_path, command_name)
+    # else:
+    #     command_path = shutil.which(command_name)
+
+    command_path = shutil.which(command_name)
+
+    if command_path is None:
+        raise errors.MissingTool(command_name=command_name)
+
+    return command_path
+
+
+_ID_TO_UBUNTU_CODENAME = {
+    "17.10": "artful",
+    "17.04": "zesty",
+    "16.04": "xenial",
+    "14.04": "trusty",
+}
+
+
+class OsRelease:
+    """A class to intelligently determine the OS on which we're running"""
+
+    def __init__(self, *, os_release_file: str = "/etc/os-release") -> None:
+        """Create a new OsRelease instance.
+
+        :param str os_release_file: Path to os-release file to be parsed.
+        """
+
+        self._os_release = {}  # type: Dict[str, str]
+        with contextlib.suppress(FileNotFoundError):
+            with open(os_release_file) as f:
+                for line in f:
+                    entry = line.rstrip().split("=")
+                    if len(entry) == 2:
+                        self._os_release[entry[0]] = entry[1].strip('"')
+
+    def id(self) -> str:
+        """Return the OS ID
+
+        :raises OsReleaseIdError: If no ID can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["ID"]
+
+        raise errors.OsReleaseError("ID")
+
+    def name(self) -> str:
+        """Return the OS name
+
+        :raises OsReleaseNameError: If no name can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["NAME"]
+
+        raise errors.OsReleaseError("name")
+
+    def version_id(self) -> str:
+        """Return the OS version ID
+
+        :raises OsReleaseVersionIdError: If no version ID can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["VERSION_ID"]
+
+        raise errors.OsReleaseError("version ID")
+
+    def version_codename(self) -> str:
+        """Return the OS version codename
+
+        This first tries to use the VERSION_CODENAME. If that's missing, it
+        tries to use the VERSION_ID to figure out the codename on its own.
+
+        :raises OsReleaseCodenameError: If no version codename can be
+                                        determined.
+        """
+
+        # pyright doesn't like "with contextlib.suppress(KeyError)"
+
+        release = self._os_release.get("VERSION_CODENAME")
+        if release:
+            return release
+
+        ver_id = self._os_release.get("VERSION_ID")
+        if ver_id and release in _ID_TO_UBUNTU_CODENAME:
+            return _ID_TO_UBUNTU_CODENAME[ver_id]
+
+        raise errors.OsReleaseError("version codename")

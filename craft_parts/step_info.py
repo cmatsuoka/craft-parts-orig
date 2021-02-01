@@ -105,14 +105,14 @@ class StepInfo:
         """
 
         info = copy.deepcopy(self)
-        info.part_src_dir = part.part_src_dir.absolute()
-        info.part_src_work_dir = part.part_src_work_dir.absolute()
-        info.part_build_dir = part.part_build_dir.absolute()
-        info.part_build_work_dir = part.part_build_work_dir.absolute()
-        info.part_install_dir = part.part_install_dir.absolute()
-        info.part_state_dir = part.part_state_dir.absolute()
-        info.stage_dir = part.stage_dir.absolute()
-        info.prime_dir = part.prime_dir.absolute()
+        info.part_src_dir = part.part_src_dir
+        info.part_src_work_dir = part.part_src_work_dir
+        info.part_build_dir = part.part_build_dir
+        info.part_build_work_dir = part.part_build_work_dir
+        info.part_install_dir = part.part_install_dir
+        info.part_state_dir = part.part_state_dir
+        info.stage_dir = part.stage_dir
+        info.prime_dir = part.prime_dir
 
         return info
 

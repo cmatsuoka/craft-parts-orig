@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Union
 from craft_parts import executor, parts, sequencer, utils
 from craft_parts.actions import Action
 from craft_parts.parts import Part
+from craft_parts.repo.apt_sources_manager import AptSourcesManager
 from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
@@ -91,6 +92,8 @@ class LifecycleManager:
             local_plugins_dir=local_plugins_dir,
             **custom_args,
         )
+
+        self._sources_manager = AptSourcesManager(host_arch=self._step_info.deb_arch)
 
     def clean(self, part_names: List[str] = None) -> None:
         """Clean the specified parts.""

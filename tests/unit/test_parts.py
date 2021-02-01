@@ -27,35 +27,39 @@ from craft_parts.steps import Step
 class TestPartBasics:
     """Test basic part creation and representation."""
 
+    # pylint: disable=attribute-defined-outside-init
+    def setup_method(self):
+        self._cwd = Path.cwd()
+
     def test_part(self):
         p = Part("foo", {"bar": "baz"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.properties == {"bar": "baz"}
-        assert p.part_src_dir == Path("./parts/foo/src")
-        assert p.part_build_dir == Path("./parts/foo/build")
-        assert p.part_state_dir == Path("./parts/foo/state")
-        assert p.part_package_dir == Path("./parts/foo/stage_packages")
-        assert p.part_run_dir == Path("./parts/foo/run")
-        assert p.stage_dir == Path("./stage")
-        assert p.prime_dir == Path("./prime")
+        assert p.part_src_dir == self._cwd / "parts/foo/src"
+        assert p.part_build_dir == self._cwd / "./parts/foo/build"
+        assert p.part_state_dir == self._cwd / "./parts/foo/state"
+        assert p.part_package_dir == self._cwd / "./parts/foo/stage_packages"
+        assert p.part_run_dir == self._cwd / "./parts/foo/run"
+        assert p.stage_dir == self._cwd / "./stage"
+        assert p.prime_dir == self._cwd / "./prime"
 
     def test_part_work_dir(self):
         p = Part("foo", {}, work_dir="foobar")
-        assert p.part_src_dir == Path("foobar/parts/foo/src")
-        assert p.part_build_dir == Path("foobar/parts/foo/build")
-        assert p.part_state_dir == Path("foobar/parts/foo/state")
-        assert p.part_package_dir == Path("foobar/parts/foo/stage_packages")
-        assert p.part_run_dir == Path("foobar/parts/foo/run")
-        assert p.stage_dir == Path("foobar/stage")
-        assert p.prime_dir == Path("foobar/prime")
+        assert p.part_src_dir == self._cwd / "foobar/parts/foo/src"
+        assert p.part_build_dir == self._cwd / "foobar/parts/foo/build"
+        assert p.part_state_dir == self._cwd / "foobar/parts/foo/state"
+        assert p.part_package_dir == self._cwd / "foobar/parts/foo/stage_packages"
+        assert p.part_run_dir == self._cwd / "foobar/parts/foo/run"
+        assert p.stage_dir == self._cwd / "foobar/stage"
+        assert p.prime_dir == self._cwd / "foobar/prime"
 
     def test_part_src_build_work_dir(self):
         p = Part("foo", {"source-subdir": "foobar"})
-        assert p.part_src_dir == Path("./parts/foo/src")
-        assert p.part_src_work_dir == Path("./parts/foo/src/foobar")
-        assert p.part_build_dir == Path("./parts/foo/build")
-        assert p.part_build_work_dir == Path("./parts/foo/build/foobar")
+        assert p.part_src_dir == self._cwd / "./parts/foo/src"
+        assert p.part_src_work_dir == self._cwd / "./parts/foo/src/foobar"
+        assert p.part_build_dir == self._cwd / "./parts/foo/build"
+        assert p.part_build_work_dir == self._cwd / "./parts/foo/build/foobar"
 
     def test_part_source(self):
         p = Part("foo", {})

@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from craft_parts import callbacks, errors, plugins, sources
+from craft_parts import callbacks, errors, plugins, repo, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
@@ -47,7 +47,7 @@ class PartHandler:
         *,
         plugin_version: str,
         step_info: StepInfo,
-        validator: Validator
+        validator: Validator,
     ):
         self._part = part
         self._step_info = step_info
@@ -64,6 +64,7 @@ class PartHandler:
         self._source_handler = _get_source_handler(
             step_info.application_name, part.source, part.part_src_dir, part_properties
         )
+        self._package_repo = repo.Repo()
 
     def run_action(self, action: Action) -> None:
         """Run the given action for this part using a plugin."""
@@ -100,7 +101,30 @@ class PartHandler:
         _remove(self._part.part_src_dir)
         self._make_dirs()
 
-        # TODO: fetch and unpack stage packages/snaps
+        # Fetch stage packages
+        stage_packages = self._part.stage_packages
+        fetched_packages = None
+
+        if stage_packages:
+            try:
+                fetched_packages = self._package_repo.fetch_stage_packages(
+                    package_names=stage_packages,
+                    target_arch=self._step_info.deb_arch,
+                    base=os_utils.get_build_base(),
+                    stage_packages_path=self._part.part_package_dir,
+                )
+            except errors.PackageNotFound as err:
+                raise errors.StagePackageError(self._part.name, err.get_brief())
+
+        # Unpack stage packages
+
+        # We do this regardless, if there is no package in stage_packages_path
+        # then nothing will happen.
+
+        self._package_repo.unpack_stage_packages(
+            stage_packages_path=self._part.part_package_dir,
+            install_path=Path(self._part.part_install_dir),
+        )
 
         # TODO: handle part replacements
 
@@ -109,6 +133,9 @@ class PartHandler:
             scriptlet_name="override-pull",
             workdir=self._part.part_src_dir,
         )
+
+        # TODO: use fetched packages list to build state
+        _ = fetched_packages
 
         _save_state_file(self._part, "pull")
 

@@ -358,7 +358,7 @@ class SourceNotFound(_Error):
         return f"Failed to pull source: {self._message}"
 
     def get_resolution(self) -> str:
-        return "Make sure source path is correct and that it is accessible."
+        return "Make sure the source path is correct and that it is accessible."
 
 
 class InvalidSourceOption(_Error):
@@ -388,6 +388,81 @@ class FilesetError(_Error):
 
     def get_resolution(self) -> str:
         return "Make sure files are correctly specified and try again."
+
+
+class PackageNotFound(_Error):
+    """The package is not available."""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self._message = message
+
+    def get_brief(self) -> str:
+        return self._message
+
+    def get_resolution(self) -> str:
+        return "Make sure the package name is correct and it is accessible."
+
+
+class OsReleaseError(_Error):
+    """Failed to recover OS release information."""
+
+    def __init__(self, entry: str):
+        super().__init__()
+        self._entry = entry
+
+    def get_brief(self) -> str:
+        return f"Unable to determine the host OS {self._entry}."
+
+    def get_resolution(self) -> str:
+        return "Make sure the OS release file exists and is accessible."
+
+
+class MissingTool(_Error):
+    """A required tool was not found."""
+
+    def __init__(self, command_name: str):
+        super().__init__()
+        self._command_name = command_name
+
+    def get_brief(self) -> str:
+        return (
+            f"A tool snapcraft depends on could not be found: {self._command_name!r}."
+        )
+
+    def get_resolution(self) -> str:
+        return "Make sure the tool is installed and available, and try again."
+
+
+class StagePackageError(_Error):
+    """Error when installing stage packages."""
+
+    def __init__(self, part_name: str, message: str):
+        super().__init__()
+        self._part_name = part_name
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Stage package error in part {self._part_name!r}: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Make sure the stage packages are correct and available, and try again."
+
+
+class CorruptedElfFile(_Error):
+    def __init__(self, path: str, error: Exception) -> None:
+        super().__init__()
+        self._path = path
+        self._message = str(error)
+
+    def get_brief(self) -> str:
+        return f"Unable to parse ELF file {self._path!r}: {self._message}"
+
+    def get_resolution(self) -> str:
+        return (
+            "Remove the suspect files from the snap using the `stage` or "
+            "`prime` keyword."
+        )
 
 
 class SchemaValidation(_Error):
@@ -441,3 +516,36 @@ class SchemaValidation(_Error):
             messages.append(error.message)
 
         return cls(" ".join(messages))
+
+
+class PackageRepositoryValidationError(_Error):
+    def __init__(
+        self,
+        *,
+        url: str,
+        brief: str,
+        details: Optional[str] = None,
+        resolution: Optional[str] = None,
+    ) -> None:
+        self.url = url
+        self.brief = brief
+        self.details = details
+        self.resolution = resolution
+
+    def get_brief(self) -> str:
+        return f"Invalid package-repository for {self.url!r}: {self.brief}"
+
+    def get_resolution(self) -> str:
+        if self.resolution:
+            return self.resolution
+
+        return (
+            "You can verify package repository configuration according to the "
+            "referenced documentation."
+        )
+
+    def get_details(self) -> Optional[str]:
+        return self.details
+
+    def get_docs_url(self) -> str:
+        return "https://snapcraft.io/docs/package-repositories"

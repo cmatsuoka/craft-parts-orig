@@ -36,7 +36,7 @@ class Part:
     def __init__(self, name: str, data: Dict[str, Any], *, work_dir: str = "."):
         self._name = name
         self._data = data
-        self._work_dir = Path(work_dir)
+        self._work_dir = Path(work_dir).absolute()
         self._part_dir = self._work_dir / "parts" / name
 
     def __repr__(self):
@@ -137,6 +137,15 @@ class Part:
     def build_environment(self) -> List[Dict[str, str]]:
         """The part's build environment."""
         return copy.deepcopy(self._data.get("build-environment", {}))
+
+    @property
+    def stage_packages(self) -> Optional[List[str]]:
+        """The list of stage packages for this part."""
+        # FIXME: run through the grammar processor
+        packages = self._data.get("stage-packages")
+        if packages:
+            return packages.copy()
+        return None
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.
