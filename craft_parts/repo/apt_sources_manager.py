@@ -35,6 +35,8 @@ logger = logging.getLogger(__name__)
 def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
     """Workaround for writing privileged files in destructive mode."""
 
+    f_name = None
+
     try:
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(content)
@@ -60,7 +62,8 @@ def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
                 f"Failed to install repository config with: {command!r}"
             ) from err
     finally:
-        os.unlink(f_name)
+        if f_name:
+            os.unlink(f_name)
 
 
 class AptSourcesManager:
