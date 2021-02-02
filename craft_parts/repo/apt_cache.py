@@ -238,9 +238,7 @@ class AptCache(ContextDecorator):
             if self.cache.is_virtual_package(name):
                 name = self.cache.get_providing_packages(name)[0].name
 
-            logger.debug(
-                "Marking {!r} (and its dependencies) to be fetched".format(name)
-            )
+            logger.debug("Marking %s (and its dependencies) to be fetched", name)
 
             name_arch, version = get_pkg_name_parts(name)
             if name_arch not in self.cache:
@@ -250,7 +248,7 @@ class AptCache(ContextDecorator):
             if version is not None:
                 self._set_pkg_version(package, version)
 
-            logger.debug(f"package: {package!r}")
+            logger.debug("package: %s", package)
 
             # Disable automatic resolving of broken packages here
             # because if that fails it raises a SystemError and the

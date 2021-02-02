@@ -24,7 +24,7 @@ from typing import List, Optional
 
 import requests
 
-from craft_parts import errors
+from craft_parts import errors, utils
 from craft_parts.cache import FileCache
 from craft_parts.utils import url_utils
 
@@ -41,7 +41,7 @@ class Base:
         source: str,
         source_dir: str,
         *,
-        application_name: str,
+        application_name: str = utils.package_name(),
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,

@@ -98,7 +98,10 @@ class Local(Base):
 
         # Now, copy files
         for file_path in self._updated_files:
-            self.copy_function(os.path.join(self.source, file_path))
+            self.copy_function(
+                os.path.join(self.source, file_path),
+                os.path.join(self.source_dir, file_path),
+            )
 
 
 _CRAFT_PARTS_IGNORED_FILES = ["parts", "stage", "prime", "*.snap"]
