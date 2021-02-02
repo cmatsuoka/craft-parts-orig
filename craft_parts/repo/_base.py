@@ -167,6 +167,7 @@ class BaseRepo:
     def fetch_stage_packages(
         cls,
         *,
+        application_name: str,
         package_names: List[str],
         base: str,
         stage_packages_path: pathlib.Path,
@@ -180,6 +181,11 @@ class BaseRepo:
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
         """Unpack stage packages to install_path."""
+        raise errors.NoNativeBackendError()
+
+    @classmethod
+    def update_package_list(cls, *, application_name: str, target_arch: str) -> None:
+        """Refresh the list of packages available in the repository."""
         raise errors.NoNativeBackendError()
 
     @classmethod

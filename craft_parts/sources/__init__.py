@@ -189,7 +189,7 @@ def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
     """
 
     if not source_type:
-        source_type = _get_source_type_from_uri(source)
+        source_type = get_source_type_from_uri(source)
 
     if source_type not in _source_handler:
         raise errors.InvalidSourceType(source)
@@ -200,7 +200,7 @@ def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
 _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
-def _get_source_type_from_uri(
+def get_source_type_from_uri(
     source: str, ignore_errors: bool = False
 ) -> str:  # noqa: C901
     for extension in ["zip", "deb", "rpm", "7z", "snap"]:

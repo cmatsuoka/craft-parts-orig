@@ -21,7 +21,7 @@ import os
 import os.path
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from craft_parts import callbacks, errors, plugins, repo, sources
 from craft_parts.actions import Action, ActionType
@@ -108,6 +108,7 @@ class PartHandler:
         if stage_packages:
             try:
                 fetched_packages = self._package_repo.fetch_stage_packages(
+                    application_name=step_info.application_name,
                     package_names=stage_packages,
                     target_arch=self._step_info.deb_arch,
                     base=os_utils.get_build_base(),
@@ -115,16 +116,6 @@ class PartHandler:
                 )
             except errors.PackageNotFound as err:
                 raise errors.StagePackageError(self._part.name, err.get_brief())
-
-        # Unpack stage packages
-
-        # We do this regardless, if there is no package in stage_packages_path
-        # then nothing will happen.
-
-        self._package_repo.unpack_stage_packages(
-            stage_packages_path=self._part.part_package_dir,
-            install_path=Path(self._part.part_install_dir),
-        )
 
         # TODO: handle part replacements
 
@@ -143,9 +134,15 @@ class PartHandler:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
-        # TODO: unpack stage packages/snaps
-        # Stage packages are fetched and unpacked in the pull step, but we'll
-        # unpack again here just in case the build step has been cleaned.
+        build_packages = _get_build_packages(self._part, self._package_repo)
+        repo.Repo.install_build_packages(build_packages)
+
+        # unpack stage packages/snaps
+
+        self._package_repo.unpack_stage_packages(
+            stage_packages_path=self._part.part_package_dir,
+            install_path=Path(self._part.part_install_dir),
+        )
 
         # TODO: handle part replacements
 
@@ -293,3 +290,28 @@ def _remove(filename: Path) -> None:
     elif filename.is_dir():
         logger.debug("remove directory %s", filename)
         shutil.rmtree(filename)
+
+
+def _get_build_packages(part: Part, repository) -> List[str]:
+    packages: List[str] = []
+
+    build_packages = part.build_packages
+    if build_packages:
+        logger.debug("part build packages: %s", build_packages)
+        packages.extend(build_packages)
+
+    source = part.source
+    if source:
+        source_type = sources.get_source_type_from_uri(source)
+        source_build_packages = repository.get_packages_for_source_type(source_type)
+        if source_build_packages:
+            logger.debug("source build packages: %s", source_build_packages)
+            packages.extend(source_build_packages)
+
+    if isinstance(part.plugin, plugins.PluginV2):
+        plugin_build_packages = part.plugin.get_build_packages()
+        if plugin_build_packages:
+            logger.debug("plugin build packages: %s", plugin_build_packages)
+            packages.extend(plugin_build_packages)
+
+    return packages

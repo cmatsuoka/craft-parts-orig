@@ -141,8 +141,15 @@ class Part:
     @property
     def stage_packages(self) -> Optional[List[str]]:
         """The list of stage packages for this part."""
-        # FIXME: run through the grammar processor
         packages = self._data.get("stage-packages")
+        if packages:
+            return packages.copy()
+        return None
+
+    @property
+    def build_packages(self) -> Optional[List[str]]:
+        """The list of build packages for this part."""
+        packages = self._data.get("build-packages")
         if packages:
             return packages.copy()
         return None

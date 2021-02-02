@@ -19,10 +19,9 @@
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from craft_parts import executor, parts, sequencer, utils
+from craft_parts import executor, parts, repo, sequencer, utils
 from craft_parts.actions import Action
 from craft_parts.parts import Part
-from craft_parts.repo.apt_sources_manager import AptSourcesManager
 from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
@@ -74,6 +73,8 @@ class LifecycleManager:
         self._parts = [
             Part(name, p, work_dir=work_dir) for name, p in parts_data.items()
         ]
+        self._application_name = application_name
+        self._target_arch = target_arch
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(self._parts)
         self._executor = executor.Executor(
@@ -93,7 +94,8 @@ class LifecycleManager:
             **custom_args,
         )
 
-        self._sources_manager = AptSourcesManager(host_arch=self._step_info.deb_arch)
+        # TODO: should sources management be left to the application?
+        # self._sources_manager = AptSourcesManager(host_arch=self._step_info.deb_arch)
 
     def clean(self, part_names: List[str] = None) -> None:
         """Clean the specified parts.""
@@ -104,18 +106,26 @@ class LifecycleManager:
 
         self._executor.clean(part_names)
 
-    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(
+        self, target_step: Step, part_names: List[str] = None, update: bool = True
+    ) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.
         :param part_names: The list of parts to process. If not specified, all
             parts will be processed.
+        :param update: refresh the list of available packages.
 
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
 
-        act = self._sequencer.actions(target_step, part_names)
+        if update:
+            repo.Repo().update_package_list(
+                application_name=self._application_name, target_arch=self._target_arch
+            )
+
+        act = self._sequencer.plan(target_step, part_names)
         return act
 
     def execute(self, actions: Union[Action, List[Action]]) -> None:

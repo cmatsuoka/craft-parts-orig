@@ -118,6 +118,42 @@ class TestPartBasics:
         assert p.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
+        "tc_spec,tc_result",
+        [
+            ({}, None),
+            ({"stage-packages": []}, None),
+            ({"stage-packages": ["foo", "bar"]}, ["foo", "bar"]),
+        ],
+    )
+    def test_part_stage_packages(self, tc_spec, tc_result):
+        p = Part("foo", tc_spec)
+        x = p.stage_packages
+        assert x == tc_result
+
+        # should be immutable
+        if x is not None:
+            x.append("foobar")
+            assert p.stage_packages == tc_result
+
+    @pytest.mark.parametrize(
+        "tc_spec,tc_result",
+        [
+            ({}, None),
+            ({"build-packages": []}, None),
+            ({"build-packages": ["foo", "bar"]}, ["foo", "bar"]),
+        ],
+    )
+    def test_part_build_packages(self, tc_spec, tc_result):
+        p = Part("foo", tc_spec)
+        x = p.build_packages
+        assert x == tc_result
+
+        # should be immutable
+        if x is not None:
+            x.append("foobar")
+            assert p.build_packages == tc_result
+
+    @pytest.mark.parametrize(
         "tc_step,tc_content",
         [
             (Step.PULL, "pull"),

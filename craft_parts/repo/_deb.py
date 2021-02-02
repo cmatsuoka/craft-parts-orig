@@ -42,10 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 _DEB_CACHE_DIR: pathlib.Path = pathlib.Path(
-    BaseDirectory.save_cache_path("snapcraft", "download")
-)
-_STAGE_CACHE_DIR: pathlib.Path = pathlib.Path(
-    BaseDirectory.save_cache_path("snapcraft", "stage-packages")
+    BaseDirectory.save_cache_path("craft_parts", "download")
 )
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
@@ -383,6 +380,7 @@ class Ubuntu(BaseRepo):
     def fetch_stage_packages(
         cls,
         *,
+        application_name: str,
         package_names: List[str],
         base: str,
         stage_packages_path: pathlib.Path,
@@ -393,11 +391,17 @@ class Ubuntu(BaseRepo):
         installed: Set[str] = set()
 
         stage_packages_path.mkdir(exist_ok=True)
+
+        stage_cache_dir = BaseDirectory.save_cache_path(
+            application_name, "craft_parts", "stage_packages"
+        )
+
         with AptCache(
-            stage_cache=_STAGE_CACHE_DIR, stage_cache_arch=target_arch
+            stage_cache=stage_cache_dir, stage_cache_arch=target_arch
         ) as apt_cache:
             filter_packages = set(get_packages_in_base(base=base))
-            apt_cache.update()
+            # We update the cache during the planning phase
+            # apt_cache.update()
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(
                 required_names=set(package_names), filtered_names=filter_packages
@@ -412,6 +416,19 @@ class Ubuntu(BaseRepo):
                 )
 
         return sorted(installed)
+
+    @classmethod
+    def update_package_list(cls, *, application_name: str, target_arch: str):
+        """Refresh the list of packages available in the repository."""
+
+        stage_cache_dir = BaseDirectory.save_cache_path(
+            application_name, "craft_parts", "stage_packages"
+        )
+
+        with AptCache(
+            stage_cache=stage_cache_dir, stage_cache_arch=target_arch
+        ) as apt_cache:
+            apt_cache.update()
 
     @classmethod
     def unpack_stage_packages(

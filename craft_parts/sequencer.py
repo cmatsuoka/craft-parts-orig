@@ -36,7 +36,7 @@ class Sequencer:
         self._sm = StateManager(all_parts)
         self._actions = []  # type: List[Action]
 
-    def actions(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
         """Determine the list of steps to execute for each part."""
 
         self._actions = []
@@ -153,9 +153,10 @@ class Sequencer:
         state = states.PartState()
 
         if step is Step.PULL:
+            # TODO: handle properties
             # pull_properties = dict()
-            # part_build_packages = []  # self._grammar_processor.get_build_packages()
-            # part_build_snaps = []  # self._grammar_processor.get_build_snaps()
+            # part_build_packages = part.build_packages
+            # part_build_snaps = part.build_snaps
 
             # TODO: build pull state
             pass
