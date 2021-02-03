@@ -22,11 +22,11 @@ from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+import apt
 import apt.cache
 import apt.package
 import apt.progress
 import apt.progress.text
-import apt_pkg
 
 from craft_parts.utils import os_utils
 
@@ -69,35 +69,32 @@ class AptCache(ContextDecorator):
 
     def _configure_apt(self):
         # Do not install recommends.
-        apt_pkg.config.set("Apt::Install-Recommends", "False")
+        apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
 
         # Ensure repos are provided by trusted third-parties.
-        apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
-
-        # FIXME: handle snap case
+        apt.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
+        snap_dir = os.getenv("SNAP")
+        if os_utils.is_snap() and snap_dir and os.path.exists(snap_dir):
+            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
+            apt.apt_pkg.config.set("Dir", apt_dir)
+            # yes apt is broken like that we need to append os.path.sep
+            methods_dir = os.path.join(apt_dir, "methods")
+            apt.apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
+            solvers_dir = os.path.join(apt_dir, "solvers")
+            apt.apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
+            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
+            apt.apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
+            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
+            apt.apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
-        # snap_dir = os.getenv("SNAP")
-        # if common.is_snap() and snap_dir and os.path.exists(snap_dir):
-        #     apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
-        #     apt.apt_pkg.config.set("Dir", apt_dir)
-        #     # yes apt is broken like that we need to append os.path.sep
-        #     methods_dir = os.path.join(apt_dir, "methods")
-        #     apt.apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-        #     solvers_dir = os.path.join(apt_dir, "solvers")
-        #     apt.apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-        #     apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
-        #     apt.apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-        #     gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
-        #     apt.apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
-
-        apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
-        apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
+        apt.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
+        apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
 
         # Clear up apt's Post-Invoke-Success as we are not running
         # on the system.
-        apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
+        apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
 
         self.progress = apt.progress.text.AcquireProgress()
         if os_utils.is_dumb_terminal():

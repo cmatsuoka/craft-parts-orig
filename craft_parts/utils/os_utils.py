@@ -17,12 +17,15 @@
 """Utilities related to the operating system."""
 
 import contextlib
+import logging
 import os
 import pathlib
 import shutil
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from craft_parts import errors
+
+logger = logging.getLogger(__name__)
 
 
 def get_bin_paths(*, root: Union[str, pathlib.Path], existing_only=True) -> List[str]:
@@ -111,6 +114,22 @@ def get_build_base() -> str:
     # FIXME: implement get_build_base
 
 
+def is_snap(*, application_name: Optional[str] = None) -> bool:
+    """Verify whether we're running as a snap."""
+
+    snap_name = os.environ.get("SNAP_NAME", "")
+    if application_name:
+        is_snap = snap_name == application_name
+    else:
+        is_snap = snap_name is not None
+
+    logger.debug(
+        "craft_parts is running as a snap: {!r}, "
+        "SNAP_NAME set to {!r}".format(is_snap, snap_name)
+    )
+    return is_snap
+
+
 def get_snap_tool_path(command_name: str) -> str:
     """Return the path command found in the snap.
 
@@ -121,23 +140,36 @@ def get_snap_tool_path(command_name: str) -> str:
     :raises MissingTool: if command_name was not found.
     :return: Path to command
     """
-    # FIXME: handle the snap case
 
-    # if os_utils.is_snap():
-    #     snap_path = os.getenv("SNAP")
-    #     if snap_path is None:
-    #         raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
-    #
-    #     command_path = _find_command_path_in_root(snap_path, command_name)
-    # else:
-    #     command_path = shutil.which(command_name)
+    if is_snap():
+        snap_path = os.getenv("SNAP")
+        if snap_path is None:
+            raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
 
-    command_path = shutil.which(command_name)
+        command_path = _find_command_path_in_root(snap_path, command_name)
+    else:
+        command_path = shutil.which(command_name)
 
     if command_path is None:
         raise errors.MissingTool(command_name=command_name)
 
     return command_path
+
+
+def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
+    for bin_directory in (
+        os.path.join("usr", "local", "sbin"),
+        os.path.join("usr", "local", "bin"),
+        os.path.join("usr", "sbin"),
+        os.path.join("usr", "bin"),
+        os.path.join("sbin"),
+        os.path.join("bin"),
+    ):
+        path = os.path.join(root, bin_directory, command_name)
+        if os.path.exists(path):
+            return path
+
+    return None
 
 
 _ID_TO_UBUNTU_CODENAME = {
