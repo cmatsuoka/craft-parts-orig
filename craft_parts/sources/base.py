@@ -41,7 +41,7 @@ class Base:
         source: str,
         source_dir: str,
         *,
-        application_name: str = utils.package_name(),
+        application_name: Optional[str] = None,
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,
@@ -49,6 +49,9 @@ class Base:
         source_checksum: Optional[str] = None,
         command: Optional[List[str]] = None,
     ):
+        if not application_name:
+            application_name = utils.package_name()
+
         self._application_name = application_name
         self.source = source
         self.source_dir = source_dir
@@ -123,7 +126,7 @@ class FileBase(Base):
         source: str,
         source_dir: str,
         *,
-        application_name: str,
+        application_name: Optional[str],
         source_tag: Optional[str] = None,
         source_commit: Optional[str] = None,
         source_branch: Optional[str] = None,

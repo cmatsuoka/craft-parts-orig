@@ -36,7 +36,7 @@ class Tar(FileBase):
         source,
         source_dir,
         *,
-        application_name,
+        application_name=None,
         source_tag=None,
         source_commit=None,
         source_branch=None,
