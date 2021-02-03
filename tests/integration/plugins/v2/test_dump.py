@@ -37,7 +37,9 @@ def test_dump_source(tmpdir):
     source_dir = Path(tmpdir / "subdir")
     source_dir.mkdir(mode=0o755)
     Path(source_dir / "foobar.txt").touch()
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_dump", work_dir=tmpdir
+    )
     lf.execute(Action("foo", Step.PULL))
     lf.execute(Action("foo", Step.BUILD))
     install_dir = Path(tmpdir / "parts" / "foo" / "install")
@@ -58,7 +60,9 @@ def test_dump_ignore(tmpdir):
 
     parts = yaml.safe_load(_parts_yaml)
     Path(tmpdir / "foobar.txt").touch()
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_dump", work_dir=tmpdir
+    )
     lf.execute(Action("foo", Step.PULL))
     lf.execute(Action("foo", Step.BUILD))
     install_dir = Path(tmpdir / "parts" / "foo" / "install")

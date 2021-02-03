@@ -63,7 +63,9 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
     callbacks.register_pre(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir, message="callback")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
 
     lf.execute(Action("foo", step, action_type=action_type))
     out, err = capfd.readouterr()
@@ -80,7 +82,9 @@ def test_callback_post(tmpdir, capfd, step, action_type):
     callbacks.register_post(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir, message="callback")
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
 
     lf.execute(Action("foo", step, action_type=action_type))
     out, err = capfd.readouterr()
@@ -96,7 +100,9 @@ def test_callback_step_info(tmpdir, capfd, step):
     callbacks.register_pre(_info_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir
+    )
 
     lf.execute(Action("foo", step))
     out, err = capfd.readouterr()

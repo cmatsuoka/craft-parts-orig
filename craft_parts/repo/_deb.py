@@ -41,10 +41,6 @@ if sys.platform == "linux":
 logger = logging.getLogger(__name__)
 
 
-_DEB_CACHE_DIR: pathlib.Path = pathlib.Path(
-    BaseDirectory.save_cache_path("craft_parts", "download")
-)
-
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
     "adduser",
@@ -392,9 +388,7 @@ class Ubuntu(BaseRepo):
 
         stage_packages_path.mkdir(exist_ok=True)
 
-        stage_cache_dir = BaseDirectory.save_cache_path(
-            application_name, "craft_parts", "stage_packages"
-        )
+        stage_cache_dir, deb_cache_dir = _get_cache_dirs(application_name)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
@@ -407,7 +401,7 @@ class Ubuntu(BaseRepo):
                 required_names=set(package_names), filtered_names=filter_packages
             )
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                _DEB_CACHE_DIR
+                deb_cache_dir
             ):
                 logger.debug("Extracting stage package: %s", pkg_name)
                 installed.add(f"{pkg_name}={pkg_version}")
@@ -421,9 +415,7 @@ class Ubuntu(BaseRepo):
     def update_package_list(cls, *, application_name: str, target_arch: str):
         """Refresh the list of packages available in the repository."""
 
-        stage_cache_dir = BaseDirectory.save_cache_path(
-            application_name, "craft_parts", "stage_packages"
-        )
+        stage_cache_dir, _ = _get_cache_dirs(application_name)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
@@ -481,3 +473,15 @@ class Ubuntu(BaseRepo):
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(deb_path) from err
+
+
+def _get_cache_dirs(name: str):
+    stage_cache_dir = pathlib.Path(
+        BaseDirectory.save_cache_path(name, "craft_parts", "stage_packages")
+    )
+
+    deb_cache_dir = pathlib.Path(
+        BaseDirectory.save_cache_path(name, "craft_parts", "download")
+    )
+
+    return (stage_cache_dir, deb_cache_dir)

@@ -40,7 +40,9 @@ parts_yaml = textwrap.dedent(
 
 def test_actions_simple(tmpdir):
     parts = yaml.safe_load(parts_yaml)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_demo", work_dir=tmpdir
+    )
 
     # first run
     # command: pull

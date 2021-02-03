@@ -40,7 +40,9 @@ def test_source_tar(tmpdir):
     src = _LOCAL_DIR / "data" / "foobar.tar.gz"
     dest = Path(tmpdir) / "foobar.tar.gz"
     shutil.copyfile(src, dest)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_tar", work_dir=tmpdir
+    )
     lf.execute(Action("foo", Step.PULL))
 
     foo_src_dir = Path(tmpdir / "parts", "foo", "src")

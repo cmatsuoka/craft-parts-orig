@@ -39,7 +39,9 @@ def test_override(tmpdir, capfd, step, action_type):
     )
 
     parts = yaml.safe_load(parts_yaml)
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_runner", work_dir=tmpdir
+    )
 
     lf.execute(Action("foo", step, action_type=action_type))
     out, err = capfd.readouterr()

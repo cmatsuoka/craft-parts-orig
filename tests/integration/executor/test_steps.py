@@ -49,7 +49,9 @@ def test_run(tmpdir):
     stage_dir = Path(tmpdir / "stage")
     prime_dir = Path(tmpdir / "prime")
 
-    lf = craft_parts.LifecycleManager(parts, work_dir=tmpdir)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_steps", work_dir=tmpdir
+    )
     lf.execute(Action("foo", Step.PULL))
     lf.execute(Action("foo", Step.BUILD))
     lf.execute(Action("foo", Step.STAGE))

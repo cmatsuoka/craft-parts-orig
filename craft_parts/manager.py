@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from craft_parts import executor, parts, repo, sequencer, utils
+from craft_parts import executor, parts, repo, sequencer
 from craft_parts.actions import Action
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
@@ -57,7 +57,7 @@ class LifecycleManager:
         self,
         all_parts: Dict[str, Any],
         *,
-        application_name: str = utils.package_name(),
+        application_name: str,
         build_packages: List[str] = None,
         work_dir: str = ".",
         target_arch: str = "",
@@ -69,12 +69,20 @@ class LifecycleManager:
         self._validator = Validator(_SCHEMA_DIR / "parts.json")
         self._validator.validate(all_parts)
 
+        self._step_info = StepInfo(
+            application_name=application_name,
+            target_arch=target_arch,
+            parallel_build_count=parallel_build_count,
+            local_plugins_dir=local_plugins_dir,
+            **custom_args,
+        )
+
         parts_data = all_parts.get("parts", {})
         self._parts = [
             Part(name, p, work_dir=work_dir) for name, p in parts_data.items()
         ]
         self._application_name = application_name
-        self._target_arch = target_arch
+        self._target_arch = self._step_info.deb_arch
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(self._parts)
         self._executor = executor.Executor(
@@ -85,14 +93,6 @@ class LifecycleManager:
 
         # TODO: validate/transform application name, should be usable in file names
         #       consider using python-slugify here
-
-        self._step_info = StepInfo(
-            application_name=application_name,
-            target_arch=target_arch,
-            parallel_build_count=parallel_build_count,
-            local_plugins_dir=local_plugins_dir,
-            **custom_args,
-        )
 
         # TODO: should sources management be left to the application?
         # self._sources_manager = AptSourcesManager(host_arch=self._step_info.deb_arch)
