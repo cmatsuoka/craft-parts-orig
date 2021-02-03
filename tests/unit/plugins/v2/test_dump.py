@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2020-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,28 +26,30 @@ from craft_parts.step_info import StepInfo
 _SCHEMA_DIR = Path(__file__).parents[4] / "craft_parts" / "data" / "schema"
 
 
+# pylint: disable=attribute-defined-outside-init
+
+
 class TestPluginDump:
     """Dump plugin tests."""
 
     def setup_class(self):
         validator = schemas.Validator(_SCHEMA_DIR / "parts.json")
-
-        # pylint: disable=attribute-defined-outside-init
         self._schema = validator.merge_schema(DumpPlugin.get_schema())
 
-    def test_plugin_nil(self):
+    def setup_method(self):
         options = PluginOptions(
             properties={"source": "of all evil"}, schema=self._schema
         )
         step_info = StepInfo()
-        p = DumpPlugin(part_name="foo", options=options, step_info=step_info)
-        assert p.get_build_snaps() == set()
-        assert p.get_build_packages() == set()
-        assert p.get_build_environment() == dict()
+        step_info.part_install_dir = Path("install/dir")
+        self._plugin = DumpPlugin(part_name="foo", options=options, step_info=step_info)
 
     def test_schema(self):
         schema = DumpPlugin.get_schema()
+        assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
+        assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
+        assert schema["properties"] == {}
 
         with pytest.raises(errors.SchemaValidation) as ei:
             PluginOptions(properties={}, schema=self._schema)
@@ -63,3 +65,15 @@ class TestPluginDump:
             == "Schema validation error: Additional properties are not allowed "
             "('invalid' was unexpected)"
         )
+
+    def test_get_build_packages(self):
+        assert self._plugin.get_build_packages() == set()
+        assert self._plugin.get_build_snaps() == set()
+
+    def test_get_build_environment(self):
+        assert self._plugin.get_build_environment() == dict()
+
+    def test_get_build_commands(self):
+        assert self._plugin.get_build_commands() == [
+            'cp --archive --link --no-dereference . "install/dir"'
+        ]

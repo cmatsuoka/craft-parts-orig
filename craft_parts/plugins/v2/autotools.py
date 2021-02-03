@@ -73,6 +73,8 @@ class AutotoolsPlugin(PluginV2):
 
     def get_build_commands(self) -> List[str]:
         return [
+            "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
+            "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
             "make -j{}".format(self._step_info.parallel_build_count),
