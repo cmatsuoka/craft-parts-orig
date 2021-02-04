@@ -46,7 +46,7 @@ def test_actions_simple(tmpdir):
 
     # first run
     # command: pull
-    actions = lf.plan(Step.PULL, update=False)
+    actions = lf.plan(Step.PULL)
     assert actions == [
         Action("foo", Step.PULL),
         Action("bar", Step.PULL),
@@ -55,7 +55,7 @@ def test_actions_simple(tmpdir):
 
     # foobar part depends on nothing
     # command: prime foobar
-    actions = lf.plan(Step.PRIME, ["foobar"], update=False)
+    actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foobar", Step.BUILD),
@@ -65,7 +65,7 @@ def test_actions_simple(tmpdir):
 
     # Then running build for bar that depends on foo
     # command: build bar
-    actions = lf.plan(Step.BUILD, ["bar"], update=False)
+    actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -75,7 +75,7 @@ def test_actions_simple(tmpdir):
     ]
 
     # Building bar again rebuilds it (explicit request)
-    actions = lf.plan(Step.BUILD, ["bar"], update=False)
+    actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action(

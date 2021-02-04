@@ -94,9 +94,6 @@ class LifecycleManager:
         # TODO: validate/transform application name, should be usable in file names
         #       consider using python-slugify here
 
-        # TODO: should sources management be left to the application?
-        # self._sources_manager = AptSourcesManager(host_arch=self._step_info.deb_arch)
-
     def clean(self, part_names: List[str] = None) -> None:
         """Clean the specified parts.""
 
@@ -106,9 +103,19 @@ class LifecycleManager:
 
         self._executor.clean(part_names)
 
-    def plan(
-        self, target_step: Step, part_names: List[str] = None, update: bool = True
-    ) -> List[Action]:
+    def update(self) -> None:
+        """Refresh the available packages list.
+
+        The list of available packages should be updated before planning the
+        sequence of actions to take. To ensure consistency between the scenarios,
+        it shouldn't be updated between planning and execution.
+        """
+
+        repo.Repo().update_package_list(
+            application_name=self._application_name, target_arch=self._target_arch
+        )
+
+    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.
@@ -119,11 +126,6 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
-
-        if update:
-            repo.Repo().update_package_list(
-                application_name=self._application_name, target_arch=self._target_arch
-            )
 
         act = self._sequencer.plan(target_step, part_names)
         return act
