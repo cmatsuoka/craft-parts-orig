@@ -25,9 +25,9 @@ import pathlib
 import re
 import shutil
 import stat
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Pattern, Set, Tuple
 
-from . import errors, file_utils
+from . import errors
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +267,7 @@ class BaseRepo:
     def _fix_xml_tools(cls, unpackdir: str) -> None:
         xml2_config_path = os.path.join(unpackdir, "usr", "bin", "xml2-config")
         with contextlib.suppress(FileNotFoundError):
-            file_utils.search_and_replace_contents(
+            _search_and_replace_contents(
                 xml2_config_path,
                 re.compile(r"prefix=/usr"),
                 "prefix={}/usr".format(unpackdir),
@@ -275,7 +275,7 @@ class BaseRepo:
 
         xslt_config_path = os.path.join(unpackdir, "usr", "bin", "xslt-config")
         with contextlib.suppress(FileNotFoundError):
-            file_utils.search_and_replace_contents(
+            _search_and_replace_contents(
                 xslt_config_path,
                 re.compile(r"prefix=/usr"),
                 "prefix={}/usr".format(unpackdir),
@@ -374,7 +374,7 @@ def _rewrite_python_shebangs(root_dir):
         r"\A#!.*(python\S*)[ \t\f\v]+(\S+)$", re.MULTILINE
     )
 
-    file_utils.replace_in_file(
+    _replace_in_file(
         root_dir, file_pattern, argless_shebang_pattern, r"#!/usr/bin/env \1"
     )
 
@@ -387,9 +387,58 @@ def _rewrite_python_shebangs(root_dir):
     # then exec the original shebang with included arguments. This requires
     # some quoting hacks to ensure the file can be interpreted by both sh as
     # well as python, but it's better than shipping our own `env`.
-    file_utils.replace_in_file(
+    _replace_in_file(
         root_dir,
         file_pattern,
         shebang_pattern_with_args,
         r"""#!/bin/sh\n''''exec \1 \2 -- "$0" "$@" # '''""",
     )
+
+
+def _replace_in_file(
+    directory: str, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+) -> None:
+    """Searches and replaces patterns that match a file pattern.
+
+    :param str directory: The directory to look for files.
+    :param str file_pattern: The file pattern to match inside directory.
+    :param search_pattern: A re.compile'd pattern to search for within
+                           matching files.
+    :param str replacement: The string to replace the matching search_pattern
+                            with.
+    """
+
+    for root, _, files in os.walk(directory):
+        for file_name in files:
+            if file_pattern.match(file_name):
+                file_path = os.path.join(root, file_name)
+                # Don't bother trying to rewrite a symlink. It's either invalid
+                # or the linked file will be rewritten on its own.
+                if not os.path.islink(file_path):
+                    _search_and_replace_contents(file_path, search_pattern, replacement)
+
+
+def _search_and_replace_contents(
+    file_path: str, search_pattern: Pattern, replacement: str
+) -> None:
+    """Search file and replace any occurrence of pattern with replacement.
+
+    :param str file_path: Path of file to be searched.
+    :param re.RegexObject search_pattern: Pattern for which to search.
+    :param str replacement: The string to replace pattern.
+    """
+    try:
+        with open(file_path, "r+") as fil:
+            try:
+                original = fil.read()
+            except UnicodeDecodeError:
+                # This was probably a binary file. Skip it.
+                return
+
+            replaced = search_pattern.sub(replacement, original)
+            if replaced != original:
+                fil.seek(0)
+                fil.truncate()
+                fil.write(replaced)
+    except PermissionError as err:
+        logger.warning("Unable to open %s for writing: %s", file_path, err)
