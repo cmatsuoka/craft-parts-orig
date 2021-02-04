@@ -16,6 +16,8 @@
 
 """Manages the state of packages obtained using apt."""
 
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -53,15 +55,15 @@ class AptCache(ContextDecorator):
         self.stage_cache = stage_cache
         self.stage_cache_arch = stage_cache_arch
 
-    def __enter__(self) -> "AptCache":
+    def __enter__(self) -> AptCache:
         if self.stage_cache is not None:
             self._configure_apt()
             self._populate_stage_cache_dir()
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         else:
-            # There appears to be a slowdown when using `rootdir` = '/' with
-            # apt.Cache().  Do not set it for the host cache.
-            self.cache = apt.cache.Cache()
+            # Setting rootdir="/" is needed otherwise the previously set rootdir will
+            # be used and repo._deb.get_installed_packages() will return an empty list.
+            self.cache = apt.cache.Cache(rootdir="/")
         return self
 
     def __exit__(self, *exc) -> None:
@@ -202,6 +204,7 @@ class AptCache(ContextDecorator):
         for package in self.cache:
             if package.installed is not None:
                 installed[package.name] = str(package.installed.version)
+
         return installed
 
     def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:

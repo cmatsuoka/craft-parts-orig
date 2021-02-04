@@ -19,6 +19,7 @@
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from craft_parts.parts import Part
@@ -98,6 +99,15 @@ class PartState(_State):
             self.project_options_of_interest(other_project_options),
         )
 
+    def write(self, filepath: Path) -> None:
+        """Write this state to disk."""
+
+        os.makedirs(filepath.parent, exist_ok=True)
+        with open(filepath, "w") as f:
+            data = yaml_utils.dump(self.__dict__)
+            if data:
+                f.write(data)
+
 
 def _get_differing_keys(dict1, dict2):
     differing_keys = set()
@@ -129,3 +139,10 @@ def load_state(part: Part, step: Step) -> Optional[PartState]:
 
     state_data["timestamp"] = file_utils.timestamp(filename)
     return PartState(data=state_data)
+
+
+def is_clean(part: Part, step: Step) -> bool:
+    """Verify whether the persistent state for the given part and step is clean."""
+
+    filename = os.path.join(part.part_state_dir, step.name.lower())
+    return not os.path.isfile(filename)

@@ -144,7 +144,10 @@ class TestMockedApt:
         with AptCache() as _:
             pass
 
-        assert fake_apt.mock_calls == [call.cache.Cache(), call.cache.Cache().close()]
+        assert fake_apt.mock_calls == [
+            call.cache.Cache(rootdir="/"),
+            call.cache.Cache().close(),
+        ]
 
 
 class TestAptReadonlyHostCache:

@@ -17,7 +17,7 @@
 """YAML file handling utilities."""
 
 import collections
-from typing import Any, TextIO
+from typing import Any, Dict, Optional, TextIO, Union
 
 import yaml
 
@@ -77,6 +77,25 @@ except ImportError:
 def load(stream: TextIO) -> Any:
     """Safely load YAML in ordered manner."""
     return yaml.load(stream, Loader=SafeLoader)
+
+
+def dump(
+    data: Union[Dict[str, Any], yaml.YAMLObject],
+    *,
+    stream: Optional[TextIO] = None,
+    sort_keys=True
+) -> Optional[str]:
+    """Safely dump YAML in ordered manner."""
+
+    # FIXME: check why pyright complains about stream: Optional[TextIO]
+    return yaml.dump(
+        data,
+        stream=stream,
+        Dumper=SafeDumper,  # type: ignore
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=sort_keys,
+    )
 
 
 class YAMLObject(yaml.YAMLObject):

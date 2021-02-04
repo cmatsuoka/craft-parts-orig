@@ -21,6 +21,8 @@ import logging
 import os
 import pathlib
 import shutil
+import subprocess
+import sys
 from typing import Dict, List, Optional, Union
 
 from craft_parts import errors
@@ -114,6 +116,40 @@ def get_build_base() -> str:
     # FIXME: implement get_build_base
 
 
+def get_system_info() -> str:
+    """Obtain running system information."""
+
+    # Use subprocess directly here. common.run_output will use binaries out
+    # of the snap, and we want to use the one on the host.
+    try:
+        output = subprocess.check_output(
+            [
+                "uname",
+                "--kernel-name",
+                "--kernel-release",
+                "--kernel-version",
+                "--machine",
+                "--processor",
+                "--hardware-platform",
+                "--operating-system",
+            ]
+        )
+    except subprocess.CalledProcessError as err:
+        logger.warning(
+            "'uname' exited with code %d: unable to record machine manifest",
+            err.returncode,
+        )
+        return ""
+
+    try:
+        uname = output.decode(sys.getfilesystemencoding()).strip()
+    except UnicodeEncodeError:
+        logger.warning("Could not decode output for 'uname' correctly")
+        uname = output.decode("latin-1", "surrogateescape").strip()
+
+    return uname
+
+
 def is_snap(*, application_name: Optional[str] = None) -> bool:
     """Verify whether we're running as a snap."""
 
@@ -124,9 +160,11 @@ def is_snap(*, application_name: Optional[str] = None) -> bool:
         is_snap = snap_name is not None
 
     logger.debug(
-        "craft_parts is running as a snap: {!r}, "
-        "SNAP_NAME set to {!r}".format(is_snap, snap_name)
+        "craft_parts is is snap: %s, SNAP_NAME set to %s",
+        is_snap,
+        snap_name,
     )
+
     return is_snap
 
 

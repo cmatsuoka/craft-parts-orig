@@ -21,7 +21,7 @@ import os
 import os.path
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import callbacks, errors, plugins, repo, sources
 from craft_parts.actions import Action, ActionType
@@ -29,11 +29,12 @@ from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
+from craft_parts.state_manager import BuildState, PrimeState, PullState, StageState
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
-from .runner import Runner
+from .runner import FilesAndDirs, Runner
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +61,12 @@ class PartHandler:
             part_name=part.name, options=options, step_info=step_info
         )
 
-        part_properties = validator.expand_part_properties(part.properties)
+        self._part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = _get_source_handler(
-            step_info.application_name, part.source, part.part_src_dir, part_properties
+            step_info.application_name,
+            part.source,
+            part.part_src_dir,
+            self._part_properties,
         )
         self._package_repo = repo.Repo()
 
@@ -70,10 +74,13 @@ class PartHandler:
         """Run the given action for this part using a plugin."""
 
         if action.type == ActionType.UPDATE:
-            if action.step == Step.PULL:
-                self._update_pull()
-            elif action.step == Step.BUILD:
-                self._update_build()
+            update_handlers: Dict[Step, Callable[[], None]] = {
+                Step.PULL: self._update_pull,
+                Step.BUILD: self._update_build,
+            }
+            if action.step in update_handlers:
+                handler = update_handlers[action.step]
+                handler()
             return
 
         if action.type == ActionType.RERUN:
@@ -86,14 +93,14 @@ class PartHandler:
 
         callbacks.run_pre(self._part, action.step, step_info=step_info)
 
-        if action.step == Step.PULL:
-            self._run_pull(step_info)
-        elif action.step == Step.BUILD:
-            self._run_build(step_info)
-        elif action.step == Step.STAGE:
-            self._run_stage(step_info)
-        elif action.step == Step.PRIME:
-            self._run_prime(step_info)
+        run_handlers: Dict[Step, Callable[[StepInfo], None]] = {
+            Step.PULL: self._run_pull,
+            Step.BUILD: self._run_build,
+            Step.STAGE: self._run_stage,
+            Step.PRIME: self._run_prime,
+        }
+        if action.step in run_handlers:
+            run_handlers[action.step](step_info)
 
         callbacks.run_post(self._part, action.step, step_info=step_info)
 
@@ -125,10 +132,14 @@ class PartHandler:
             workdir=self._part.part_src_dir,
         )
 
-        # TODO: use fetched packages list to build state
-        _ = fetched_packages
-
-        _save_state_file(self._part, "pull")
+        # TODO: check what else should be part of the pull state
+        state = PullState(
+            property_names={},
+            part_properties=self._part_properties,
+            stage_packages=fetched_packages,
+            source_details=getattr(self._source_handler, "source_details", None),
+        )
+        state.write(self._part.part_state_dir / "pull")
 
     def _run_build(self, step_info: StepInfo, *, update=False):
         self._make_dirs()
@@ -176,33 +187,43 @@ class PartHandler:
         # TODO: implement organize
         # self._organize(overwrite=update)
 
-        _save_state_file(self._part, "build")
+        # TODO: check what else should be part of the build state
+        state = BuildState(
+            property_names={},
+            part_properties=self._part_properties,
+            machine_assets=_get_machine_manifest(),
+        )
+        state.write(self._part.part_state_dir / "build")
 
     def _run_stage(self, step_info: StepInfo):
         # TODO: handle part replacements
         self._make_dirs()
 
-        self._run_step(
+        files, dirs = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
             workdir=self._part.stage_dir,
         )
 
-        _save_state_file(self._part, "stage")
+        state = StageState(files=files, directories=dirs)
+        state.write(self._part.part_state_dir / "stage")
 
     def _run_prime(self, step_info: StepInfo):
         # TODO: handle part replacements
         self._make_dirs()
 
-        self._run_step(
+        files, dirs = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
             workdir=self._part.prime_dir,
         )
 
-        _save_state_file(self._part, "prime")
+        state = PrimeState(files=files, directories=dirs)
+        state.write(self._part.part_state_dir / "prime")
 
-    def _run_step(self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path):
+    def _run_step(
+        self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path
+    ) -> FilesAndDirs:
         """Run the scriptlet if overriding, otherwise run the built-in handler."""
 
         if not step_info.step:
@@ -219,8 +240,9 @@ class PartHandler:
             runner.run_scriptlet(
                 scriptlet, scriptlet_name=scriptlet_name, workdir=workdir
             )
-        else:
-            runner.run_builtin()
+            return FilesAndDirs(set(), set())
+
+        return runner.run_builtin()
 
     def _update_pull(self):
         # TODO: implement update pull
@@ -315,3 +337,11 @@ def _get_build_packages(part: Part, repository) -> List[str]:
             packages.extend(plugin_build_packages)
 
     return packages
+
+
+def _get_machine_manifest() -> Dict[str, Any]:
+    return {
+        "uname": os_utils.get_system_info(),
+        "installed-packages": sorted(repo.Repo.get_installed_packages()),
+        "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
+    }

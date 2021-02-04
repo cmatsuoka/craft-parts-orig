@@ -23,8 +23,9 @@ import sys
 import tempfile
 import textwrap
 import time
+from collections import namedtuple
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Dict, Optional
 
 from craft_parts import errors, filesets, plugins
 from craft_parts.filesets import Fileset
@@ -36,6 +37,8 @@ from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
 from . import environment
+
+FilesAndDirs = namedtuple("FilesAndDirs", ["files", "dirs"])
 
 
 class Runner:
@@ -65,30 +68,37 @@ class Runner:
             part=part, plugin=plugin, step_info=step_info
         )
 
-    def run_builtin(self):
+    def run_builtin(self) -> FilesAndDirs:
         """Run the built-in commands for the current step."""
 
-        step = self._step_info.step
-        if step == Step.PULL:
-            self._builtin_pull()
-        elif step == Step.BUILD:
-            self._builtin_build()
-        elif step == Step.STAGE:
-            self._builtin_stage()
-        elif step == Step.PRIME:
-            self._builtin_prime()
+        builtin_handlers: Dict[Optional[Step], Callable[[], FilesAndDirs]] = {
+            Step.PULL: self._builtin_pull,
+            Step.BUILD: self._builtin_build,
+            Step.STAGE: self._builtin_stage,
+            Step.PRIME: self._builtin_prime,
+        }
 
-    def _builtin_pull(self):
+        try:
+            handler = builtin_handlers[self._step_info.step]
+            return handler()
+        except KeyError:
+            raise errors.InternalError(
+                "Request to run the built-in handler for an invalid step."
+            )
+
+    def _builtin_pull(self) -> FilesAndDirs:
         if self._source_handler:
             self._source_handler.pull()
+        return FilesAndDirs(set(), set())
 
-    def _builtin_build(self):
+    def _builtin_build(self) -> FilesAndDirs:
         if not isinstance(self._plugin, plugins.PluginV2):
             raise errors.InternalError("Plugin version not supported.")
 
         _do_v2_build(part=self._part, plugin=self._plugin, env=self._env)
+        return FilesAndDirs(set(), set())
 
-    def _builtin_stage(self):
+    def _builtin_stage(self) -> FilesAndDirs:
         stage_fileset = Fileset(self._part.stage_fileset)
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
@@ -98,8 +108,9 @@ class Runner:
             srcdir=self._part.part_install_dir,
             destdir=self._part.stage_dir,
         )
+        return FilesAndDirs(files, dirs)
 
-    def _builtin_prime(self):
+    def _builtin_prime(self) -> FilesAndDirs:
         prime_fileset = Fileset(self._part.prime_fileset)
 
         # If we're priming and we don't have an explicit set of files to prime
@@ -117,6 +128,8 @@ class Runner:
             destdir=self._part.prime_dir,
         )
         # TODO: handle elf dependencies
+
+        return FilesAndDirs(files, dirs)
 
     def run_scriptlet(
         self, scriptlet: str, *, scriptlet_name: str, workdir: Path

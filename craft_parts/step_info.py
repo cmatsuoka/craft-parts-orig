@@ -16,6 +16,8 @@
 
 """Definitions for the step information used by part handlers."""
 
+from __future__ import annotations
+
 import copy
 import logging
 import platform
@@ -98,7 +100,7 @@ class StepInfo:
         """The architecture used for deb packages."""
         return self.__machine_info["deb"]
 
-    def for_part(self, part: Part) -> "StepInfo":
+    def for_part(self, part: Part) -> StepInfo:
         """Return a copy of this object adding part-specific fields.
 
         :param part: the part containing the information to add.
@@ -116,7 +118,7 @@ class StepInfo:
 
         return info
 
-    def for_step(self, step: Step) -> "StepInfo":
+    def for_step(self, step: Step) -> StepInfo:
         """Return a copy of this object adding step-specific fields.
 
         :param step: the step information to add.
