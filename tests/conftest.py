@@ -33,6 +33,8 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="class")
 def http_server(request):
+    """Provide an http server with configurable request handlers."""
+
     marker = request.node.get_closest_marker("http_request_handler")
     if marker:
         handler = getattr(fake_servers, marker.args[0])
@@ -52,6 +54,8 @@ def http_server(request):
 
 @pytest.fixture
 def new_dir(tmpdir):
+    """Change to a new temporary directory."""
+
     cwd = os.getcwd()
     os.chdir(tmpdir)
 
@@ -62,6 +66,8 @@ def new_dir(tmpdir):
 
 @pytest.fixture(autouse=True)
 def temp_xdg(tmpdir, mocker):
+    """Use a temporary locaction for XDG directories."""
+
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_home", new=os.path.join(tmpdir, ".config")
     )

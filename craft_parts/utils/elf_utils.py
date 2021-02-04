@@ -40,6 +40,13 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
+
+
 def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
     logger.debug("_ldd_resolve: %s, %s", soname, soname_path)
 

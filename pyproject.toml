@@ -15,5 +15,10 @@ min-similarity-lines=10
 [tool.pylint.format]
 max-line-length = "88"
 
+[tool.pylint.MASTER]
+extension-pkg-whitelist = [
+    "apt_pkg"
+]
+
 [tool.black]
 exclude = '/((\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist|parts|stage|prime)/|setup.py)'

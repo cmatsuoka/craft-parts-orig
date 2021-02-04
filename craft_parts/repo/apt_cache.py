@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Manages the state of packages obtained using apt."""
+
 import logging
 import os
 import re
@@ -40,7 +42,7 @@ _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+
 
 
 class AptCache(ContextDecorator):
-    """Transient cache for use with stage-packages, or read-only host-mode for build-packages."""
+    """Transient cache for stage packages, or read-only for build packages."""
 
     def __init__(
         self,
@@ -64,8 +66,6 @@ class AptCache(ContextDecorator):
 
     def __exit__(self, *exc) -> None:
         self.cache.close()
-        # FIXME: is this necessary?
-        # self.cache = None
 
     def _configure_apt(self):
         # Do not install recommends.
@@ -152,38 +152,19 @@ class AptCache(ContextDecorator):
             if package.is_auto_removable:
                 package.mark_keep()
 
-    def _set_pkg_version(self, package: apt.package.Package, version: str) -> None:
-        # Set candidate version to a specific version if available
-        if version in package.versions:
-            pkg_version = package.versions.get(version)
-            if pkg_version:
-                package.candidate = pkg_version
-        else:
-            raise errors.PackageNotFoundError("{}={}".format(package.name, version))
-
-    def _verify_marked_install(self, package: apt.package.Package):
-        if package.installed or package.marked_install:
-            return
-
-        if not package.candidate:
-            return
-
-        broken_deps: List[str] = list()
-        for package_dependencies in package.candidate.dependencies:
-            for dep in package_dependencies:
-                if not dep.target_versions:
-                    broken_deps.append(dep.name)
-        raise errors.PackageBrokenError(package.name, broken_deps)
-
     def is_package_valid(self, package_name: str) -> bool:
+        """Verify whether there is a valid package with the given name."""
         return package_name in self.cache or self.cache.is_virtual_package(package_name)
 
     def get_installed_version(
         self, package_name: str, *, resolve_virtual_packages: bool = False
     ) -> Optional[str]:
+        """Obtain the version of the package currently installed on the system."""
+
         if resolve_virtual_packages and self.cache.is_virtual_package(package_name):
             logger.warning(
-                "%s is a virtual package, use non virtual packages for deterministic results.",
+                "%s is a virtual package, use non-virtual packages for "
+                "deterministic results.",
                 package_name,
             )
             # Recusrse until a "real" package is found.
@@ -200,6 +181,7 @@ class AptCache(ContextDecorator):
 
     def fetch_archives(self, download_path: Path) -> List[Tuple[str, str, Path]]:
         """Fetches archives, list of (<package-name>, <package-version>, <dl-path>)."""
+
         downloaded = list()
         for package in self.cache.get_changes():
             if package.candidate is None:
@@ -214,6 +196,8 @@ class AptCache(ContextDecorator):
         return downloaded
 
     def get_installed_packages(self) -> Dict[str, str]:
+        """Obtain a list of all packages and versions currently installed on the system."""
+
         installed: Dict[str, str] = dict()
         for package in self.cache:
             if package.installed is not None:
@@ -221,6 +205,8 @@ class AptCache(ContextDecorator):
         return installed
 
     def get_packages_marked_for_installation(self) -> List[Tuple[str, str]]:
+        """Obtain a list of packages and versions to be installed on the system."""
+
         return [
             (package.name, package.candidate.version)
             for package in self.cache.get_changes()
@@ -228,6 +214,8 @@ class AptCache(ContextDecorator):
         ]
 
     def mark_packages(self, package_names: Set[str]) -> None:
+        """Mark the given package names to be fetched from the repository."""
+
         for name in package_names:
             if name.endswith(":any"):
                 name = name[:-4]
@@ -243,7 +231,7 @@ class AptCache(ContextDecorator):
 
             package = self.cache[name_arch]
             if version is not None:
-                self._set_pkg_version(package, version)
+                _set_pkg_version(package, version)
 
             logger.debug("package: %s", package)
 
@@ -260,11 +248,13 @@ class AptCache(ContextDecorator):
             # allows us to clean them up if necessary.
             package.mark_auto(False)
 
-            self._verify_marked_install(package)
+            _verify_marked_install(package)
 
     def unmark_packages(
         self, *, required_names: Set[str], filtered_names: Set[str]
     ) -> None:
+        """Unmark packages and dependencies that are no longer required."""
+
         skipped_essential = set()
         skipped_blacklisted = set()
 
@@ -304,9 +294,37 @@ class AptCache(ContextDecorator):
         self._autokeep_packages()
 
     def update(self) -> None:
+        """Update the package manager cache."""
+
         try:
             self.cache.update(fetch_progress=self.progress, sources_list=None)
             self.cache.close()
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         except apt.cache.FetchFailedException as err:
             raise errors.CacheUpdateFailedError(str(err))
+
+
+def _verify_marked_install(package: apt.package.Package):
+    if package.installed or package.marked_install:
+        return
+
+    if not package.candidate:
+        return
+
+    broken_deps: List[str] = list()
+    for package_dependencies in package.candidate.dependencies:
+        for dep in package_dependencies:
+            if not dep.target_versions:
+                broken_deps.append(dep.name)
+    raise errors.PackageBrokenError(package.name, broken_deps)
+
+
+def _set_pkg_version(package: apt.package.Package, version: str) -> None:
+    """Set candidate version to a specific version if available."""
+
+    if version in package.versions:
+        pkg_version = package.versions.get(version)
+        if pkg_version:
+            package.candidate = pkg_version
+    else:
+        raise errors.PackageNotFoundError("{}={}".format(package.name, version))
