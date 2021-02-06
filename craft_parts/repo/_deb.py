@@ -388,7 +388,7 @@ class Ubuntu(BaseRepo):
 
         stage_packages_path.mkdir(exist_ok=True)
 
-        stage_cache_dir, deb_cache_dir = _get_cache_dirs(application_name)
+        stage_cache_dir, deb_cache_dir = get_cache_dirs(application_name)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
@@ -415,7 +415,7 @@ class Ubuntu(BaseRepo):
     def update_package_list(cls, *, application_name: str, target_arch: str):
         """Refresh the list of packages available in the repository."""
 
-        stage_cache_dir, _ = _get_cache_dirs(application_name)
+        stage_cache_dir, _ = get_cache_dirs(application_name)
 
         with AptCache(
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
@@ -475,7 +475,7 @@ class Ubuntu(BaseRepo):
             raise errors.UnpackError(deb_path) from err
 
 
-def _get_cache_dirs(name: str):
+def get_cache_dirs(name: str):
     stage_cache_dir = pathlib.Path(
         BaseDirectory.save_cache_path(name, "craft_parts", "stage_packages")
     )

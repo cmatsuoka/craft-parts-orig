@@ -142,7 +142,7 @@ test-mypy:
 .PHONY: test-pylint
 test-pylint:
 	pylint --fail-under=9.0 craft_parts
-	pylint tests --fail-under=9.0 --disable=invalid-name,missing-module-docstring,missing-function-docstring,redefined-outer-name,no-self-use,duplicate-code,protected-access
+	pylint tests --fail-under=9.0 --disable=invalid-name,missing-module-docstring,missing-function-docstring,redefined-outer-name,no-self-use,duplicate-code,protected-access,too-few-public-methods
 
 .PHONY: test-pyright
 test-pyright:
