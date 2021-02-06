@@ -16,6 +16,7 @@
 
 import http.server
 import os
+import tempfile
 import threading
 from unittest import mock
 
@@ -23,33 +24,14 @@ import pytest
 import xdg  # type: ignore
 
 from . import fake_servers
+from .fake_snap_command import FakeSnapCommand
+from .fake_snapd import FakeSnapd
 
 
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "http_request_handler(handler): set a fake HTTP request handler"
     )
-
-
-@pytest.fixture(scope="class")
-def http_server(request):
-    """Provide an http server with configurable request handlers."""
-
-    marker = request.node.get_closest_marker("http_request_handler")
-    if marker:
-        handler = getattr(fake_servers, marker.args[0])
-    else:
-        handler = fake_servers.DummyHTTPRequestHandler
-
-    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
-
-    yield server
-
-    server.shutdown()
-    server.server_close()
-    server_thread.join()
 
 
 @pytest.fixture
@@ -83,3 +65,55 @@ def temp_xdg(tmpdir, mocker):
         os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")}
     ):
         yield
+
+
+@pytest.fixture(scope="class")
+def http_server(request):
+    """Provide an http server with configurable request handlers."""
+
+    marker = request.node.get_closest_marker("http_request_handler")
+    if marker:
+        handler = getattr(fake_servers, marker.args[0])
+    else:
+        handler = fake_servers.DummyHTTPRequestHandler
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+
+    yield server
+
+    server.shutdown()
+    server.server_close()
+    server_thread.join()
+
+
+@pytest.fixture(scope="class")
+def fake_snapd():
+    """Provide a fake snapd server."""
+
+    server = FakeSnapd()
+
+    snapd_fake_socket_path = tempfile.mkstemp()[1]
+    os.unlink(snapd_fake_socket_path)
+
+    socket_path_patcher = mock.patch(
+        "craft_parts.repo.snaps.get_snapd_socket_path_template"
+    )
+    mock_socket_path = socket_path_patcher.start()
+    mock_socket_path.return_value = "http+unix://{}/v2/{{}}".format(
+        snapd_fake_socket_path.replace("/", "%2F")
+    )
+
+    thread = server.start_fake_server(snapd_fake_socket_path)
+
+    yield server
+
+    server.stop_fake_server(thread)
+    socket_path_patcher.stop()
+
+
+@pytest.fixture
+def fake_snap_command(mocker):
+    """Mock the snap command."""
+    return FakeSnapCommand(mocker)

@@ -374,13 +374,14 @@ def _get_parsed_snap(snap: str) -> Tuple[str, str]:
     return snap_name, snap_channel
 
 
-def _get_snapd_socket_path_template():
+def get_snapd_socket_path_template():
+    """Return the template for the snapd socket URI."""
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
 def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
     slug = "snaps/{}/file".format(parse.quote(snap_name, safe=""))
-    url = _get_snapd_socket_path_template().format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     try:
         snap_file = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
@@ -391,7 +392,7 @@ def _get_local_snap_file_iter(snap_name: str, *, chunk_size: int):
 
 def _get_local_snap_info(snap_name: str):
     slug = "snaps/{}".format(parse.quote(snap_name, safe=""))
-    url = _get_snapd_socket_path_template().format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     try:
         snap_info = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
@@ -404,7 +405,7 @@ def _get_store_snap_info(snap_name: str) -> Dict[str, Any]:
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
     slug = "find?{}".format(parse.urlencode(dict(name=snap_name)))
-    url = _get_snapd_socket_path_template().format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
     return snap_info.json()["result"][0]
@@ -416,7 +417,7 @@ def get_installed_snaps() -> List[str]:
     :return: a list of "name=revision" for the snaps installed.
     """
     slug = "snaps"
-    url = _get_snapd_socket_path_template().format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     try:
         snap_info = requests_unixsocket.get(url)
         snap_info.raise_for_status()
