@@ -12,13 +12,13 @@ Exceptions
 
 .. autoclass:: InvalidPartName
 
-.. autoclass:: UnknownPluginVersion
+.. autoclass:: InvalidPluginAPIVersion
 
-.. autoclass:: UnknownPlugin
+.. autoclass:: InvalidPlugin
 
 .. autoclass:: PluginBuildError
 
 .. autoclass:: ScriptletRunError
 
-.. autoclass:: class SchemaValidation
+.. autoclass:: SchemaValidation
 
