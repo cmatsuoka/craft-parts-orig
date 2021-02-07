@@ -22,7 +22,7 @@ import copy
 import logging
 import platform
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from craft_parts import errors, utils
 from craft_parts.parts import Part
@@ -66,8 +66,10 @@ class StepInfo:
         self.part_state_dir = Path()
         self.stage_dir = Path()
         self.prime_dir = Path()
+        self._custom_args: List[str] = []
 
         for key, value in custom_args.items():
+            self._custom_args.append(key)
             setattr(self, key, value)
 
     @property

@@ -29,7 +29,14 @@ from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
-from craft_parts.state_manager import BuildState, PrimeState, PullState, StageState
+from craft_parts.state_manager import (
+    BuildState,
+    PartState,
+    PrimeState,
+    PullState,
+    StageState,
+    states,
+)
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -49,9 +56,11 @@ class PartHandler:
         plugin_version: str,
         step_info: StepInfo,
         validator: Validator,
+        part_list: List[Part],
     ):
         self._part = part
         self._step_info = step_info
+        self._part_list = part_list
 
         plugin_class = plugins.get_plugin(part.plugin, version=plugin_version)
         plugin_schema = validator.merge_schema(plugin_class.get_schema())
@@ -70,6 +79,54 @@ class PartHandler:
         )
         self._package_repo = repo.Repo()
 
+    def clean_step(self, *, step: Step) -> None:
+        """Remove the work files and the state of the given step."""
+
+        logger.debug("clean %s:%s", self._part.name, step)
+
+        # Don't try to shortcut it, always clean everything. A previous clean
+        # attempt may have failed.
+        # if states.is_clean(self._part, step):
+        #    return
+
+        clean_handlers: Dict[Step, Callable[[], None]] = {
+            Step.PULL: self._clean_pull,
+            Step.BUILD: self._clean_build,
+            Step.STAGE: self._clean_stage,
+            Step.PRIME: self._clean_prime,
+        }
+        if step in clean_handlers:
+            states.remove(self._part, step)
+            clean_handlers[step]()
+
+    def _clean_pull(self) -> None:
+        # remove dirs where stage packages and snaps are fetched
+        _remove(self._part.part_package_dir)
+        _remove(self._part.part_snaps_dir)
+
+        # remove the source tree
+        _remove(self._part.part_src_dir)
+
+    def _clean_build(self) -> None:
+        _remove(self._part.part_build_dir)
+        _remove(self._part.part_install_dir)
+
+    def _clean_stage(self) -> None:
+        part_states = states.load_part_states(Step.STAGE, self._part_list)
+        _clean_shared_area(
+            part_name=self._part.name,
+            shared_dir=self._part.stage_dir,
+            part_states=part_states,
+        )
+
+    def _clean_prime(self) -> None:
+        part_states = states.load_part_states(Step.PRIME, self._part_list)
+        _clean_shared_area(
+            part_name=self._part.name,
+            shared_dir=self._part.stage_dir,
+            part_states=part_states,
+        )
+
     def run_action(self, action: Action) -> None:
         """Run the given action for this part using a plugin."""
 
@@ -84,8 +141,7 @@ class PartHandler:
             return
 
         if action.type == ActionType.RERUN:
-            # TODO: clean part
-            pass
+            self.clean_step(step=action.step)
 
         os_utils.reset_env()
 
@@ -93,18 +149,19 @@ class PartHandler:
 
         callbacks.run_pre(self._part, action.step, step_info=step_info)
 
-        run_handlers: Dict[Step, Callable[[StepInfo], None]] = {
+        run_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
             Step.PULL: self._run_pull,
             Step.BUILD: self._run_build,
             Step.STAGE: self._run_stage,
             Step.PRIME: self._run_prime,
         }
         if action.step in run_handlers:
-            run_handlers[action.step](step_info)
+            state = run_handlers[action.step](step_info)
+            state.write(self._part.part_state_dir / action.step.name.lower())
 
         callbacks.run_post(self._part, action.step, step_info=step_info)
 
-    def _run_pull(self, step_info: StepInfo):
+    def _run_pull(self, step_info: StepInfo) -> PartState:
         _remove(self._part.part_src_dir)
         self._make_dirs()
 
@@ -139,9 +196,9 @@ class PartHandler:
             stage_packages=fetched_packages,
             source_details=getattr(self._source_handler, "source_details", None),
         )
-        state.write(self._part.part_state_dir / "pull")
+        return state
 
-    def _run_build(self, step_info: StepInfo, *, update=False):
+    def _run_build(self, step_info: StepInfo, *, update=False) -> PartState:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
@@ -149,7 +206,6 @@ class PartHandler:
         repo.Repo.install_build_packages(build_packages)
 
         # unpack stage packages/snaps
-
         self._package_repo.unpack_stage_packages(
             stage_packages_path=self._part.part_package_dir,
             install_path=Path(self._part.part_install_dir),
@@ -193,9 +249,9 @@ class PartHandler:
             part_properties=self._part_properties,
             machine_assets=_get_machine_manifest(),
         )
-        state.write(self._part.part_state_dir / "build")
+        return state
 
-    def _run_stage(self, step_info: StepInfo):
+    def _run_stage(self, step_info: StepInfo) -> PartState:
         # TODO: handle part replacements
         self._make_dirs()
 
@@ -205,10 +261,9 @@ class PartHandler:
             workdir=self._part.stage_dir,
         )
 
-        state = StageState(files=files, directories=dirs)
-        state.write(self._part.part_state_dir / "stage")
+        return StageState(files=files, directories=dirs)
 
-    def _run_prime(self, step_info: StepInfo):
+    def _run_prime(self, step_info: StepInfo) -> PartState:
         # TODO: handle part replacements
         self._make_dirs()
 
@@ -218,8 +273,7 @@ class PartHandler:
             workdir=self._part.prime_dir,
         )
 
-        state = PrimeState(files=files, directories=dirs)
-        state.write(self._part.part_state_dir / "prime")
+        return PrimeState(files=files, directories=dirs)
 
     def _run_step(
         self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path
@@ -227,7 +281,7 @@ class PartHandler:
         """Run the scriptlet if overriding, otherwise run the built-in handler."""
 
         if not step_info.step:
-            raise errors.InternalError("undefined step")
+            raise errors.InternalError("request to run an undefined step")
 
         runner = Runner(
             self._part,
@@ -345,3 +399,55 @@ def _get_machine_manifest() -> Dict[str, Any]:
         "installed-packages": sorted(repo.Repo.get_installed_packages()),
         "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
     }
+
+
+def _clean_shared_area(
+    *, part_name: str, shared_dir: Path, part_states: Dict[str, PartState]
+) -> None:
+    # no state defined for this part, we won't remove files
+    if part_name not in part_states:
+        return
+
+    state = part_states[part_name]
+    primed_files = state.files
+    primed_directories = state.directories
+
+    # We want to make sure we don't remove a file or directory that's
+    # being used by another part. So we'll examine the state for all parts
+    # in the project and leave any files or directories found to be in
+    # common.
+    for other_name, other_state in part_states.items():
+        if other_state and (other_name != part_name):
+            primed_files -= other_state.files
+            primed_directories -= other_state.directories
+
+    # Finally, clean the files and directories that are specific to this
+    # part.
+    _clean_migrated_files(primed_files, primed_directories, shared_dir)
+
+
+def _clean_migrated_files(files, dirs, directory):
+    for each_file in files:
+        try:
+            os.remove(os.path.join(directory, each_file))
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove file {name!r}, but it didn't exist. "
+                "Skipping...".format(name=each_file)
+            )
+
+    # Directories may not be ordered so that subdirectories come before
+    # parents, and we want to be able to remove directories if possible, so
+    # we'll sort them in reverse here to get subdirectories before parents.
+    dirs = sorted(dirs, reverse=True)
+
+    for each_dir in dirs:
+        migrated_directory = os.path.join(directory, each_dir)
+        try:
+            if not os.listdir(migrated_directory):
+                os.rmdir(migrated_directory)
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove directory {name!r}, but it didn't exist. "
+                "Skipping...".format(name=each_dir)
+            )

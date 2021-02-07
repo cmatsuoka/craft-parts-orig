@@ -16,11 +16,11 @@
 
 """The part state for a given step."""
 
+import contextlib
 import os
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -50,7 +50,13 @@ class PartState(_State):
     """The context used to run a step for a given part."""
 
     def __init__(
-        self, *, part_properties=None, project=None, data: Dict[str, Any] = None
+        self,
+        *,
+        part_properties=None,
+        project=None,
+        data: Dict[str, Any] = None,
+        files: Set[str] = None,
+        directories: Set[str] = None
     ):
         if data:
             super().__init__(data)
@@ -58,8 +64,9 @@ class PartState(_State):
 
         super().__init__()
 
+        self._files = files
+        self._directories = directories
         self.timestamp: datetime = datetime.now()
-        time.sleep(0.1)  # FIXME: ensure timestamps are different
 
         if not part_properties:
             part_properties = {}
@@ -70,6 +77,14 @@ class PartState(_State):
 
         if project:
             self.project_options = self.project_options_of_interest(project)
+
+    @property
+    def files(self) -> Set[str]:
+        return self._files if self._files else set()
+
+    @property
+    def directories(self) -> Set[str]:
+        return self._directories if self._directories else set()
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.
@@ -141,8 +156,25 @@ def load_state(part: Part, step: Step) -> Optional[PartState]:
     return PartState(data=state_data)
 
 
+def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
+    """Return a dictionary of the state of the given step for all parts."""
+
+    states: Dict[str, PartState] = {}
+    for part in part_list:
+        state = load_state(part, step)
+        if state:
+            states[part.name] = state
+    return states
+
+
 def is_clean(part: Part, step: Step) -> bool:
     """Verify whether the persistent state for the given part and step is clean."""
 
     filename = os.path.join(part.part_state_dir, step.name.lower())
     return not os.path.isfile(filename)
+
+
+def remove(part: Part, step: Step):
+    """Remove the persistent state file for the given part and step."""
+    with contextlib.suppress(FileNotFoundError):
+        os.remove(part.part_state_dir / step.name.lower())

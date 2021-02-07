@@ -31,14 +31,14 @@ class PrimeState(PartState):
         scriptlet_metadata=None,
         primed_stage_packages=None,
     ):
-        super().__init__(part_properties=part_properties)
+        super().__init__(
+            part_properties=part_properties, files=files, directories=directories
+        )
 
         # TODO: verify how to deal with metadata
         # if not scriptlet_metadata:
         #     scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
 
-        self.files = files
-        self.directories = directories
         self.dependency_paths = set()
         self.scriptlet_metadata = scriptlet_metadata
         self.primed_stage_packages = primed_stage_packages

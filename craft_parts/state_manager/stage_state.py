@@ -29,14 +29,14 @@ class StageState(PartState):
         project=None,
         scriptlet_metadata=None,
     ):
-        super().__init__(part_properties=part_properties)
+        super().__init__(
+            part_properties=part_properties, files=files, directories=directories
+        )
 
         # TODO: verify how to deal with metadata
         # if not scriptlet_metadata:
         #    scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
 
-        self.files = files
-        self.directories = directories
         self.scriptlet_metadata = scriptlet_metadata
 
     def properties_of_interest(self, part_properties):

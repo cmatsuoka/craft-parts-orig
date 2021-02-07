@@ -90,6 +90,11 @@ class Part:
         return self._part_dir / "stage_packages"
 
     @property
+    def part_snaps_dir(self) -> Path:
+        """The subdirectory containing this part's snap packages directory."""
+        return self._part_dir / "stage_snaps"
+
+    @property
     def part_run_dir(self) -> Path:
         """The subdirectory containing this part's plugin scripts."""
         return self._part_dir / "run"
