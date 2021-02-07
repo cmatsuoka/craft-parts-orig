@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .states import PartState
+from .part_state import PartState
 
 
 def _schema_properties():

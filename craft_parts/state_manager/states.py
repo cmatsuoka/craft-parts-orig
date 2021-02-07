@@ -14,129 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The part state for a given step."""
+"""Helpers and definitions for lifecycle states."""
 
 import contextlib
 import os
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, yaml_utils
 
-
-class _State(yaml_utils.YAMLObject):
-    def __init__(self, yaml_data: Dict[str, Any] = None):
-        if yaml_data:
-            self.__dict__.update(yaml_data)
-
-    def __repr__(self):
-        items = sorted(self.__dict__.items())
-        strings = (": ".join((key, repr(value))) for key, value in items)
-        representation = ", ".join(strings)
-
-        return "{}({})".format(self.__class__.__name__, representation)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False
-
-
-class PartState(_State):
-    """The context used to run a step for a given part."""
-
-    def __init__(
-        self,
-        *,
-        part_properties=None,
-        project=None,
-        data: Dict[str, Any] = None,
-        files: Set[str] = None,
-        directories: Set[str] = None
-    ):
-        if data:
-            super().__init__(data)
-            return
-
-        super().__init__()
-
-        self._files = files
-        self._directories = directories
-        self.timestamp: datetime = datetime.now()
-
-        if not part_properties:
-            part_properties = {}
-
-        # TODO: handle this in a better way
-        if part_properties:
-            self.properties = self.properties_of_interest(part_properties)
-
-        if project:
-            self.project_options = self.project_options_of_interest(project)
-
-    @property
-    def files(self) -> Set[str]:
-        return self._files if self._files else set()
-
-    @property
-    def directories(self) -> Set[str]:
-        return self._directories if self._directories else set()
-
-    def properties_of_interest(self, part_properties):
-        """Extract the properties concerning this step from the options.
-
-        Note that these options come from the YAML for a given part.
-        """
-
-        raise NotImplementedError
-
-    def project_options_of_interest(self, project):
-        """Extract the options concerning this step from the project."""
-
-        raise NotImplementedError
-
-    def diff_properties_of_interest(self, other_properties):
-        """Return set of properties that differ."""
-
-        return _get_differing_keys(
-            self.properties, self.properties_of_interest(other_properties)
-        )
-
-    def diff_project_options_of_interest(self, other_project_options):
-        """Return set of project options that differ."""
-
-        return _get_differing_keys(
-            self.project_options,
-            self.project_options_of_interest(other_project_options),
-        )
-
-    def write(self, filepath: Path) -> None:
-        """Write this state to disk."""
-
-        os.makedirs(filepath.parent, exist_ok=True)
-        with open(filepath, "w") as f:
-            data = yaml_utils.dump(self.__dict__)
-            if data:
-                f.write(data)
-
-
-def _get_differing_keys(dict1, dict2):
-    differing_keys = set()
-    for key, dict1_value in dict1.items():
-        dict2_value = dict2.get(key)
-        if dict1_value != dict2_value:
-            differing_keys.add(key)
-
-    for key, dict2_value in dict2.items():
-        dict1_value = dict1.get(key)
-        if dict1_value != dict2_value:
-            differing_keys.add(key)
-
-    return differing_keys
+from .build_state import BuildState  # noqa: F401
+from .part_state import PartState
+from .prime_state import PrimeState  # noqa: F401
+from .pull_state import PullState  # noqa: F401
+from .stage_state import StageState  # noqa: F401
 
 
 def load_state(part: Part, step: Step) -> Optional[PartState]:

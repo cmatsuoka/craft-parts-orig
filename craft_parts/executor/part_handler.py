@@ -29,14 +29,7 @@ from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
-from craft_parts.state_manager import (
-    BuildState,
-    PartState,
-    PrimeState,
-    PullState,
-    StageState,
-    states,
-)
+from craft_parts.state_manager import PartState, states
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -190,7 +183,7 @@ class PartHandler:
         )
 
         # TODO: check what else should be part of the pull state
-        state = PullState(
+        state = states.PullState(
             property_names={},
             part_properties=self._part_properties,
             stage_packages=fetched_packages,
@@ -244,7 +237,7 @@ class PartHandler:
         # self._organize(overwrite=update)
 
         # TODO: check what else should be part of the build state
-        state = BuildState(
+        state = states.BuildState(
             property_names={},
             part_properties=self._part_properties,
             machine_assets=_get_machine_manifest(),
@@ -261,7 +254,7 @@ class PartHandler:
             workdir=self._part.stage_dir,
         )
 
-        return StageState(files=files, directories=dirs)
+        return states.StageState(files=files, directories=dirs)
 
     def _run_prime(self, step_info: StepInfo) -> PartState:
         # TODO: handle part replacements
@@ -273,7 +266,7 @@ class PartHandler:
             workdir=self._part.prime_dir,
         )
 
-        return PrimeState(files=files, directories=dirs)
+        return states.PrimeState(files=files, directories=dirs)
 
     def _run_step(
         self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path

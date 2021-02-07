@@ -16,7 +16,7 @@
 
 from typing import Any, Dict, Optional
 
-from .states import PartState
+from .part_state import PartState
 
 
 def _schema_properties():

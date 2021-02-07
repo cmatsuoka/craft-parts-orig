@@ -10,12 +10,12 @@ exclude =
     craft_parts.sources.*
     craft_parts.cache*
     craft_parts.state_manager.states
+    craft_parts.state_manager.*_state
     craft_parts.step_info
     craft_parts.steps
     craft_parts.utils
     craft_parts.schemas
-    craft_parts.repo.errors
-    craft_parts.repo._base
+    craft_parts.repo.*
 
 rmprefix = craft_parts.
 

@@ -26,7 +26,8 @@ from craft_parts.steps import Step
 from .dependencies import Dependency
 from .dirty_report import DirtyReport
 from .outdated_report import OutdatedReport
-from .states import PartState, load_state
+from .part_state import PartState
+from .states import load_state
 
 logger = logging.getLogger(__name__)
 
