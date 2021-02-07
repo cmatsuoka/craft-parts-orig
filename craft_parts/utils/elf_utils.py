@@ -292,6 +292,7 @@ class ElfFile:
         self.arch: Optional[ElfArchitectureTuple] = None
         self.interp: str = ""
         self.soname: str = ""
+        self.versions: Set[str] = set()
         self.needed: Dict[str, NeededLibrary] = dict()
         self.execstack_set: bool = False
         self.is_dynamic: bool = True
