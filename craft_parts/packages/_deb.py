@@ -32,7 +32,7 @@ from xdg import BaseDirectory  # type: ignore
 from craft_parts.utils import file_utils, os_utils
 
 from . import errors
-from ._base import BaseRepo, get_pkg_name_parts
+from ._base import BaseRepository, get_pkg_name_parts
 
 if sys.platform == "linux":
     # Ensure importing works on non-Linux.
@@ -219,7 +219,7 @@ def get_packages_in_base(*, base: str) -> List[str]:
     return package_list
 
 
-class Ubuntu(BaseRepo):
+class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
     @classmethod

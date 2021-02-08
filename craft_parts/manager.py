@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from craft_parts import errors, executor, parts, repo, sequencer
+from craft_parts import errors, executor, packages, parts, sequencer
 from craft_parts.actions import Action
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
@@ -125,7 +125,7 @@ class LifecycleManager:
         it shouldn't be updated between planning and execution.
         """
 
-        repo.Repo().update_package_list(
+        packages.Repository().update_package_list(
             application_name=self._application_name, target_arch=self._target_arch
         )
 

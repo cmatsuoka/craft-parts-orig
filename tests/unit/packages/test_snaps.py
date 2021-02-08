@@ -19,7 +19,7 @@ from unittest.mock import call
 
 import pytest
 
-from craft_parts.repo import errors, snaps
+from craft_parts.packages import errors, snaps
 
 # pylint: disable=missing-class-docstring
 
@@ -279,7 +279,7 @@ class TestSnapPackageLifecycle:
 
     def test_download_from_host(self, fake_snapd, mocker):
         fake_get_assertion = mocker.patch(
-            "craft_parts.repo.snaps.get_assertion", return_value=b"foo-assert"
+            "craft_parts.packages.snaps.get_assertion", return_value=b"foo-assert"
         )
 
         fake_snapd.snaps_result = [
@@ -314,7 +314,7 @@ class TestSnapPackageLifecycle:
 
     def test_download_from_host_dangerous(self, fake_snapd, mocker):
         fake_get_assertion = mocker.patch(
-            "craft_parts.repo.snaps.get_assertion", return_value=b"foo-assert"
+            "craft_parts.packages.snaps.get_assertion", return_value=b"foo-assert"
         )
         fake_snapd.snaps_result = [
             {
@@ -577,7 +577,7 @@ class TestInstalledSnaps:
 class TestSnapdNotInstalled:
     def test_get_installed_snaps(self, mocker):
         mocker.patch(
-            "craft_parts.repo.snaps.get_snapd_socket_path_template",
+            "craft_parts.packages.snaps.get_snapd_socket_path_template",
             return_value="http+unix://nonexisting",
         )
 

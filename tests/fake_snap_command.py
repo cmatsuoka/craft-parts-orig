@@ -16,7 +16,7 @@
 
 import subprocess
 
-import craft_parts.repo.snaps
+import craft_parts.packages.snaps
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=unused-argument
@@ -31,8 +31,8 @@ class FakeSnapCommand:
         self.refresh_success = True
         self._email = "-"
 
-        original_check_call = craft_parts.repo.snaps.check_call
-        original_check_output = craft_parts.repo.snaps.check_output
+        original_check_call = craft_parts.packages.snaps.check_call
+        original_check_output = craft_parts.packages.snaps.check_output
 
         def side_effect_check_call(cmd, *args, **kwargs):
             return side_effect(original_check_call, cmd, *args, **kwargs)
@@ -51,8 +51,10 @@ class FakeSnapCommand:
 
             return original(cmd, *args, **kwargs)
 
-        mocker.patch("craft_parts.repo.snaps.check_call", side_effect_check_call)
-        mocker.patch("craft_parts.repo.snaps.check_output", side_effect_check_output)
+        mocker.patch("craft_parts.packages.snaps.check_call", side_effect_check_call)
+        mocker.patch(
+            "craft_parts.packages.snaps.check_output", side_effect_check_output
+        )
 
     def login(self, email):
         self._email = email

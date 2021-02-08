@@ -32,11 +32,11 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-class BaseRepo:
-    """Base implementation for a platform specific repo handler.
+class BaseRepository:
+    """Base implementation for a platform specific repository handler.
 
-    Generally any new repo handling system would inherit from this and
-    implement:
+    Generally any new repository handling system would inherit from
+    this and implement:
 
     - get
     - unpack
@@ -70,7 +70,7 @@ class BaseRepo:
         :param str file_path: the absolute path to the file to search for.
         :returns: package name that provides file_path.
         :rtype: str
-        :raises craft_parts.repo.errors.FileProviderNotFound:
+        :raises craft_parts.packages.errors.FileProviderNotFound:
             if file_path is not provided by any package.
         """
         raise errors.NoNativeBackendError()
@@ -103,9 +103,9 @@ class BaseRepo:
         """Refresh the build packages cache.
 
         If refreshing is not possible
-        craft_parts.repo.errors.CacheUpdateFailedError should be raised
+        craft_parts.packages.errors.CacheUpdateFailedError should be raised
 
-        :raises craft_parts.repo.errors.NoNativeBackendError:
+        :raises craft_parts.packages.errors.NoNativeBackendError:
             if the method is not implemented in the subclass.
         """
         raise errors.NoNativeBackendError()
@@ -121,17 +121,17 @@ class BaseRepo:
         in the form "package=version".
 
         If one of the packages cannot be found
-        craft_parts.repo.errors.BuildPackageNotFoundError should be raised.
+        craft_parts.packages.errors.BuildPackageNotFoundError should be raised.
         If dependencies for a package cannot be resolved
-        craft_parts.repo.errors.PackageBrokenError should be raised.
+        craft_parts.packages.errors.PackageBrokenError should be raised.
         If installing a package on the host failed
-        craft_parts.repo.errors.BuildPackagesNotInstalledError should be raised.
+        craft_parts.packages.errors.BuildPackagesNotInstalledError should be raised.
 
         :param package_names: a list of package names to install.
         :type package_names: a list of strings.
         :return: a list with the packages installed and their versions.
         :rtype: list of strings.
-        :raises craft_parts.repo.errors.NoNativeBackendError:
+        :raises craft_parts.packages.errors.NoNativeBackendError:
             if the method is not implemented in the subclass.
         """
         raise errors.NoNativeBackendError()
@@ -300,7 +300,7 @@ class BaseRepo:
         _rewrite_python_shebangs(unpackdir)
 
 
-class DummyRepo(BaseRepo):
+class DummyRepository(BaseRepository):
     """A dummy repository."""
 
     @classmethod

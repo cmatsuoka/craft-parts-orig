@@ -62,7 +62,7 @@ class AptCache(ContextDecorator):
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         else:
             # Setting rootdir="/" is needed otherwise the previously set rootdir will
-            # be used and repo._deb.get_installed_packages() will return an empty list.
+            # be used and _deb.get_installed_packages() will return an empty list.
             self.cache = apt.cache.Cache(rootdir="/")
         return self
 

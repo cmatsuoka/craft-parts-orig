@@ -19,7 +19,6 @@
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
 from . import _platform
-from ._base import BaseRepo  # noqa: F401
 
 # pylint: disable=import-outside-toplevel
 
@@ -28,15 +27,15 @@ from ._base import BaseRepo  # noqa: F401
 #     from ._deb import Ubuntu  # noqa
 
 
-def _get_repo_for_platform():
+def _get_repository_for_platform():
     if _platform._is_deb_based():
         from ._deb import Ubuntu
 
         return Ubuntu
 
-    from ._base import DummyRepo
+    from ._base import DummyRepository
 
-    return DummyRepo
+    return DummyRepository
 
 
-Repo = _get_repo_for_platform()
+Repository = _get_repository_for_platform()

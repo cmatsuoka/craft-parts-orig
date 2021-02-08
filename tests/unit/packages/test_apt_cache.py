@@ -20,7 +20,7 @@ from pathlib import Path
 from unittest import mock
 from unittest.mock import call
 
-from craft_parts.repo.apt_cache import AptCache
+from craft_parts.packages.apt_cache import AptCache
 
 # pylint: disable=missing-class-docstring
 # pylint: disable=too-few-public-methods
@@ -70,7 +70,7 @@ class TestMockedApt:
     def test_stage_cache(self, tmpdir, mocker):
         stage_cache = Path(tmpdir, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
-        fake_apt = mocker.patch("craft_parts.repo.apt_cache.apt")
+        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
         with AptCache(stage_cache=stage_cache) as apt_cache:
             apt_cache.update()
@@ -92,7 +92,7 @@ class TestMockedApt:
         ]
 
     def test_stage_cache_in_snap(self, tmpdir, mocker):
-        fake_apt = mocker.patch("craft_parts.repo.apt_cache.apt")
+        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
         stage_cache = Path(tmpdir, "cache")
         stage_cache.mkdir(exist_ok=True, parents=True)
@@ -139,7 +139,7 @@ class TestMockedApt:
         ]
 
     def test_host_cache_setup(self, mocker):
-        fake_apt = mocker.patch("craft_parts.repo.apt_cache.apt")
+        fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
         with AptCache() as _:
             pass

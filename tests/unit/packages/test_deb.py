@@ -23,7 +23,7 @@ from unittest.mock import call
 
 import pytest
 
-from craft_parts.repo import _deb, errors
+from craft_parts.packages import _deb, errors
 
 # pylint: disable=line-too-long
 # pylint: disable=missing-class-docstring
@@ -41,7 +41,7 @@ def fake_apt_cache(mocker):
     def get_installed_version(package_name, resolve_virtual_packages=False):
         return "1.0" if "installed" in package_name else None
 
-    fake = mocker.patch("craft_parts.repo._deb.AptCache")
+    fake = mocker.patch("craft_parts.packages._deb.AptCache")
     fake.return_value.__enter__.return_value.get_installed_version.side_effect = (
         get_installed_version
     )
@@ -67,7 +67,7 @@ def cache_dirs(mocker, tmpdir):
     debs_path.mkdir(parents=True, exist_ok=False)
 
     mocker.patch(
-        "craft_parts.repo._deb.get_cache_dirs",
+        "craft_parts.packages._deb.get_cache_dirs",
         return_value=(stage_cache_path, debs_path),
     )
 
@@ -78,7 +78,7 @@ def cache_dirs(mocker, tmpdir):
         yield str(temp_dir)
 
     mocker.patch(
-        "craft_parts.repo._deb.tempfile.TemporaryDirectory",
+        "craft_parts.packages._deb.tempfile.TemporaryDirectory",
         new=fake_tempdir,
     )
 
@@ -386,7 +386,7 @@ class TestBuildPackages:
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
-        mocker.patch("craft_parts.repo._deb.Ubuntu.refresh_build_packages")
+        mocker.patch("craft_parts.packages._deb.Ubuntu.refresh_build_packages")
         fake_run.side_effect = CalledProcessError(100, "apt-get")
 
         with pytest.raises(errors.BuildPackagesNotInstalledError) as raised:
@@ -465,7 +465,7 @@ class TestGetPackagesInBase:
     def test_package_list_from_dpkg_list(self, tmpdir, mocker):
         dpkg_list_path = Path(tmpdir, "dpkg.list")
         mocker.patch(
-            "craft_parts.repo._deb._get_dpkg_list_path", return_value=dpkg_list_path
+            "craft_parts.packages._deb._get_dpkg_list_path", return_value=dpkg_list_path
         )
         with dpkg_list_path.open("w") as dpkg_list_file:
             print(
@@ -499,7 +499,7 @@ class TestGetPackagesInBase:
     def test_package_empty_list_from_missing_dpkg_list(self, tmpdir, mocker):
         dpkg_list_path = Path(tmpdir, "dpkg.list")
         mocker.patch(
-            "craft_parts.repo._deb._get_dpkg_list_path", return_value=dpkg_list_path
+            "craft_parts.packages._deb._get_dpkg_list_path", return_value=dpkg_list_path
         )
 
         assert _deb.get_packages_in_base(base="core22") == list()

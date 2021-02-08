@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from craft_parts import callbacks, errors, plugins, repo, sources
+from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
@@ -70,7 +70,7 @@ class PartHandler:
             part.part_src_dir,
             self._part_properties,
         )
-        self._package_repo = repo.Repo()
+        self._package_repo = packages.Repository()
 
     def clean_step(self, *, step: Step) -> None:
         """Remove the work files and the state of the given step."""
@@ -196,7 +196,7 @@ class PartHandler:
         _remove(self._part.part_build_dir)
 
         build_packages = _get_build_packages(self._part, self._package_repo)
-        repo.Repo.install_build_packages(build_packages)
+        packages.Repository.install_build_packages(build_packages)
 
         # unpack stage packages/snaps
         self._package_repo.unpack_stage_packages(
@@ -389,8 +389,8 @@ def _get_build_packages(part: Part, repository) -> List[str]:
 def _get_machine_manifest() -> Dict[str, Any]:
     return {
         "uname": os_utils.get_system_info(),
-        "installed-packages": sorted(repo.Repo.get_installed_packages()),
-        "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
+        "installed-packages": sorted(packages.Repository.get_installed_packages()),
+        "installed-snaps": sorted(packages.snaps.get_installed_snaps()),
     }
 
 
