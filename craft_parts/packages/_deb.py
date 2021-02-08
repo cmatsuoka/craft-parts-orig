@@ -258,9 +258,7 @@ class Ubuntu(BaseRepository):
             logger.debug("Executing: %s", cmd)
             subprocess.check_call(cmd)
         except subprocess.CalledProcessError as call_error:
-            raise errors.CacheUpdateFailedError(
-                "failed to run apt update"
-            ) from call_error
+            raise errors.CacheUpdateFailed("failed to run apt update") from call_error
 
     @classmethod
     def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
@@ -294,8 +292,8 @@ class Ubuntu(BaseRepository):
         with AptCache() as apt_cache:
             try:
                 apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFoundError as error:
-                raise errors.BuildPackageNotFoundError(error.package_name)
+            except errors.PackageNotFound as error:
+                raise errors.BuildPackageNotFound(error.package_name)
 
             return apt_cache.get_packages_marked_for_installation()
 
@@ -307,11 +305,11 @@ class Ubuntu(BaseRepository):
         :type package_names: a list of strings.
         :return: a list with the packages installed and their versions.
         :rtype: list of strings.
-        :raises snapcraft.repo.errors.BuildPackageNotFoundError:
+        :raises craft_parts.packages.errors.BuildPackageNotFound:
             if one of the packages was not found.
-        :raises snapcraft.repo.errors.PackageBrokenError:
+        :raises craft_parts.packages.errors.PackageBroken:
             if dependencies for one of the packages cannot be resolved.
-        :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
+        :raises craft_parts.packages.errors.BuildPackagesNotInstalled:
             if installing the packages on the host failed.
         """
         install_required = False
@@ -362,7 +360,7 @@ class Ubuntu(BaseRepository):
         try:
             subprocess.check_call(apt_command + package_names, env=env)
         except subprocess.CalledProcessError as err:
-            raise errors.BuildPackagesNotInstalledError(packages=package_names) from err
+            raise errors.BuildPackagesNotInstalled(packages=package_names) from err
 
         versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
         try:

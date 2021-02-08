@@ -219,9 +219,12 @@ class TestPartOrdering:
         p2 = Part("bar", {"after": ["baz"]})
         p3 = Part("baz", {"after": ["bar"]})
 
-        with pytest.raises(errors.PartDependencyCycle) as ei:
+        with pytest.raises(errors.PartDependencyCycle) as raised:
             parts.sort_parts([p1, p2, p3])
-        assert ei.value.get_brief() == "A circular dependency chain was detected."
+        assert (
+            str(raised.value) == "A circular dependency chain was detected. "
+            "Please review the parts definition to remove dependency cycles."
+        )
 
 
 class TestPartHelpers:
@@ -235,11 +238,11 @@ class TestPartHelpers:
         x = parts.part_by_name("bar", [p1, p2, p3])
         assert x == p2
 
-        with pytest.raises(errors.InvalidPartName) as ei:
+        with pytest.raises(errors.InvalidPartName) as raised:
             parts.part_by_name("invalid", [p1, p2, p3])
         assert (
-            ei.value.get_brief()
-            == "A part named 'invalid' is not defined in the parts list."
+            str(raised.value) == "A part named 'invalid' is not defined "
+            "in the parts list."
         )
 
     def test_part_dependencies(self):
@@ -254,9 +257,9 @@ class TestPartHelpers:
         x = parts.part_dependencies("foo", part_list=[p1, p2, p3, p4], recursive=True)
         assert x == {p2, p3, p4}
 
-        with pytest.raises(errors.InvalidPartName) as ei:
+        with pytest.raises(errors.InvalidPartName) as raised:
             parts.part_dependencies("invalid", part_list=[p1, p2, p3, p4])
         assert (
-            ei.value.get_brief()
-            == "A part named 'invalid' is not defined in the parts list."
+            str(raised.value) == "A part named 'invalid' is not defined "
+            "in the parts list."
         )

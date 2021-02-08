@@ -27,11 +27,17 @@ from craft_parts.utils import file_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(self, entries: List[str]):
+    def __init__(self, entries: List[str], *, name: str = ""):
+        self._name = name
         self._list = entries
 
     def __repr__(self):
         return f"Fileset({self._list})"
+
+    @property
+    def name(self) -> str:
+        """Return the fileset name."""
+        return self._name
 
     @property
     def entries(self) -> List[str]:
@@ -141,7 +147,7 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
     # paths must be relative
     for d in includes + excludes:
         if os.path.isabs(d):
-            raise errors.FilesetError(f"path {d!r} must be relative.")
+            raise errors.FilesetError(fileset.name, f"path {d!r} must be relative.")
 
     includes = includes or ["*"]
 

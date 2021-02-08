@@ -18,8 +18,9 @@
 
 from typing import Tuple
 
-from craft_parts import errors
 from craft_parts.utils import file_utils
+
+from . import errors
 
 
 def split_checksum(source_checksum: str) -> Tuple:

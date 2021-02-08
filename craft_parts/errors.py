@@ -16,475 +16,252 @@
 
 """The exceptions that can be raised when using craft_parts."""
 
-import shlex
-from abc import ABC, abstractmethod
-from typing import List, Optional
+from abc import ABC
+from pathlib import Path
+from typing import List, Union
 
 import jsonschema  # type: ignore
 
 from craft_parts.utils import schema_helpers
 
 
-# pylint: disable=no-self-use
-class _Error(Exception, ABC):
-    """Base class for craft_parts exceptions."""
+class CraftPartsError(Exception, ABC):
+    """Base class for Craft Parts exceptions."""
 
-    @abstractmethod
-    def get_brief(self) -> str:
-        """Concise, single-line description of the error."""
+    fmt = "Daughter classes should redefine this"
 
-    @abstractmethod
-    def get_resolution(self) -> str:
-        """Concise suggestion for user to resolve error."""
+    def __init__(self, **kwargs) -> None:
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    def get_details(self) -> Optional[str]:
-        """Detailed technical information, if required for user to debug issue."""
-        return None
-
-    def get_docs_url(self) -> Optional[str]:
-        """Link to documentation, if applicable."""
-        return None
-
-    def get_reportable(self) -> bool:
-        """Whether this error is reportable (an exception trace should be shown)."""
-        return False
-
-    def __str__(self) -> str:
-        return self.get_brief()
+    def __str__(self):
+        return self.fmt.format([], **self.__dict__)
 
 
-class _ReportableError(_Error, ABC):
-    """Helper class for reportable exceptions."""
+class CraftPartsReportableError(CraftPartsError):
+    """Base class for reportable Craft Parts exceptions."""
 
-    def get_reportable(self) -> bool:
-        return True
-
-
-# pylint: enable=no-self-use
+    pass
 
 
-class InternalError(_ReportableError):
+class InternalError(CraftPartsReportableError):
     """Internal error."""
 
-    def __init__(self, msg: str):
-        super().__init__()
-        self._msg = msg
+    fmt = "Internal error: {message}"
 
-    def get_brief(self) -> str:
-        return f"Internal error: {self._msg}"
-
-    def get_resolution(self) -> str:
-        return "Please contact the developers to report this bug."
+    def __init__(self, message: str):
+        super().__init__(message=message)
 
 
-class InvalidArchitecture(_Error):
+class InvalidArchitecture(CraftPartsError):
     """The machine architecture is not supported.
 
     :param arch_name: the unsupported architecture name.
     """
 
+    fmt = "Architecture {arch_name!r} is not supported."
+
     def __init__(self, arch_name: str):
-        super().__init__()
-        self._arch_name = arch_name
-
-    def get_brief(self) -> str:
-        return f"Architecture {self._arch_name!r} is invalid."
-
-    def get_resolution(self) -> str:
-        return "Make sure the requested architecture is supported."
+        super().__init__(arch_name=arch_name)
 
 
-class PartDependencyCycle(_Error):
+class PartDependencyCycle(CraftPartsError):
     """Dependency cycles have been detected in the parts definition."""
 
-    def get_brief(self) -> str:
-        return "A circular dependency chain was detected."
+    fmt = (
+        "A circular dependency chain was detected. Please review the parts "
+        "definition to remove dependency cycles."
+    )
 
-    def get_resolution(self) -> str:
-        return "Review the parts definition to remove dependency cycles."
 
-
-class InvalidPartName(_Error):
+class InvalidPartName(CraftPartsError):
     """An operation was requested on a part that's in the parts specification.
 
     :param part_name: the invalid part name.
     """
 
+    fmt = "A part named {part_name!r} is not defined in the parts list."
+
     def __init__(self, part_name: str):
-        super().__init__()
-        self._part_name = part_name
-
-    def get_brief(self) -> str:
-        return f"A part named {self._part_name!r} is not defined in the parts list."
-
-    def get_resolution(self) -> str:
-        return "Check for typos in the part name or in the parts definition."
+        super().__init__(part_name=part_name)
 
 
-class InvalidPluginAPIVersion(_Error):
+class InvalidPluginAPIVersion(CraftPartsError):
     """A request was made to use an unsupported plugin API version.
 
     :param version: the invalid plugin API version.
     """
 
+    fmt = "Plugin version {version!r} is not supported."
+
     def __init__(self, version: str):
-        super().__init__()
-        self._version = version
-
-    def get_brief(self) -> str:
-        return f"Plugin version {self._version!r} does not exist."
-
-    def get_resolution(self) -> str:
-        return "Check for typos in the plugin version."
+        super().__init__(version=version)
 
 
-class InvalidPlugin(_Error):
+class InvalidPlugin(CraftPartsError):
     """A request was made to use a plugin that's not defined.
 
     :param plugin_name: The invalid plugin name."
     """
 
+    fmt = "A plugin named {plugin_name!r} does not exist."
+
     def __init__(self, plugin_name: str):
-        super().__init__()
-        self._plugin_name = plugin_name
-
-    def get_brief(self) -> str:
-        return f"Plugin {self._plugin_name!r} does not exist."
-
-    def get_resolution(self) -> str:
-        return (
-            "Check for typos in the plugin name and make sure the plugin is supported."
-        )
+        super().__init__(plugin_name=plugin_name)
 
 
-class PluginBuildError(_ReportableError):
+class PluginBuildError(CraftPartsReportableError):
     """An exception to raise when the PluginV2 build fails at runtime.
 
     :param part_name: the name of the part where the plugin build failed.
     """
 
+    fmt = "Failed to run the build script for part {part_name!r}."
+
     def __init__(self, *, part_name: str) -> None:
-        super().__init__()
-        self._part_name = part_name
-
-    def get_brief(self) -> str:
-        return f"Failed to build {self._part_name!r}."
-
-    def get_resolution(self) -> str:
-        return "Check the build logs and ensure the part configuration is correct."
+        super().__init__(part_name=part_name)
 
 
-class ScriptletRunError(_Error):
+class ScriptletRunError(CraftPartsError):
     """A scriptlet execution failed.
 
+    :param part_name: the name of the part where the scriptlet execution failed.
     :param scriptlet_name: the name of the scriptlet that failed to execute.
-    :param code: the execution error code.
+    :param exit_code: the execution error code.
     """
 
-    def __init__(self, scriptlet_name: str, code: int):
-        super().__init__()
-        self._name = scriptlet_name
-        self._code = code
+    fmt = "The {scriptlet_name} scriptlet in part {part_name!r} failed with code {exit_code}."
 
-    def get_brief(self) -> str:
-        return f"{self._name} scriptlet execution failed with code {self._code}."
-
-    def get_resolution(self) -> str:
-        return "Check the build logs and make sure the scriptlet is correct."
+    def __init__(self, part_name: str, scriptlet_name: str, exit_code: int):
+        super().__init__(
+            part_name=part_name, scriptlet_name=scriptlet_name, exit_code=exit_code
+        )
 
 
-class InvalidControlAPICall(_Error):
+class InvalidControlAPICall(CraftPartsError):
     """A control API call was made with invalid parameters.
 
     :param scriptlet_name: the name of the scriptlet that originated the call.
+    :param message: the error message.
     """
 
-    def __init__(self, scriptlet_name: str, message: str):
-        super().__init__()
-        self._name = scriptlet_name
-        self._message = message
+    fmt = (
+        "The {scriptlet_name} in part {part_name!r} executed an invallid "
+        "control API call: {self._message}"
+    )
 
-    def get_brief(self) -> str:
-        return f"{self._name} executed an invallid control API call: {self._message}"
+    def __init__(self, part_name, scriptlet_name: str, message: str):
+        super().__init__(
+            part_name=part_name, scriptlet_name=scriptlet_name, message=message
+        )
 
-    def get_resolution(self) -> str:
-        return "Verify the scriptlet commands and make sure control calls are correct."
 
-
-class InvalidEnvironment(_Error):
+class InvalidEnvironment(CraftPartsError):
     """The environment is incorrect.
 
     :param message: the error message.
     """
 
+    fmt = "Environment error: {message}"
+
     def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Environment error: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Check the environment and make sure it's correct."
+        super().__init__(message=message)
 
 
-class CallbackRegistration(_Error):
+class CallbackRegistration(CraftPartsError):
     """Error in callback function registration.
 
     :param message: the error message.
     """
 
+    fmt = "Callback registration error: {message}"
+
     def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Callback registration error: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "The same callback shouldn't be registered more than once."
+        super().__init__(message=message)
 
 
-class SourceUpdateUnsupported(_Error):
-    """Source don't support updating.
-
-    :param source: the source specification.
-    """
-
-    def __init__(self, source):
-        super().__init__()
-        self._source = source
-
-    def get_brief(self) -> str:
-        return f"Cannot update source: {self._source!r} sources don't support updating."
-
-    # TODO: add a resolution string
-    def get_resolution(self) -> str:
-        return ""
-
-
-class InvalidSourceType(_Error):
-    """Source type is unknown.
-
-    :param source: the source specification.
-    """
-
-    def __init__(self, source):
-        super().__init__()
-        self._source = source
-
-    def get_brief(self) -> str:
-        return f"Source {self._source!r} type is not recognized."
-
-    # TODO: add a resolution string
-    def get_resolution(self) -> str:
-        return "Verify the source specification and the supported source types."
-
-
-class PullError(_Error):
-    """Failed to pull source."""
-
-    def __init__(self, command, exit_code):
-        super().__init__()
-
-        if isinstance(command, list):
-            self._command = " ".join(shlex.quote(i) for i in command)
-        else:
-            self._command = command
-
-        self._code = exit_code
-
-    def get_brief(self) -> str:
-        return (
-            "Failed to pull source: command {self._command!r} exited with "
-            "code {self._code!r}."
-        )
-
-    def get_resolution(self) -> str:
-        return "Check the sources and try again."
-
-
-class CopyFileNotFound(_Error):
+class CopyFileNotFound(CraftPartsError):
     """An attempt was made to copy a file that doesn't exist."""
 
+    fmt = "Failed to copy {name!r}: no such file or directory."
+
     def __init__(self, name):
-        super().__init__()
-        self._name = name
-
-    def get_brief(self) -> str:
-        return "Failed to copy {self._name!r}: no such file or directory."
-
-    def get_resolution(self) -> str:
-        return "Check the path and try again."
+        super().__init__(name=name)
 
 
-class ChecksumMismatch(_Error):
-    """A checksum doesn't match the expected value."""
+class FilesetError(CraftPartsError):
+    """An invalid fileset operation was performed."""
 
-    def __init__(self, expected: str, actual: str):
-        super().__init__()
-        self._expected = expected
-        self._actual = actual
+    fmt = "File specification error in {name!r}: {message}"
 
-    def get_brief(self) -> str:
-        return f"Expected the digest to be {self._expected}, but it was {self._actual}"
-
-    def get_resolution(self) -> str:
-        return "Make sure the source file has not been modified or corrupt."
+    def __init__(self, name: str, message: str):
+        super().__init__(name=name, message=message)
 
 
-class NetworkError(_Error):
-    """A network request failed."""
+class OsReleaseIdError(CraftPartsError):
 
-    def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Network operation failed: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Make sure network is available and properly configured."
+    fmt = "Unable to determine host OS ID"
 
 
-class SourceNotFound(_Error):
-    """The source could not be pulled."""
+class OsReleaseNameError(CraftPartsError):
 
-    def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Failed to pull source: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Make sure the source path is correct and that it is accessible."
+    fmt = "Unable to determine host OS name"
 
 
-class InvalidSourceOption(_Error):
-    """The specified options are invalid for the chosen source type."""
+class OsReleaseVersionIdError(CraftPartsError):
 
-    def __init__(self, source_type: str, option: str):
-        super().__init__()
-        self._source_type = source_type
-        self._option = option
-
-    def get_brief(self) -> str:
-        return f"{self._option!r} cannot be used with a {self._source_type} source."
-
-    def get_resolution(self) -> str:
-        return "Make sure source options are correct and try again."
+    fmt = "Unable to determine host OS version ID"
 
 
-class FilesetError(_Error):
-    """The specified options are invalid for the chosen source type."""
+class OsReleaseCodenameError(CraftPartsError):
 
-    def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"File specification error: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Make sure files are correctly specified and try again."
+    fmt = "Unable to determine host OS version codename"
 
 
-class PackageNotFound(_Error):
-    """The package is not available."""
-
-    def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return self._message
-
-    def get_resolution(self) -> str:
-        return "Make sure the package name is correct and it is accessible."
-
-
-class OsReleaseError(_Error):
-    """Failed to recover OS release information."""
-
-    def __init__(self, entry: str):
-        super().__init__()
-        self._entry = entry
-
-    def get_brief(self) -> str:
-        return f"Unable to determine the host OS {self._entry}."
-
-    def get_resolution(self) -> str:
-        return "Make sure the OS release file exists and is accessible."
-
-
-class MissingTool(_Error):
+class MissingTool(CraftPartsError):
     """A required tool was not found."""
 
+    fmt = "A required tool could not be found: {command_name!r}."
+
     def __init__(self, command_name: str):
-        super().__init__()
-        self._command_name = command_name
-
-    def get_brief(self) -> str:
-        return (
-            f"A tool snapcraft depends on could not be found: {self._command_name!r}."
-        )
-
-    def get_resolution(self) -> str:
-        return "Make sure the tool is installed and available, and try again."
+        super().__init__(command_name=command_name)
 
 
-class StagePackageError(_Error):
+class StagePackageError(CraftPartsError):
     """Error when installing stage packages."""
 
+    fmt = "Stage package error in part {part_name!r}: {message}"
+
     def __init__(self, part_name: str, message: str):
-        super().__init__()
-        self._part_name = part_name
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Stage package error in part {self._part_name!r}: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Make sure the stage packages are correct and available, and try again."
+        super().__init__(part_name=part_name, message=message)
 
 
-class CorruptedElfFile(_Error):
-    def __init__(self, path: str, error: Exception) -> None:
-        super().__init__()
-        self._path = path
-        self._message = str(error)
+class CorruptedElfFile(CraftPartsError):
 
-    def get_brief(self) -> str:
-        return f"Unable to parse ELF file {self._path!r}: {self._message}"
+    fmt = "Unable to parse ELF file {path!r}: {message}"
 
-    def get_resolution(self) -> str:
-        return (
-            "Remove the suspect files from the snap using the `stage` or "
-            "`prime` keyword."
-        )
+    def __init__(self, path: str, message: str) -> None:
+        super().__init__(path=path, message=message)
 
 
-class SchemaValidation(_Error):
+class SchemaNotFound(CraftPartsReportableError):
+
+    fmt = "Unable to find the schema definition file {path!r}."
+
+    def __init__(self, path: Union[str, Path]) -> None:
+        super().__init__(path=path)
+
+
+class SchemaValidationError(CraftPartsError):
     """The parts data failed schema validation.
 
     :param message: the error message from the schema validator.
     """
 
+    fmt = "Schema validation error: {message}"
+
     def __init__(self, message: str):
-        super().__init__()
-        self._message = message
-
-    def get_brief(self) -> str:
-        return f"Schema validation error: {self._message}"
-
-    def get_resolution(self) -> str:
-        return "Check the parts definition and make sure it's correct."
-
-    @property
-    def message(self):
-        """The schema validation error message."""
-        return self._message
+        super().__init__(message=message)
 
     @classmethod
     def from_validation_error(cls, error: jsonschema.ValidationError):
@@ -512,7 +289,6 @@ class SchemaValidation(_Error):
         elif cause:
             messages.append(cause)
         else:
-
             messages.append(error.message)
 
         return cls(" ".join(messages))

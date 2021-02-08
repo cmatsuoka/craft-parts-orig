@@ -243,7 +243,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["ID"]
 
-        raise errors.OsReleaseError("ID")
+        raise errors.OsReleaseIdError()
 
     def name(self) -> str:
         """Return the OS name
@@ -253,7 +253,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["NAME"]
 
-        raise errors.OsReleaseError("name")
+        raise errors.OsReleaseNameError()
 
     def version_id(self) -> str:
         """Return the OS version ID
@@ -263,7 +263,7 @@ class OsRelease:
         with contextlib.suppress(KeyError):
             return self._os_release["VERSION_ID"]
 
-        raise errors.OsReleaseError("version ID")
+        raise errors.OsReleaseVersionIdError()
 
     def version_codename(self) -> str:
         """Return the OS version codename
@@ -285,4 +285,4 @@ class OsRelease:
         if ver_id and release in _ID_TO_UBUNTU_CODENAME:
             return _ID_TO_UBUNTU_CODENAME[ver_id]
 
-        raise errors.OsReleaseError("version codename")
+        raise errors.OsReleaseCodenameError()

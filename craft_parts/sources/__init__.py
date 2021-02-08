@@ -80,7 +80,7 @@ import re
 import sys
 from typing import Any, Dict, Type, Union
 
-from craft_parts import errors
+from . import errors
 
 if sys.platform == "linux":
     # from .bazaar import Bazaar  # noqa: F401

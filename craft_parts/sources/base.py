@@ -24,10 +24,11 @@ from typing import List, Optional
 
 import requests
 
-from craft_parts import errors, utils
+from craft_parts import utils
 from craft_parts.cache import FileCache
 from craft_parts.utils import url_utils
 
+from . import errors
 from .checksum import split_checksum, verify_checksum
 
 
@@ -209,7 +210,7 @@ class FileBase(Base):
                 request = requests.get(self.source, stream=True, allow_redirects=True)
                 request.raise_for_status()
             except requests.exceptions.RequestException as err:
-                raise errors.NetworkError(
+                raise errors.NetworkRequestError(
                     message=f"network request failed (request={err.request!r}, "
                     "response={err.response!r}"
                 )

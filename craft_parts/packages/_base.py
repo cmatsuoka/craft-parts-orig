@@ -103,7 +103,7 @@ class BaseRepository:
         """Refresh the build packages cache.
 
         If refreshing is not possible
-        craft_parts.packages.errors.CacheUpdateFailedError should be raised
+        craft_parts.packages.errors.CacheUpdateFailed should be raised
 
         :raises craft_parts.packages.errors.NoNativeBackendError:
             if the method is not implemented in the subclass.
@@ -121,11 +121,11 @@ class BaseRepository:
         in the form "package=version".
 
         If one of the packages cannot be found
-        craft_parts.packages.errors.BuildPackageNotFoundError should be raised.
+        craft_parts.packages.errors.BuildPackageNotFound should be raised.
         If dependencies for a package cannot be resolved
-        craft_parts.packages.errors.PackageBrokenError should be raised.
+        craft_parts.packages.errors.PackageBroken should be raised.
         If installing a package on the host failed
-        craft_parts.packages.errors.BuildPackagesNotInstalledError should be raised.
+        craft_parts.packages.errors.BuildPackagesNotInstalled should be raised.
 
         :param package_names: a list of package names to install.
         :type package_names: a list of strings.

@@ -230,7 +230,7 @@ class Library:
             elf_file = ElfFile(path=resolved_path)
         except errors.CorruptedElfFile as error:
             # Log if the ELF file seems corrupted.
-            logger.warning(error.get_brief())
+            logger.warning(error)
             return False
 
         return elf_file.arch == self.arch
@@ -306,9 +306,9 @@ class ElfFile:
         try:
             logger.debug("Extracting ELF attributes: %s", path)
             self._extract_attributes()
-        except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
-            logger.debug("Extracting ELF attributes exception: %s", str(exception))
-            raise errors.CorruptedElfFile(path, exception)
+        except (UnicodeDecodeError, AttributeError, ConstructError) as error:
+            logger.debug("Extracting ELF attributes exception: %s", str(error))
+            raise errors.CorruptedElfFile(path, str(error))
 
     @classmethod
     def is_elf(cls, path: str) -> bool:
@@ -558,9 +558,9 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
         except elftools.common.exceptions.ELFError:
             # Ignore invalid ELF files.
             continue
-        except errors.CorruptedElfFile as exception:
+        except errors.CorruptedElfFile as error:
             # Log if the ELF file seems corrupted
-            logger.warning(exception.get_brief())
+            logger.warning(str(error))
             continue
 
         # If ELF has dynamic symbols, add it.

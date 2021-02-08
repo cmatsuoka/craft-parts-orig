@@ -14,45 +14,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional, Sequence
+"""Exceptions the packages handling subsystem."""
+
+from abc import ABC
+from typing import List, Sequence
 
 from craft_parts import errors
 from craft_parts.utils import os_utils
 
 from ._platform import _is_deb_based
 
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
 
-class RepoError(Exception):
-    """DEPRECATED: Use SnapcraftException instead."""
-
-    fmt = "Daughter classes should redefine this"
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__()
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __str__(self):
-        return self.fmt.format([], **self.__dict__)
-
-    def get_exit_code(self):
-        """Exit code to use if this exception causes Snapcraft to exit."""
-        return 2
+# Enforce our constructor arguments
+# pylint: disable=useless-super-delegation
 
 
-class NoNativeBackendError(RepoError):
+class PackagesError(errors.CraftPartsError, ABC):
+    pass
+
+
+class NoNativeBackendError(PackagesError):
 
     fmt = "Native builds aren't supported on {distro}."
 
     def __init__(self):
         try:
             distro = os_utils.OsRelease().name()
-        except errors.OsReleaseError:
+        except errors.OsReleaseNameError:
             distro = "this system"
         super().__init__(distro=distro)
 
 
-class CacheUpdateFailedError(RepoError):
+class CacheUpdateFailed(PackagesError):
 
     fmt = (
         "Failed to update the package cache: "
@@ -60,6 +55,7 @@ class CacheUpdateFailedError(RepoError):
         "Check that the sources on your host are configured correctly."
     )
 
+    # pylint: disable=redefined-outer-name
     def __init__(self, errors: str) -> None:
         if errors:
             errors = "\n\n{}\n\n".format(errors.replace(", ", "\n"))
@@ -67,8 +63,10 @@ class CacheUpdateFailedError(RepoError):
             errors = " "
         super().__init__(errors=errors)
 
+    # pylint: enable=redefined-outer-name
 
-class FileProviderNotFound(RepoError):
+
+class FileProviderNotFound(PackagesError):
 
     fmt = "{file_path} is not provided by any package."
 
@@ -76,7 +74,7 @@ class FileProviderNotFound(RepoError):
         super().__init__(file_path=file_path)
 
 
-class BuildPackageNotFoundError(RepoError):
+class BuildPackageNotFound(PackagesError):
 
     fmt = "Could not find a required package in 'build-packages': {package}"
 
@@ -84,7 +82,7 @@ class BuildPackageNotFoundError(RepoError):
         super().__init__(package=package)
 
 
-class BuildPackagesNotInstalledError(RepoError):
+class BuildPackagesNotInstalled(PackagesError):
 
     fmt = "Could not install all requested build packages: {packages}"
 
@@ -92,7 +90,7 @@ class BuildPackagesNotInstalledError(RepoError):
         super().__init__(packages=" ".join(packages))
 
 
-class PackageFetchError(RepoError):
+class PackageFetchError(PackagesError):
 
     fmt = "Package fetch error: {message}"
 
@@ -100,7 +98,7 @@ class PackageFetchError(RepoError):
         super().__init__(message=message)
 
 
-class PackageBrokenError(RepoError):
+class PackageBroken(PackagesError):
 
     fmt = "The package {package} has unmet dependencies: {deps}"
 
@@ -108,10 +106,10 @@ class PackageBrokenError(RepoError):
         super().__init__(package=package, deps=" ".join(deps))
 
 
-class PackageNotFoundError(RepoError):
+class PackageNotFound(PackagesError):
     @property
     def message(self):
-        message = "The package {!r} was not found.".format(self.package_name)
+        message = "Package {!r} was not found.".format(self.package_name)
         # If the package was multiarch, try to help.
         distro = os_utils.OsRelease().id()
         if _is_deb_based(distro) and ":" in self.package_name:
@@ -124,13 +122,14 @@ class PackageNotFoundError(RepoError):
         return message
 
     def __init__(self, package_name):
+        super().__init__()
         self.package_name = package_name
 
     def __str__(self):
         return self.message
 
 
-class UnpackError(RepoError):
+class UnpackError(PackagesError):
 
     fmt = "Error while provisioning {package!r}"
 
@@ -138,7 +137,7 @@ class UnpackError(RepoError):
         super().__init__(package=package)
 
 
-class SnapUnavailableError(RepoError):
+class SnapUnavailableError(PackagesError):
 
     fmt = (
         "Failed to install or refresh a snap: {snap_name!r} does not exist "
@@ -151,7 +150,7 @@ class SnapUnavailableError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
-class SnapFindError(RepoError):
+class SnapFindError(PackagesError):
 
     fmt = (
         "Could not find the snap {snap_name!r} installed on this host.\n"
@@ -162,7 +161,7 @@ class SnapFindError(RepoError):
         super().__init__(snap_name=snap_name)
 
 
-class SnapInstallError(RepoError):
+class SnapInstallError(PackagesError):
 
     fmt = "Error while installing snap {snap_name!r} from channel {snap_channel!r}"
 
@@ -170,7 +169,7 @@ class SnapInstallError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
-class SnapDownloadError(RepoError):
+class SnapDownloadError(PackagesError):
 
     fmt = "Error while downloading snap {snap_name!r} from channel {snap_channel!r}"
 
@@ -178,7 +177,7 @@ class SnapDownloadError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
-class SnapGetAssertionError(RepoError):
+class SnapGetAssertionError(PackagesError):
 
     fmt = (
         "Error while retrieving assertion with parameters "
@@ -190,7 +189,7 @@ class SnapGetAssertionError(RepoError):
         super().__init__(assertion_params=assertion_params)
 
 
-class SnapRefreshError(RepoError):
+class SnapRefreshError(PackagesError):
 
     fmt = "Error while refreshing snap {snap_name!r} to channel {snap_channel!r}"
 
@@ -198,7 +197,7 @@ class SnapRefreshError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
-class SnapdConnectionError(RepoError):
+class SnapdConnectionError(PackagesError):
 
     fmt = (
         "Failed to get information for snap {snap_name!r}: "
@@ -207,93 +206,3 @@ class SnapdConnectionError(RepoError):
 
     def __init__(self, snap_name: str, url: str) -> None:
         super().__init__(snap_name=snap_name, url=url)
-
-
-class AptGPGKeyInstallError(RepoError):
-
-    fmt = "Failed to install GPG key: {message}"
-
-    def __init__(
-        self,
-        *,
-        output: str,
-        key: Optional[str] = None,
-        key_id: Optional[str] = None,
-        key_server: Optional[str] = None,
-    ) -> None:
-        self._output = output
-        self._key = key
-        self._key_id = key_id
-        self._key_server = key_server
-
-        super().__init__(message=self._parse_apt_key_output())
-
-    def _parse_apt_key_output(self) -> str:
-        """Convert apt-key's output into a more user-friendly message."""
-        message = self._output.replace(
-            "Warning: apt-key output should not be parsed (stdout is not a terminal)",
-            "",
-        ).strip()
-
-        # Improve error messages that we can.
-        if (
-            "gpg: keyserver receive failed: No data" in message
-            and self._key_id
-            and self._key_server
-        ):
-            message = (
-                f"GPG key {self._key_id!r} not found on key server {self._key_server!r}"
-            )
-        elif (
-            "gpg: keyserver receive failed: Server indicated a failure" in message
-            and self._key_server
-        ):
-            message = (
-                f"unable to establish connection to key server {self._key_server!r}"
-            )
-        elif (
-            "gpg: keyserver receive failed: Connection timed out" in message
-            and self._key_server
-        ):
-            message = f"unable to establish connection to key server {self._key_server!r} (connection timed out)"
-
-        return message
-
-
-class AptPPAInstallError(errors._Error):
-    def __init__(self, *, ppa: str, reason: str) -> None:
-        self._ppa = ppa
-        self._reason = reason
-
-    def get_brief(self) -> str:
-        return f"Failed to install PPA {self._ppa!r}: {self._reason}"
-
-    def get_resolution(self) -> str:
-        return "Verify PPA is correct and try again."
-
-
-class PackageRepositoryValidationError(errors._Error):
-    def __init__(
-        self,
-        *,
-        url: str,
-        brief: str,
-        details: Optional[str] = None,
-        resolution: Optional[str] = None,
-    ) -> None:
-        self.url = url
-        self.brief = brief
-        self.details = details
-        self.resolution = resolution
-
-    def get_brief(self) -> str:
-        return f"Invalid package-repository for {self.url!r}: {self.brief}"
-
-    def get_resolution(self) -> str:
-        if self.resolution:
-            return self.resolution
-
-        return (
-            "You can verify package repository configuration according to the "
-            "referenced documentation."
-        )

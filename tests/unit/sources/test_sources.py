@@ -16,7 +16,8 @@
 
 import pytest
 
-from craft_parts import errors, sources
+from craft_parts import sources
+from craft_parts.sources import errors
 
 
 @pytest.mark.parametrize("tc_url,tc_handler", [(".", sources.Local)])
@@ -26,6 +27,9 @@ def test_get_source_handler(tc_url, tc_handler):
 
 
 def test_get_source_handler_with_invalid_type():
-    with pytest.raises(errors.InvalidSourceType) as ei:
+    with pytest.raises(errors.InvalidSourceType) as raised:
         sources.get_source_handler(".", source_type="invalid")
-    assert ei.value.get_brief() == "Source '.' type is not recognized."
+    assert (
+        str(raised.value)
+        == "Failed to pull source: unable to determine source type of '.'."
+    )

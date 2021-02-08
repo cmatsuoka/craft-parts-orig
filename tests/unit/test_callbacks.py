@@ -44,12 +44,11 @@ class TestCallbackRegistration:
         callbacks.register_pre(_callback_1)
 
         # A callback function shouldn't be registered again
-        with pytest.raises(errors.CallbackRegistration) as ei:
+        with pytest.raises(errors.CallbackRegistration) as raised:
             callbacks.register_pre(_callback_1)
         assert (
-            ei.value.get_brief()
-            == "Callback registration error: the callback function is "
-            "already registered."
+            str(raised.value) == "Callback registration error: the callback "
+            "function is already registered."
         )
 
         # But we can register a different one
@@ -59,12 +58,11 @@ class TestCallbackRegistration:
         callbacks.register_post(_callback_1)
 
         # A callback function shouldn't be registered again
-        with pytest.raises(errors.CallbackRegistration) as ei:
+        with pytest.raises(errors.CallbackRegistration) as raised:
             callbacks.register_post(_callback_1)
         assert (
-            ei.value.get_brief()
-            == "Callback registration error: the callback function is "
-            "already registered."
+            str(raised.value) == "Callback registration error: the callback "
+            "function is already registered."
         )
 
         # But we can register a different one
@@ -83,12 +81,11 @@ class TestCallbackRegistration:
         callbacks.register_pre(_callback_1, step_list=[Step.PULL, Step.BUILD])
 
         # A callback function shouldn't be registered again, even for a different step
-        with pytest.raises(errors.CallbackRegistration) as ei:
+        with pytest.raises(errors.CallbackRegistration) as raised:
             callbacks.register_pre(_callback_1, step_list=[Step.PRIME])
         assert (
-            ei.value.get_brief()
-            == "Callback registration error: the callback function is "
-            "already registered."
+            str(raised.value) == "Callback registration error: the callback "
+            "function is already registered."
         )
 
 

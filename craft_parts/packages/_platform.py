@@ -26,6 +26,6 @@ def _is_deb_based(distro=None):
     if not distro:
         try:
             distro = os_utils.OsRelease().id()
-        except errors.OsReleaseError:
+        except errors.OsReleaseIdError:
             distro = "unknown"
     return distro in _DEB_BASED_PLATFORM

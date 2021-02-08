@@ -49,12 +49,11 @@ class TestPluginNil:
         assert schema["additionalProperties"] is False
         assert schema["properties"] == {}
 
-        with pytest.raises(errors.SchemaValidation) as ei:
+        with pytest.raises(errors.SchemaValidationError) as raised:
             PluginOptions(properties={"invalid": True}, schema=schema)
         assert (
-            ei.value.get_brief()
-            == "Schema validation error: Additional properties are not allowed "
-            "('invalid' was unexpected)"
+            str(raised.value) == "Schema validation error: Additional properties "
+            "are not allowed ('invalid' was unexpected)"
         )
 
     def test_get_build_packages(self):

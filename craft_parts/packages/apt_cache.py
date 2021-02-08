@@ -230,7 +230,7 @@ class AptCache(ContextDecorator):
 
             name_arch, version = get_pkg_name_parts(name)
             if name_arch not in self.cache:
-                raise errors.PackageNotFoundError(name_arch)
+                raise errors.PackageNotFound(name_arch)
 
             package = self.cache[name_arch]
             if version is not None:
@@ -304,7 +304,7 @@ class AptCache(ContextDecorator):
             self.cache.close()
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         except apt.cache.FetchFailedException as err:
-            raise errors.CacheUpdateFailedError(str(err))
+            raise errors.CacheUpdateFailed(str(err))
 
 
 def _verify_marked_install(package: apt.package.Package):
@@ -319,7 +319,7 @@ def _verify_marked_install(package: apt.package.Package):
         for dep in package_dependencies:
             if not dep.target_versions:
                 broken_deps.append(dep.name)
-    raise errors.PackageBrokenError(package.name, broken_deps)
+    raise errors.PackageBroken(package.name, broken_deps)
 
 
 def _set_pkg_version(package: apt.package.Package, version: str) -> None:
@@ -330,4 +330,4 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
         if pkg_version:
             package.candidate = pkg_version
     else:
-        raise errors.PackageNotFoundError("{}={}".format(package.name, version))
+        raise errors.PackageNotFound("{}={}".format(package.name, version))

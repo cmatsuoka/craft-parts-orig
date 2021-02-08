@@ -25,6 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
+from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
@@ -171,8 +172,8 @@ class PartHandler:
                     base=os_utils.get_build_base(),
                     stage_packages_path=self._part.part_package_dir,
                 )
-            except errors.PackageNotFound as err:
-                raise errors.StagePackageError(self._part.name, err.get_brief())
+            except packages_errors.PackageNotFound as err:
+                raise errors.StagePackageError(self._part.name, err.message)
 
         # TODO: handle part replacements
 

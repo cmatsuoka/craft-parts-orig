@@ -99,7 +99,7 @@ class Runner:
         return FilesAndDirs(set(), set())
 
     def _builtin_stage(self) -> FilesAndDirs:
-        stage_fileset = Fileset(self._part.stage_fileset)
+        stage_fileset = Fileset(self._part.stage_fileset, name="stage")
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
         _migrate_files(
@@ -111,7 +111,7 @@ class Runner:
         return FilesAndDirs(files, dirs)
 
     def _builtin_prime(self) -> FilesAndDirs:
-        prime_fileset = Fileset(self._part.prime_fileset)
+        prime_fileset = Fileset(self._part.prime_fileset, name="prime")
 
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
@@ -206,7 +206,9 @@ class Runner:
 
             if process.returncode != 0:
                 raise errors.ScriptletRunError(
-                    scriptlet_name=scriptlet_name, code=status
+                    part_name=self._part.name,
+                    scriptlet_name=scriptlet_name,
+                    exit_code=status,
                 )
 
     def _handle_control_api(self, scriptlet_name, function_call) -> None:
@@ -237,7 +239,7 @@ class Runner:
             self._builtin_prime()
         else:
             raise errors.InvalidControlAPICall(
-                self._part.name, f"invalid function {function_name!r}"
+                self._part.name, scriptlet_name, f"invalid function {function_name!r}"
             )
 
 

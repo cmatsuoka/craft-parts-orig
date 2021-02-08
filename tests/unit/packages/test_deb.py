@@ -376,10 +376,10 @@ class TestBuildPackages:
 
     def test_invalid_package_requested(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = (
-            errors.PackageNotFoundError("package-invalid")
+            errors.PackageNotFound("package-invalid")
         )
 
-        with pytest.raises(errors.BuildPackageNotFoundError):
+        with pytest.raises(errors.BuildPackageNotFound):
             _deb.Ubuntu.install_build_packages(["package-invalid"])
 
     def test_broken_package_apt_install(self, fake_apt_cache, fake_run, mocker):
@@ -389,7 +389,7 @@ class TestBuildPackages:
         mocker.patch("craft_parts.packages._deb.Ubuntu.refresh_build_packages")
         fake_run.side_effect = CalledProcessError(100, "apt-get")
 
-        with pytest.raises(errors.BuildPackagesNotInstalledError) as raised:
+        with pytest.raises(errors.BuildPackagesNotInstalled) as raised:
             _deb.Ubuntu.install_build_packages(["package=1.0"])
         assert (
             str(raised.value)
@@ -408,7 +408,7 @@ class TestBuildPackages:
             returncode=1, cmd=["sudo", "--preserve-env", "apt-get", "update"]
         )
 
-        with pytest.raises(errors.CacheUpdateFailedError):
+        with pytest.raises(errors.CacheUpdateFailed):
             _deb.Ubuntu.refresh_build_packages()
 
         fake_run.assert_has_calls(

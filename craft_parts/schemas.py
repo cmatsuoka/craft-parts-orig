@@ -56,9 +56,7 @@ class Validator:
             with open(filename) as schema_file:
                 self._schema = json.load(schema_file)
         except FileNotFoundError as err:
-            raise errors.SchemaValidation(
-                "schema validation file is missing from installation path"
-            ) from err
+            raise errors.SchemaNotFound(filename) from err
 
     def validate(self, data: Dict[str, Any]) -> None:
         """Validate the given data against the validator's schema.
@@ -129,4 +127,4 @@ def validate_schema(*, data: Dict[str, Any], schema: Dict[str, Any]) -> None:
     try:
         jsonschema.validate(data, schema, format_checker=format_check)
     except jsonschema.ValidationError as err:
-        raise errors.SchemaValidation.from_validation_error(err)
+        raise errors.SchemaValidationError.from_validation_error(err)

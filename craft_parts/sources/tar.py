@@ -22,8 +22,7 @@ import shutil
 import tarfile
 import tempfile
 
-from craft_parts import errors
-
+from . import errors
 from .base import FileBase
 
 

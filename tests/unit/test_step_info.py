@@ -81,11 +81,11 @@ def test_local_plugin_dir(tc_param, tc_result):
 
 
 def test_invalid_arch():
-    with pytest.raises(errors.InvalidArchitecture) as ei:
+    with pytest.raises(errors.InvalidArchitecture) as raised:
         StepInfo(
             target_arch="invalid",
         )
-    assert ei.value.get_brief() == "Architecture 'invalid' is invalid."
+    assert str(raised.value) == "Architecture 'invalid' is not supported."
 
 
 def test_update_part_data():
