@@ -7,13 +7,14 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.pylint.messages_control]
-disable = "C0330, C0326"
+disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods"
 
 [tool.pylint.similarities]
 min-similarity-lines=10
 
 [tool.pylint.format]
 max-line-length = "88"
+good-names = "f,id,do_GET"
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [

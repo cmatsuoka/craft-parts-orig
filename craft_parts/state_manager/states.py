@@ -24,11 +24,13 @@ from craft_parts.parts import Part
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, yaml_utils
 
-from .build_state import BuildState  # noqa: F401
 from .part_state import PartState
-from .prime_state import PrimeState  # noqa: F401
-from .pull_state import PullState  # noqa: F401
-from .stage_state import StageState  # noqa: F401
+
+# pylint: disable=unused-import
+from .build_state import BuildState  # noqa: F401, isort: skip
+from .prime_state import PrimeState  # noqa: F401, isort: skip
+from .pull_state import PullState  # noqa: F401, isort: skip
+from .stage_state import StageState  # noqa: F401, isort: skip
 
 
 def load_state(part: Part, step: Step) -> Optional[PartState]:

@@ -69,13 +69,13 @@ class Base:
     # pylint: enable=too-many-instance-attributes
     # pylint: enable=too-many-arguments
 
-    def check(self, target: str):
+    def check(self, target: str, ignore_files: Optional[List[str]] = None) -> bool:
         """Check if pulled sources have changed since target was created.
 
         :param str target: Path to target file.
         """
         self._checked = True
-        return self._check(target)
+        return self._check(target, ignore_files=ignore_files)
 
     def update(self):
         """Update pulled source.
@@ -87,7 +87,7 @@ class Base:
             raise RuntimeError("source must be checked before it's updated")
         self._update()
 
-    def _check(self, target: str):
+    def _check(self, target: str, ignore_files: Optional[List[str]]):
         """Check if pulled sources have changed since target was created.
 
         :param str target: Path to target file.

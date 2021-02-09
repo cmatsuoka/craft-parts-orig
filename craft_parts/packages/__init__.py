@@ -22,13 +22,9 @@ from . import _platform
 
 # pylint: disable=import-outside-toplevel
 
-# Imported for backwards compatibility with plugins
-# if _platform._is_deb_based():
-#     from ._deb import Ubuntu  # noqa
-
 
 def _get_repository_for_platform():
-    if _platform._is_deb_based():
+    if _platform.is_deb_based():
         from ._deb import Ubuntu
 
         return Ubuntu

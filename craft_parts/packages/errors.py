@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Exceptions the packages handling subsystem."""
+"""Exceptions raised by the packages handling subsystem."""
 
 from abc import ABC
 from typing import List, Sequence
@@ -22,7 +22,7 @@ from typing import List, Sequence
 from craft_parts import errors
 from craft_parts.utils import os_utils
 
-from ._platform import _is_deb_based
+from ._platform import is_deb_based
 
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
@@ -112,7 +112,7 @@ class PackageNotFound(PackagesError):
         message = "Package {!r} was not found.".format(self.package_name)
         # If the package was multiarch, try to help.
         distro = os_utils.OsRelease().id()
-        if _is_deb_based(distro) and ":" in self.package_name:
+        if is_deb_based(distro) and ":" in self.package_name:
             (name, arch) = self.package_name.split(":", 2)
             if arch:
                 message += (

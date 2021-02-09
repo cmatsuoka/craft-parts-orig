@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Exceptions raised by the sources handling subsystem."""
+
 import shlex
 from abc import ABC
 from typing import List

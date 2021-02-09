@@ -209,8 +209,8 @@ def get_packages_in_base(*, base: str) -> List[str]:
     # Lines we care about in dpkg.list had the following format:
     # ii adduser 3.118ubuntu1 all add and rem
     package_list = list()
-    with fileinput.input(str(base_package_list_path)) as fin:
-        for line in fin:
+    with fileinput.input(str(base_package_list_path)) as f:
+        for line in f:
             if not line.startswith("ii "):
                 continue
             package_list.append(line.split()[1])
@@ -474,6 +474,8 @@ class Ubuntu(BaseRepository):
 
 
 def get_cache_dirs(name: str):
+    """Return the paths to the stage and deb cache directories."""
+
     stage_cache_dir = pathlib.Path(
         BaseDirectory.save_cache_path(name, "craft_parts", "stage_packages")
     )

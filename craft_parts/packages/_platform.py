@@ -22,7 +22,7 @@ from craft_parts.utils import os_utils
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
 
 
-def _is_deb_based(distro=None):
+def is_deb_based(distro=None):
     if not distro:
         try:
             distro = os_utils.OsRelease().id()

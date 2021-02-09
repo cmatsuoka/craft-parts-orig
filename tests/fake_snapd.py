@@ -17,7 +17,7 @@
 import json
 import socketserver
 import threading
-from typing import Any, Dict, List  # noqa
+from typing import Any, Callable, Dict, List, Optional, Tuple  # noqa
 from urllib import parse
 
 from tests import fake_servers
@@ -45,7 +45,9 @@ class FakeSnapd:
         self.request_handler.snaps_result = value
 
     @property
-    def snap_details_func(self):
+    def snap_details_func(
+        self,
+    ) -> Optional[Callable[[str], Tuple[int, Dict[str, Any]]]]:
         return self.request_handler.snap_details_func
 
     @snap_details_func.setter
@@ -65,7 +67,6 @@ class FakeSnapd:
         self.request_handler = _FakeSnapdRequestHandler
         self.snaps_result = []
         self.find_result = []
-        self.snap_details_func = None
         self.server = None
 
     def start_fake_server(self, socket):

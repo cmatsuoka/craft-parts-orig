@@ -81,10 +81,10 @@ class Runner:
         try:
             handler = builtin_handlers[self._step_info.step]
             return handler()
-        except KeyError:
+        except KeyError as err:
             raise errors.InternalError(
                 "Request to run the built-in handler for an invalid step."
-            )
+            ) from err
 
     def _builtin_pull(self) -> FilesAndDirs:
         if self._source_handler:

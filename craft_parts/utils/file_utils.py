@@ -294,8 +294,8 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
 
 
 def _file_reader_iter(path: str, block_size=2 ** 20):
-    with open(path, "rb") as fin:
-        block = fin.read(block_size)
+    with open(path, "rb") as f:
+        block = f.read(block_size)
         while len(block) > 0:
             yield block
-            block = fin.read(block_size)
+            block = f.read(block_size)

@@ -145,9 +145,9 @@ def _get_file_list(fileset: Fileset) -> Tuple[List[str], List[str]]:
             includes.append(item)
 
     # paths must be relative
-    for d in includes + excludes:
-        if os.path.isabs(d):
-            raise errors.FilesetError(fileset.name, f"path {d!r} must be relative.")
+    for entry in includes + excludes:
+        if os.path.isabs(entry):
+            raise errors.FilesetError(fileset.name, f"path {entry!r} must be relative.")
 
     includes = includes or ["*"]
 

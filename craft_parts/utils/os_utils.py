@@ -155,17 +155,17 @@ def is_snap(*, application_name: Optional[str] = None) -> bool:
 
     snap_name = os.environ.get("SNAP_NAME", "")
     if application_name:
-        is_snap = snap_name == application_name
+        res = snap_name == application_name
     else:
-        is_snap = snap_name is not None
+        res = snap_name is not None
 
     logger.debug(
         "craft_parts is is snap: %s, SNAP_NAME set to %s",
-        is_snap,
+        res,
         snap_name,
     )
 
-    return is_snap
+    return res
 
 
 def get_snap_tool_path(command_name: str) -> str:

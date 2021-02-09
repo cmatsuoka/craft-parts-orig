@@ -19,7 +19,7 @@
 import functools
 import glob
 import os
-from typing import List
+from typing import List, Optional
 
 from craft_parts.utils import file_utils
 
@@ -48,7 +48,7 @@ class Local(Base):
             copy_function=self.copy_function,
         )
 
-    def _check(self, target):
+    def _check(self, target: str, ignore_files: Optional[List[str]]) -> bool:
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:
@@ -58,7 +58,9 @@ class Local(Base):
         self._updated_directories = set()
 
         for (root, directories, files) in os.walk(self.source_abspath, topdown=True):
-            ignored = set(self._ignore(root, directories + files, check=True))
+            ignored = set(
+                self._ignore(root, directories + files, also_ignore=ignore_files)
+            )
             if ignored:
                 # Prune our search appropriately given an ignore list, i.e.
                 # don't walk into directories that are ignored.
@@ -107,15 +109,14 @@ class Local(Base):
 _CRAFT_PARTS_IGNORED_FILES = ["parts", "stage", "prime", "*.snap"]
 
 
-# FIXME: handle externally defined ignore list (e.g. for snapcraft files)
-def _ignore(source, current_directory, directory, files, check=False) -> List[str]:
+def _ignore(source, current_directory, directory, files, also_ignore=None) -> List[str]:
     ignored = []
     if directory in (source, current_directory):
-        if check:
-            # TODO: We hardcode the snap directory here, but we really need
-            # to ignore the directory where snapcraft.yaml is hosted.
-            ignored.extend(["snap", "snapcraft.yaml", ".snapcraft.yaml"])
-        for pattern in _CRAFT_PARTS_IGNORED_FILES:
+        patterns = _CRAFT_PARTS_IGNORED_FILES.copy()
+        if also_ignore:
+            patterns.extend(also_ignore)
+
+        for pattern in patterns:
             files = glob.glob(os.path.join(directory, pattern))
             if files:
                 files = [os.path.basename(f) for f in files]

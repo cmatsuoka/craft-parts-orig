@@ -55,6 +55,7 @@ class AptCache(ContextDecorator):
         self.stage_cache = stage_cache
         self.stage_cache_arch = stage_cache_arch
 
+    # pylint: disable=attribute-defined-outside-init
     def __enter__(self) -> AptCache:
         if self.stage_cache is not None:
             self._configure_apt()
@@ -65,6 +66,8 @@ class AptCache(ContextDecorator):
             # be used and _deb.get_installed_packages() will return an empty list.
             self.cache = apt.cache.Cache(rootdir="/")
         return self
+
+    # pylint: enable=attribute-defined-outside-init
 
     def __exit__(self, *exc) -> None:
         self.cache.close()
@@ -198,7 +201,7 @@ class AptCache(ContextDecorator):
         return downloaded
 
     def get_installed_packages(self) -> Dict[str, str]:
-        """Obtain a list of all packages and versions currently installed on the system."""
+        """Obtain a list of all packages and versions installed on the system."""
 
         installed: Dict[str, str] = dict()
         for package in self.cache:
@@ -296,6 +299,7 @@ class AptCache(ContextDecorator):
         # Unmark dependencies that are no longer required.
         self._autokeep_packages()
 
+    # pylint: disable=attribute-defined-outside-init
     def update(self) -> None:
         """Update the package manager cache."""
 
@@ -305,6 +309,8 @@ class AptCache(ContextDecorator):
             self.cache = apt.cache.Cache(rootdir=str(self.stage_cache), memonly=True)
         except apt.cache.FetchFailedException as err:
             raise errors.CacheUpdateFailed(str(err))
+
+    # pylint: enable=attribute-defined-outside-init
 
 
 def _verify_marked_install(package: apt.package.Package):

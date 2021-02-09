@@ -175,7 +175,8 @@ class PartHandler:
             except packages_errors.PackageNotFound as err:
                 raise errors.StagePackageError(self._part.name, err.message)
 
-        # TODO: handle part replacements
+        # We don't need to expand environment variables in plugin options here because
+        # the build script execution will expand them (assuming we're using plugins V2).
 
         self._run_step(
             step_info=step_info,
@@ -325,8 +326,6 @@ def _get_source_handler(
     if not properties:
         properties = dict()
 
-    # TODO: we cannot pop source as it is used by plugins. We also make
-    # the default '.'
     source_handler = None
     if source:
         handler_class = sources.get_source_handler(
@@ -426,8 +425,8 @@ def _clean_migrated_files(files, dirs, directory):
             os.remove(os.path.join(directory, each_file))
         except FileNotFoundError:
             logger.warning(
-                "Attempted to remove file {name!r}, but it didn't exist. "
-                "Skipping...".format(name=each_file)
+                "Attempted to remove file '%s', but it didn't exist. " "Skipping...",
+                each_file,
             )
 
     # Directories may not be ordered so that subdirectories come before
@@ -442,6 +441,7 @@ def _clean_migrated_files(files, dirs, directory):
                 os.rmdir(migrated_directory)
         except FileNotFoundError:
             logger.warning(
-                "Attempted to remove directory {name!r}, but it didn't exist. "
-                "Skipping...".format(name=each_dir)
+                "Attempted to remove directory '%s', but it didn't exist. "
+                "Skipping...",
+                each_dir,
             )

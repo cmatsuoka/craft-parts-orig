@@ -40,7 +40,6 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals

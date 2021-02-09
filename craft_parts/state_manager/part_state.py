@@ -61,8 +61,14 @@ class PartState(_State):
 
         super().__init__()
 
-        self._files = files
-        self._directories = directories
+        if not files:
+            files = set()
+
+        if not directories:
+            directories = set()
+
+        self.files = files
+        self.directories = directories
         self.timestamp: datetime = datetime.now()
 
         if not part_properties:
@@ -74,14 +80,6 @@ class PartState(_State):
 
         if project:
             self.project_options = self.project_options_of_interest(project)
-
-    @property
-    def files(self) -> Set[str]:
-        return self._files if self._files else set()
-
-    @property
-    def directories(self) -> Set[str]:
-        return self._directories if self._directories else set()
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.

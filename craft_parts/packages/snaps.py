@@ -197,8 +197,12 @@ class SnapPackage:
             assertions.append(
                 [
                     "snap-revision",
-                    "snap-revision={}".format(self._local_snap_info["revision"]),  # type: ignore[index]
-                    "snap-id={}".format(self._local_snap_info["id"]),  # type: ignore[index]
+                    "snap-revision={}".format(
+                        self._local_snap_info["revision"]  # type: ignore[index]
+                    ),
+                    "snap-id={}".format(
+                        self._local_snap_info["id"]  # type: ignore[index]
+                    ),
                 ]
             )
 

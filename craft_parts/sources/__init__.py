@@ -154,32 +154,6 @@ def get_source_defaults() -> Dict[str, Any]:
     return __SOURCE_DEFAULTS.copy()
 
 
-def populate(sourcedir, builddir, options) -> None:
-    """Populate sourcedir and builddir from parameters defined in options.
-
-    :param str sourcedir: The source directory to use.
-    :param str builddir: The build directory to use.
-    :param options: source options.
-    """
-    source_type = getattr(options, "source_type", None)
-    source_attributes = dict(
-        source_depth=getattr(options, "source_depth", None),
-        source_checksum=getattr(options, "source_checksum", None),
-        source_tag=getattr(options, "source_tag", None),
-        source_commit=getattr(options, "source_commit", None),
-        source_branch=getattr(options, "source_branch", None),
-    )
-
-    handler_class = get_source_handler(options.source, source_type=source_type)
-    handler = handler_class(options.source, sourcedir, **source_attributes)
-    handler.pull()
-
-
-# def get_source_handler_from_type(source_type) -> SourceHandlerType:
-#     """Return the source handler for source_type."""
-#     return _source_handler.get(source_type, Local)
-
-
 def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
     """Return the appropriate handler for the given source.
 

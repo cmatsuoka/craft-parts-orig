@@ -21,7 +21,6 @@ from typing import Any, Dict
 from craft_parts import schemas
 
 
-# pylint: disable=too-few-public-methods
 class PluginOptions:
     """Parameters to be passed to the plugin instance.
 

@@ -93,7 +93,6 @@ def download_and_show_progress(request, destination, message=None, total_read=0)
     progress_bar.finish()
 
 
-# pylint: disable=too-few-public-methods
 class _UrllibDownloader:
     """Download an URI with nice progress bars."""
 

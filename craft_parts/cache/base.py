@@ -21,7 +21,6 @@ import os
 from xdg import BaseDirectory  # type: ignore
 
 
-# pylint: disable=too-few-public-methods
 class Cache:
     """Generic cache base class.
 
