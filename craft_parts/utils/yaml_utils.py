@@ -27,56 +27,60 @@ try:
     # from .yaml_utils_c import SafeDumper, SafeLoader
 
     import yaml.constructor
-    from yaml import CSafeDumper, CSafeLoader  # type: ignore
-
-    class SafeLoader(CSafeLoader):
-        """C-based SafeLoader wrapper."""
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.add_constructor(
-                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
-            )
-
-    class SafeDumper(CSafeDumper):
-        """C-based SafeDumper wrapper."""
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.add_representer(str, _str_presenter)
-            self.add_representer(collections.OrderedDict, _dict_representer)
-
-    def _dict_constructor(loader, node):
-        # Necessary in order to make yaml merge tags work
-        loader.flatten_mapping(node)
-        value = loader.construct_pairs(node)
-
-        try:
-            return collections.OrderedDict(value)
-        except TypeError as type_error:
-            raise yaml.constructor.ConstructorError(
-                "while constructing a mapping",
-                node.start_mark,
-                "found unhashable key",
-                node.start_mark,
-            ) from type_error
-
-    def _dict_representer(dumper, data):
-        return dumper.represent_dict(data.items())
-
-    def _str_presenter(dumper, data):
-        if len(data.splitlines()) > 1:  # check for multiline string
-            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-
-
+    from yaml import CSafeDumper as SafeDumper  # type: ignore
+    from yaml import CSafeLoader as SafeLoader
 except ImportError:
     from yaml import SafeDumper, SafeLoader  # type: ignore
 
 
-def load(stream: TextIO) -> Any:
+class _SafeOrderedLoader(SafeLoader):  # type: ignore
+    """C-based SafeLoader wrapper."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_constructor(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
+        )
+
+
+class _SafeOrderedDumper(SafeDumper):  # type: ignore
+    """C-based SafeDumper wrapper."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(str, _str_presenter)
+        self.add_representer(collections.OrderedDict, _dict_representer)
+
+
+def _dict_constructor(loader, node):
+    # Necessary in order to make yaml merge tags work
+    loader.flatten_mapping(node)
+    value = loader.construct_pairs(node)
+
+    try:
+        return collections.OrderedDict(value)
+    except TypeError as type_error:
+        raise yaml.constructor.ConstructorError(
+            "while constructing a mapping",
+            node.start_mark,
+            "found unhashable key",
+            node.start_mark,
+        ) from type_error
+
+
+def _dict_representer(dumper, data):
+    return dumper.represent_dict(data.items())
+
+
+def _str_presenter(dumper, data):
+    if len(data.splitlines()) > 1:  # check for multiline string
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+def load(stream: Union[str, TextIO]) -> Dict[str, Any]:
     """Safely load YAML in ordered manner."""
-    return yaml.load(stream, Loader=SafeLoader)
+    return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
 def dump(
@@ -87,11 +91,10 @@ def dump(
 ) -> Optional[str]:
     """Safely dump YAML in ordered manner."""
 
-    # FIXME: check why pyright complains about stream: Optional[TextIO]
     return yaml.dump(
         data,
         stream=stream,
-        Dumper=SafeDumper,  # type: ignore
+        Dumper=_SafeOrderedDumper,  # type: ignore
         default_flow_style=False,
         allow_unicode=True,
         sort_keys=sort_keys,
