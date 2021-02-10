@@ -14,9 +14,203 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import stat
 import textwrap
 
-from craft_parts.packages._base import BaseRepository
+import pytest
+
+from craft_parts.packages._base import BaseRepository, get_pkg_name_parts
+
+
+@pytest.mark.parametrize(
+    "tc,files",
+    [
+        (
+            "fix_xml2_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                }
+            ],
+        ),
+        (
+            "no_fix_xml2_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                }
+            ],
+        ),
+        (
+            "fix_xslt_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                }
+            ],
+        ),
+        (
+            "no_fix_xslt_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                }
+            ],
+        ),
+        (
+            "fix_xml2_xslt_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                },
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                },
+            ],
+        ),
+        (
+            "no_fix_xml2_xslt_config",
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                },
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                },
+            ],
+        ),
+    ],
+)
+@pytest.mark.usefixtures("new_dir")
+class TestFixXmlTools:
+    """Check the normalization of pathnames in XML tools."""
+
+    def test_fix_xmltools(self, tc, files):
+        for test_file in files:
+            path = test_file["path"]
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write(test_file["content"])
+
+        BaseRepository.normalize("root")
+
+        for test_file in files:
+            with open(test_file["path"], "r") as f:
+                assert f.read() == test_file["expected"]
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestFixShebang:
+
+    scenarios = [
+        (
+            "python bin dir",
+            {
+                "file_path": os.path.join("root", "bin", "a"),
+                "content": "#!/usr/bin/python\nimport this",
+                "expected": "#!/usr/bin/env python\nimport this",
+            },
+        ),
+        (
+            "python3 bin dir",
+            {
+                "file_path": os.path.join("root", "bin", "d"),
+                "content": "#!/usr/bin/python3\nimport this",
+                "expected": "#!/usr/bin/env python3\nimport this",
+            },
+        ),
+        (
+            "sbin dir",
+            {
+                "file_path": os.path.join("root", "sbin", "b"),
+                "content": "#!/usr/bin/python\nimport this",
+                "expected": "#!/usr/bin/env python\nimport this",
+            },
+        ),
+        (
+            "usr/bin dir",
+            {
+                "file_path": os.path.join("root", "usr", "bin", "c"),
+                "content": "#!/usr/bin/python\nimport this",
+                "expected": "#!/usr/bin/env python\nimport this",
+            },
+        ),
+        (
+            "usr/sbin dir",
+            {
+                "file_path": os.path.join("root", "usr", "sbin", "d"),
+                "content": "#!/usr/bin/python\nimport this",
+                "expected": "#!/usr/bin/env python\nimport this",
+            },
+        ),
+        (
+            "opt/bin dir",
+            {
+                "file_path": os.path.join("root", "opt", "bin", "e"),
+                "content": "#!/usr/bin/python\nraise Exception()",
+                "expected": "#!/usr/bin/env python\nraise Exception()",
+            },
+        ),
+    ]
+
+    def test_fix_shebang(self):
+        for _, data in self.scenarios:
+            os.makedirs(os.path.dirname(data["file_path"]), exist_ok=True)
+            with open(data["file_path"], "w") as fd:
+                fd.write(data["content"])
+
+        BaseRepository.normalize("root")
+
+        for _, data in self.scenarios:
+            with open(data["file_path"], "r") as fd:
+                assert fd.read() == data["expected"]
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestRemoveUselessFiles:
+    def create(self, file_path: str) -> str:
+        path = os.path.join("root", file_path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "w").close()
+
+        return path
+
+    def test_remove(self):
+        paths = [
+            self.create(p)
+            for p in [
+                os.path.join("usr", "lib", "python3.5", "sitecustomize.py"),
+                os.path.join("usr", "lib", "python2.7", "sitecustomize.py"),
+                os.path.join("usr", "lib", "python", "sitecustomize.py"),
+            ]
+        ]
+        BaseRepository.normalize("root")
+
+        for p in paths:
+            assert os.path.exists(p) is False
+
+    def test_no_remove(self):
+        path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))
+        BaseRepository.normalize("root")
+
+        assert os.path.exists(path)
 
 
 class TestFixPkgConfig:
@@ -63,3 +257,59 @@ class TestFixPkgConfig:
         )
 
         assert pc_file.read_text(encoding=None) == expected_pc_file_content
+
+
+@pytest.mark.parametrize(
+    "src,dst",
+    [
+        ("a", "rel-to-a"),
+        # disabled: calls BaseRepository.get_package_libraries()
+        # ("/a", "abs-to-a"),
+    ],
+)
+class TestFixSymlinks:
+    def test_fix_symlinks(self, src, dst, new_dir):
+        os.makedirs("a")
+        open("1", mode="w").close()
+
+        os.symlink(src, dst)
+        BaseRepository.normalize(new_dir)
+
+        assert os.readlink(dst) == src
+
+
+class TestFixSUID:
+    @pytest.mark.parametrize(
+        "key,test_mod,expected_mod",
+        [
+            ("suid_file", 0o4765, 0o0765),
+            ("guid_file", 0o2777, 0o0777),
+            ("suid_guid_file", 0o6744, 0o0744),
+            ("suid_guid_sticky_file", 0o7744, 0o1744),
+        ],
+    )
+    def test_mode(self, key, test_mod, expected_mod, tmpdir):
+        f = os.path.join(tmpdir, key)
+        open(f, mode="w").close()
+        os.chmod(f, test_mod)
+
+        BaseRepository.normalize(tmpdir)
+
+        assert stat.S_IMODE(os.stat(f).st_mode) == expected_mod
+
+
+class TestPkgNameParts:
+    def test_get_pkg_name_parts_name_only(self):
+        name, version = get_pkg_name_parts("hello")
+        assert name == "hello"
+        assert version is None
+
+    def test_get_pkg_name_parts_all(self):
+        name, version = get_pkg_name_parts("hello:i386=2.10-1")
+        assert name == "hello:i386"
+        assert version == "2.10-1"
+
+    def test_get_pkg_name_parts_no_arch(self):
+        name, version = get_pkg_name_parts("hello=2.10-1")
+        assert name == "hello"
+        assert version == "2.10-1"
