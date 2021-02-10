@@ -17,6 +17,7 @@
 """Definition and helpers for the repository base class."""
 
 import contextlib
+import fileinput
 import glob
 import itertools
 import logging
@@ -25,7 +26,8 @@ import pathlib
 import re
 import shutil
 import stat
-from typing import List, Optional, Pattern, Set, Tuple
+from pathlib import Path
+from typing import List, Optional, Pattern, Set, Tuple, Union
 
 from . import errors
 
@@ -259,9 +261,8 @@ class BaseRepository:
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
-                # TODO: check if this should be here
-                # if path.endswith(".pc") and not os.path.islink(path):
-                #     fix_pkg_config(unpackdir, path)
+                if path.endswith(".pc") and not os.path.islink(path):
+                    fix_pkg_config(unpackdir, path)
 
     @classmethod
     def _fix_xml_tools(cls, unpackdir: str) -> None:
@@ -320,28 +321,30 @@ def _try_copy_local(path: str, target: str) -> bool:
     return False
 
 
-# TODO: check if we'll need this in craft-parts or if it should be in app
+def fix_pkg_config(
+    root: Union[str, Path],
+    pkg_config_file: Union[str, Path],
+    prefix_trim: Optional[Union[str, Path]] = None,
+) -> None:
+    """Opens a pkg_config_file and prefixes the prefix with root."""
 
-# def fix_pkg_config(
-#     root: str, pkg_config_file: str, prefix_trim: Optional[str] = None
-# ) -> None:
-#     """Opens a pkg_config_file and prefixes the prefix with root."""
-#     pattern_trim = None
-#     if prefix_trim:
-#         pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
-#     pattern = re.compile("^prefix=(?P<prefix>.*)")
-#
-#     with fileinput.input(pkg_config_file, inplace=True) as input_file:
-#         for line in input_file:
-#             match = pattern.search(line)
-#             if prefix_trim is not None and pattern_trim is not None:
-#                 match_trim = pattern_trim.search(line)
-#             if prefix_trim is not None and match_trim is not None:
-#                 print("prefix={}{}".format(root, match_trim.group("prefix")))
-#             elif match:
-#                 print("prefix={}{}".format(root, match.group("prefix")))
-#             else:
-#                 print(line, end="")
+    pattern_trim = None
+    if prefix_trim:
+        pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
+    pattern = re.compile("^prefix=(?P<prefix>.*)")
+
+    with fileinput.input(pkg_config_file, inplace=True) as input_file:
+        match_trim = None
+        for line in input_file:
+            match = pattern.search(line)
+            if prefix_trim is not None and pattern_trim is not None:
+                match_trim = pattern_trim.search(line)
+            if prefix_trim is not None and match_trim is not None:
+                print("prefix={}{}".format(root, match_trim.group("prefix")))
+            elif match:
+                print("prefix={}{}".format(root, match.group("prefix")))
+            else:
+                print(line, end="")
 
 
 def _fix_filemode(path: str) -> None:

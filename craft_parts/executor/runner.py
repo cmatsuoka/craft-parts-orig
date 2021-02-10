@@ -27,7 +27,7 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
-from craft_parts import errors, filesets, plugins
+from craft_parts import errors, filesets, packages, plugins
 from craft_parts.filesets import Fileset
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -102,11 +102,22 @@ class Runner:
         stage_fileset = Fileset(self._part.stage_fileset, name="stage")
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(stage_fileset, srcdir)
+
+        def pkgconfig_fixup(file_path):
+            if os.path.islink(file_path):
+                return
+            if not file_path.endswith(".pc"):
+                return
+            packages.fix_pkg_config(
+                self._part.stage_dir, file_path, self._part.part_install_dir
+            )
+
         _migrate_files(
             files=files,
             dirs=dirs,
             srcdir=self._part.part_install_dir,
             destdir=self._part.stage_dir,
+            fixup_func=pkgconfig_fixup,
         )
         return FilesAndDirs(files, dirs)
 

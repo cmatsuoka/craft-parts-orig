@@ -244,6 +244,26 @@ class CorruptedElfFile(CraftPartsError):
         super().__init__(path=path, message=message)
 
 
+class PartConflictError(CraftPartsError):
+
+    fmt = (
+        "Failed to stage: "
+        "Parts {other_part_name!r} and {part_name!r} have the following "
+        "files, but with different contents:\n"
+        "{file_paths}"
+    )
+
+    def __init__(
+        self, *, part_name: str, other_part_name: str, conflict_files: List[str]
+    ):
+        spaced_conflict_files = ("    {}".format(i) for i in conflict_files)
+        super().__init__(
+            part_name=part_name,
+            other_part_name=other_part_name,
+            file_paths="\n".join(sorted(spaced_conflict_files)),
+        )
+
+
 class SchemaNotFound(CraftPartsReportableError):
 
     fmt = "Unable to find the schema definition file {path!r}."

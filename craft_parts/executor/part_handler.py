@@ -247,7 +247,6 @@ class PartHandler:
         return state
 
     def _run_stage(self, step_info: StepInfo) -> PartState:
-        # TODO: handle part replacements
         self._make_dirs()
 
         files, dirs = self._run_step(

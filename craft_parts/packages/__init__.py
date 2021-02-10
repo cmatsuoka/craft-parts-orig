@@ -19,6 +19,7 @@
 from . import errors  # noqa: F401
 from . import snaps  # noqa: F401
 from . import _platform
+from ._base import fix_pkg_config  # noqa
 
 # pylint: disable=import-outside-toplevel
 
