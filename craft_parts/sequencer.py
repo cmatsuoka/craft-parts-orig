@@ -55,7 +55,7 @@ class Sequencer:
             selected_parts = self._all_parts
 
         for current_step in target_step.previous_steps() + [target_step]:
-            # TODO: if step is STAGE, check for collisions
+            # We check for stage collisions when executing the step actions
 
             for part in selected_parts:
                 logger.debug("process %s:%s", part.name, current_step)

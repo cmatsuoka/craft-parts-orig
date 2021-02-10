@@ -26,6 +26,7 @@ from craft_parts.schemas import Validator
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 
+from .collisions import check_for_stage_collisions
 from .part_handler import PartHandler
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,9 @@ class Executor:
         if action.type == ActionType.SKIP:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
             return
+
+        if action.step == Step.STAGE:
+            check_for_stage_collisions(self._part_list)
 
         self._create_part_handler(part, step_info=step_info)
 

@@ -14,7 +14,7 @@ min-similarity-lines=10
 
 [tool.pylint.format]
 max-line-length = "88"
-good-names = "f,id,do_GET"
+good-names = "f,e,id,do_GET"
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [
