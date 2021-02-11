@@ -157,7 +157,7 @@ def get_source_defaults() -> Dict[str, Any]:
 def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
     """Return the appropriate handler for the given source.
 
-    :param source: the source specification.
+    :param source: The source specification.
     :param source_type: The source type to use. If not specified, the
         type will be inferred from the source specification.
     """
@@ -177,6 +177,14 @@ _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 def get_source_type_from_uri(
     source: str, ignore_errors: bool = False
 ) -> str:  # noqa: C901
+    """Return the source type based on the given source URI.
+
+    :param source: The source specification.
+    :param ignore_errors: Don't raise InvalidSourceType if the source
+        type could not be determined.
+    :raises InvalidSourceType: If the source type is unknown.
+    """
+
     for extension in ["zip", "deb", "rpm", "7z", "snap"]:
         if source.endswith(".{}".format(extension)):
             return extension

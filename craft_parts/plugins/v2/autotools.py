@@ -72,6 +72,7 @@ class AutotoolsPlugin(PluginV2):
         return " ".join(cmd)
 
     def get_build_commands(self) -> List[str]:
+        # pylint: disable=line-too-long
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
             "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",

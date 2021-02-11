@@ -24,86 +24,68 @@ from craft_parts.packages._base import BaseRepository, get_pkg_name_parts
 
 
 @pytest.mark.parametrize(
-    "tc,files",
+    "tc",
     [
-        (
-            "fix_xml2_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                    "content": "prefix=/usr/foo",
-                    "expected": "prefix=root/usr/foo",
-                }
-            ],
-        ),
-        (
-            "no_fix_xml2_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                    "content": "prefix=/foo",
-                    "expected": "prefix=/foo",
-                }
-            ],
-        ),
-        (
-            "fix_xslt_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                    "content": "prefix=/usr/foo",
-                    "expected": "prefix=root/usr/foo",
-                }
-            ],
-        ),
-        (
-            "no_fix_xslt_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                    "content": "prefix=/foo",
-                    "expected": "prefix=/foo",
-                }
-            ],
-        ),
-        (
-            "fix_xml2_xslt_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                    "content": "prefix=/usr/foo",
-                    "expected": "prefix=root/usr/foo",
-                },
-                {
-                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                    "content": "prefix=/usr/foo",
-                    "expected": "prefix=root/usr/foo",
-                },
-            ],
-        ),
-        (
-            "no_fix_xml2_xslt_config",
-            [
-                {
-                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                    "content": "prefix=/foo",
-                    "expected": "prefix=/foo",
-                },
-                {
-                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                    "content": "prefix=/foo",
-                    "expected": "prefix=/foo",
-                },
-            ],
-        ),
+        [  # fix_xml2_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "content": "prefix=/usr/foo",
+                "expected": "prefix=root/usr/foo",
+            }
+        ],
+        [  # no_fix_xml2_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "content": "prefix=/foo",
+                "expected": "prefix=/foo",
+            }
+        ],
+        [  # fix_xslt_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "content": "prefix=/usr/foo",
+                "expected": "prefix=root/usr/foo",
+            }
+        ],
+        [  # no_fix_xslt_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "content": "prefix=/foo",
+                "expected": "prefix=/foo",
+            }
+        ],
+        [  # fix_xml2_xslt_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "content": "prefix=/usr/foo",
+                "expected": "prefix=root/usr/foo",
+            },
+            {
+                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "content": "prefix=/usr/foo",
+                "expected": "prefix=root/usr/foo",
+            },
+        ],
+        [  # no_fix_xml2_xslt_config
+            {
+                "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                "content": "prefix=/foo",
+                "expected": "prefix=/foo",
+            },
+            {
+                "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                "content": "prefix=/foo",
+                "expected": "prefix=/foo",
+            },
+        ],
     ],
 )
 @pytest.mark.usefixtures("new_dir")
 class TestFixXmlTools:
     """Check the normalization of pathnames in XML tools."""
 
-    def test_fix_xmltools(self, tc, files):
-        for test_file in files:
+    def test_fix_xmltools(self, tc):
+        for test_file in tc:
             path = test_file["path"]
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w") as f:
@@ -111,13 +93,14 @@ class TestFixXmlTools:
 
         BaseRepository.normalize("root")
 
-        for test_file in files:
+        for test_file in tc:
             with open(test_file["path"], "r") as f:
                 assert f.read() == test_file["expected"]
 
 
 @pytest.mark.usefixtures("new_dir")
 class TestFixShebang:
+    """Check the normalization of script interpreter lines."""
 
     scenarios = [
         (
@@ -185,6 +168,8 @@ class TestFixShebang:
 
 @pytest.mark.usefixtures("new_dir")
 class TestRemoveUselessFiles:
+    """Check the removal of unnecessary files."""
+
     def create(self, file_path: str) -> str:
         path = os.path.join("root", file_path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -268,6 +253,8 @@ class TestFixPkgConfig:
     ],
 )
 class TestFixSymlinks:
+    """Check the normalization of symbolic links."""
+
     def test_fix_symlinks(self, src, dst, new_dir):
         os.makedirs("a")
         open("1", mode="w").close()
@@ -279,6 +266,8 @@ class TestFixSymlinks:
 
 
 class TestFixSUID:
+    """Check the normalization of suid bits in file mode."""
+
     @pytest.mark.parametrize(
         "key,test_mod,expected_mod",
         [
@@ -299,6 +288,8 @@ class TestFixSUID:
 
 
 class TestPkgNameParts:
+    """Check the extraction of package name parts."""
+
     def test_get_pkg_name_parts_name_only(self):
         name, version = get_pkg_name_parts("hello")
         assert name == "hello"

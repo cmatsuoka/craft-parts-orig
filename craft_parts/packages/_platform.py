@@ -23,6 +23,8 @@ _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"
 
 
 def is_deb_based(distro=None):
+    """Verify whether the distro uses .deb pacakages."""
+
     if not distro:
         try:
             distro = os_utils.OsRelease().id()
