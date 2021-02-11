@@ -240,7 +240,7 @@ def create_similar_directory(source: str, destination: str) -> None:
 
     :param str source: Directory from which to copy name, permission bits, and
                        owner information.
-    :param str destintion: Directory to create and to which the `source`
+    :param str destination: Directory to create and to which the `source`
                            information will be copied.
     """
 
