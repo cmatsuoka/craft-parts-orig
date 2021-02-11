@@ -25,6 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from craft_parts import callbacks, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
+from craft_parts.filesets import Fileset
 from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
@@ -35,6 +36,7 @@ from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
+from .organize import organize_filesets
 from .runner import FilesAndDirs, Runner
 
 logger = logging.getLogger(__name__)
@@ -206,8 +208,6 @@ class PartHandler:
             install_path=Path(self._part.part_install_dir),
         )
 
-        # TODO: handle part replacements
-
         shutil.copytree(
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
         )
@@ -234,9 +234,7 @@ class PartHandler:
         # overwrite anything else, because to do so would require changing the
         # `organize` keyword, which will make the build step dirty and require a clean
         # instead of an update.
-
-        # TODO: implement organize
-        # self._organize(overwrite=update)
+        self._organize(overwrite=update)
 
         # TODO: check what else should be part of the build state
         state = states.BuildState(
@@ -258,7 +256,6 @@ class PartHandler:
         return states.StageState(files=files, directories=dirs)
 
     def _run_prime(self, step_info: StepInfo) -> PartState:
-        # TODO: handle part replacements
         self._make_dirs()
 
         files, dirs = self._run_step(
@@ -312,6 +309,15 @@ class PartHandler:
         ]
         for dir_name in dirs:
             os.makedirs(dir_name, exist_ok=True)
+
+    def _organize(self, *, overwrite=False):
+        fileset = Fileset(self._part.organize_fileset, name="organize")
+        organize_filesets(
+            part_name=self._part.name,
+            fileset=fileset,
+            base_dir=self._part.part_install_dir,
+            overwrite=overwrite,
+        )
 
 
 def _get_source_handler(

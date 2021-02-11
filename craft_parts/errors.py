@@ -244,6 +244,14 @@ class CorruptedElfFile(CraftPartsError):
         super().__init__(path=path, message=message)
 
 
+class FileOrganizeError(CraftPartsError):
+
+    fmt = "Failed to organize part {part_name!r}: {message}"
+
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)
+
+
 class PartConflictError(CraftPartsError):
 
     fmt = (

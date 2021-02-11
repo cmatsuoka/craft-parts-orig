@@ -18,7 +18,7 @@
 
 import os
 from glob import iglob
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from craft_parts import errors
 from craft_parts.utils import file_utils
@@ -27,9 +27,13 @@ from craft_parts.utils import file_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(self, entries: List[str], *, name: str = ""):
+    def __init__(self, entries: Union[List[str], Dict[str, str]], *, name: str = ""):
         self._name = name
-        self._list = entries
+        if isinstance(entries, dict):
+            self._dict = entries
+            self._list = list(entries.keys())
+        else:
+            self._list = entries
 
     def __repr__(self):
         return f"Fileset({self._list})"
@@ -53,6 +57,9 @@ class Fileset:
     def excludes(self) -> List[str]:
         """Return the list of files to be excluded."""
         return [x[1:] for x in self._list if x[0] == "-"]
+
+    def get(self, key: str) -> str:
+        return self._dict[key]
 
     def remove(self, item: str) -> None:
         """Remove this entry from the list of files."""

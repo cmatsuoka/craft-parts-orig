@@ -20,15 +20,16 @@ from craft_parts.filesets import Fileset
 
 
 @pytest.mark.parametrize(
-    "tc_entries,tc_includes,tc_excludes",
+    "tc_data,tc_entries,tc_includes,tc_excludes",
     [
-        ([], [], []),
-        (["a", "b"], ["a", "b"], []),
-        (["a", "-b"], ["a"], ["b"]),
+        ([], [], [], []),
+        (["a", "b"], ["a", "b"], ["a", "b"], []),
+        (["a", "-b"], ["a", "-b"], ["a"], ["b"]),
+        ({"a": "1", "b": "2"}, ["a", "b"], ["a", "b"], []),
     ],
 )
-def test_fileset(tc_entries, tc_includes, tc_excludes):
-    fs = Fileset(tc_entries)
+def test_fileset(tc_data, tc_entries, tc_includes, tc_excludes):
+    fs = Fileset(tc_data)
     assert fs.entries == tc_entries
     assert fs.includes == tc_includes
     assert fs.excludes == tc_excludes

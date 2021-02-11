@@ -129,6 +129,11 @@ class Part:
         return self._data.get("prime", ["*"]).copy()
 
     @property
+    def organize_fileset(self) -> Dict[str, str]:
+        """The list of files to organize."""
+        return self._data.get("organize", {}).copy()
+
+    @property
     def dependencies(self) -> List[str]:
         """The list of parts this parts depends on."""
         return self._data.get("after", []).copy()
