@@ -477,11 +477,11 @@ def get_cache_dirs(name: str):
     """Return the paths to the stage and deb cache directories."""
 
     stage_cache_dir = pathlib.Path(
-        BaseDirectory.save_cache_path(name, "craft_parts", "stage_packages")
+        BaseDirectory.save_cache_path(name, "craft-parts", "stage-packages")
     )
 
     deb_cache_dir = pathlib.Path(
-        BaseDirectory.save_cache_path(name, "craft_parts", "download")
+        BaseDirectory.save_cache_path(name, "craft-parts", "download")
     )
 
     return (stage_cache_dir, deb_cache_dir)

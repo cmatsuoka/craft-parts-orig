@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2021 Canonical Ltd
+# Copyright (C) 2016-2021 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,11 +21,23 @@ import os
 import shutil
 from typing import Optional
 
+from xdg import BaseDirectory  # type: ignore
+
 from craft_parts.utils import file_utils
 
-from .base import Cache
-
 logger = logging.getLogger(__name__)
+
+
+class Cache:
+    """Generic cache base class.
+
+    This class is responsible for cache location, notification and pruning.
+    """
+
+    def __init__(self, name: str):
+        self.cache_root = os.path.join(
+            BaseDirectory.xdg_cache_home, name, "craft-parts"
+        )
 
 
 class FileCache(Cache):
