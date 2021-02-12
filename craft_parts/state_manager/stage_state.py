@@ -40,8 +40,9 @@ class StageState(PartState):
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties.
 
-        The only property of interest to the stage step is the `stage` keyword
-        used to filter out files with a white or blacklist.
+        The properties of interest to the stage step are the `stage` keyword
+        used to filter out files with an allow or deny list, and the override-stage
+        scriptlet (if defined).
         """
 
         return {

@@ -19,10 +19,12 @@
 import logging
 from typing import List, Optional
 
-from craft_parts import parts, steps
+from craft_parts import common, errors, packages, parts, steps
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part, sort_parts
+from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
+from craft_parts.step_info import StepInfo, options_from_step_info
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
@@ -31,9 +33,13 @@ logger = logging.getLogger(__name__)
 class Sequencer:
     """Obtain a list of actions from the parts specification."""
 
-    def __init__(self, all_parts: List[Part]):
-        self._all_parts = sort_parts(all_parts)
-        self._sm = StateManager(all_parts)
+    def __init__(
+        self, *, part_list: List[Part], validator: Validator, step_info: StepInfo
+    ):
+        self._part_list = sort_parts(part_list)
+        self._validator = validator
+        self._step_info = step_info
+        self._sm = StateManager(part_list)
         self._actions = []  # type: List[Action]
 
     def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
@@ -50,9 +56,9 @@ class Sequencer:
         reason: Optional[str] = None,
     ) -> None:
         if part_names:
-            selected_parts = [p for p in self._all_parts if p.name in part_names]
+            selected_parts = [p for p in self._part_list if p.name in part_names]
         else:
-            selected_parts = self._all_parts
+            selected_parts = self._part_list
 
         for current_step in target_step.previous_steps() + [target_step]:
             # We check for stage collisions when executing the step actions
@@ -124,7 +130,7 @@ class Sequencer:
         )
 
     def _prepare_step(self, part: Part, step: Step) -> None:
-        all_deps = parts.part_dependencies(part.name, part_list=self._all_parts)
+        all_deps = parts.part_dependencies(part.name, part_list=self._part_list)
         prerequisite_step = steps.dependency_prerequisite_step(step)
 
         # With v2 plugins we don't need to stage dependencies before PULL
@@ -151,20 +157,34 @@ class Sequencer:
         self._prepare_step(part, step)
 
         # FIXME: update properties
-        state = states.PartState()
+        state: states.PartState
+        part_properties = self._validator.expand_part_properties(part.properties)
 
-        if step is Step.PULL:
-            # TODO: handle properties
-            # pull_properties = dict()
-            # part_build_packages = part.build_packages
-            # part_build_snaps = part.build_snaps
+        if step == Step.PULL:
+            state = states.PullState(
+                part_properties=part.properties,
+                project_options=options_from_step_info(self._step_info),
+            )
 
-            # TODO: build pull state
-            pass
+        elif step == Step.BUILD:
+            package_repo = packages.Repository()
+            build_packages = common.get_build_packages(part, package_repo)
 
-        if step is Step.BUILD:
-            # TODO: build and update ephemeral build state
-            pass
+            state = states.BuildState(
+                part_properties=part_properties,
+                project_options=options_from_step_info(self._step_info),
+                build_packages=build_packages,
+                machine_assets=common.get_machine_manifest(),
+            )
+
+        elif step == Step.STAGE:
+            state = states.StageState(files=set(), directories=set())
+
+        elif step == Step.PRIME:
+            state = states.PrimeState(files=set(), directories=set())
+
+        else:
+            raise errors.InternalError("invalid step {step!r}")
 
         if rerun:
             self._add_action(part, step, action_type=ActionType.RERUN, reason=reason)

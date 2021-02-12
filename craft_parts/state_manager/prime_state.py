@@ -52,8 +52,9 @@ class PrimeState(PartState):
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties.
 
-        The only property of interest to the prime step is the `prime` keyword
-        used to filter out files with a white or blacklist.
+        The properties of interest to the prime step are the `prime` keyword
+        used to filter out files with an allow or deny, and the override-prime
+        scriptlet (if defined).
         """
 
         return {

@@ -46,7 +46,7 @@ def load_state(
     with open(filename, "r") as state_file:
         data = yaml_utils.load(state_file)
         if data:
-            state_data.update(data)
+            state_data = data
 
     timestamp = file_utils.timestamp(filename)
 

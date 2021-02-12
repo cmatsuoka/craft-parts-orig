@@ -86,7 +86,9 @@ class LifecycleManager:
         self._application_name = application_name
         self._target_arch = self._step_info.deb_arch
         self._build_packages = build_packages
-        self._sequencer = sequencer.Sequencer(self._parts)
+        self._sequencer = sequencer.Sequencer(
+            part_list=self._parts, validator=self._validator, step_info=self._step_info
+        )
         self._executor = executor.Executor(
             part_list=self._parts,
             plugin_version=plugin_version,
