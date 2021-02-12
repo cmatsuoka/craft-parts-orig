@@ -31,6 +31,7 @@ class CraftPartsError(Exception, ABC):
     fmt = "Daughter classes should redefine this"
 
     def __init__(self, **kwargs) -> None:
+        super().__init__()
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -40,8 +41,6 @@ class CraftPartsError(Exception, ABC):
 
 class CraftPartsReportableError(CraftPartsError):
     """Base class for reportable Craft Parts exceptions."""
-
-    pass
 
 
 class InternalError(CraftPartsReportableError):
@@ -130,7 +129,10 @@ class ScriptletRunError(CraftPartsError):
     :param exit_code: the execution error code.
     """
 
-    fmt = "The {scriptlet_name} scriptlet in part {part_name!r} failed with code {exit_code}."
+    fmt = (
+        "The {scriptlet_name} scriptlet in part {part_name!r} failed "
+        "with code {exit_code}."
+    )
 
     def __init__(self, part_name: str, scriptlet_name: str, exit_code: int):
         super().__init__(

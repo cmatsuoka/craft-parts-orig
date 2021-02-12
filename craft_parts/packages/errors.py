@@ -113,7 +113,7 @@ class PackageNotFound(PackagesError):
         # If the package was multiarch, try to help.
         distro = os_utils.OsRelease().id()
         if is_deb_based(distro) and ":" in self.package_name:
-            (name, arch) = self.package_name.split(":", 2)
+            (_, arch) = self.package_name.split(":", 2)
             if arch:
                 message += (
                     "\nYou may need to add support for this architecture with "

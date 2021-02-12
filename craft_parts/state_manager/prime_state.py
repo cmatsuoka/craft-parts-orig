@@ -22,6 +22,8 @@ from .part_state import PartState
 
 
 class PrimeState(PartState):
+    """Hold context information for the prime step."""
+
     yaml_tag = "!PrimeState"
 
     def __init__(

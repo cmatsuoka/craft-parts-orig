@@ -22,6 +22,8 @@ from .part_state import PartState
 
 
 class StageState(PartState):
+    """Hold context information for the stage step."""
+
     yaml_tag = "!StageState"
 
     def __init__(

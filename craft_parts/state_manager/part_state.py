@@ -81,7 +81,6 @@ class PartState(_State):
         if not part_properties:
             part_properties = {}
 
-        # TODO: handle this in a better way
         if part_properties:
             self.properties = self.properties_of_interest(part_properties)
 

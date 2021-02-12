@@ -25,7 +25,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Set, Tuple  # noqa: F401
+from typing import List, Set, Tuple
 
 from xdg import BaseDirectory  # type: ignore
 

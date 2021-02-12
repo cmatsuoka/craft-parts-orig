@@ -23,6 +23,9 @@ from typing import Any, Dict, List, Optional, Set
 from craft_parts import errors
 from craft_parts.steps import Step
 
+# pylint: disable=too-many-public-methods
+# We use many property getters to prevent unintentional value overwrites
+
 
 class Part:
     """Each of the components used in the project specification.

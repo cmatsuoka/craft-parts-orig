@@ -59,6 +59,7 @@ class Fileset:
         return [x[1:] for x in self._list if x[0] == "-"]
 
     def get(self, key: str) -> str:
+        """Retrieve fileset dictionary values."""
         return self._dict[key]
 
     def remove(self, item: str) -> None:

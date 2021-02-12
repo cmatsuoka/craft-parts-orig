@@ -14,6 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Handle part files organization.
+
+Installed part files can be reorganized according to a mapping specified
+under the `organize` entry in a part definition. In the key/value pair,
+the key represents the path of a file inside the part and the value
+represents how the file is going to be staged.
+"""
+
 import contextlib
 import os
 import shutil
@@ -27,6 +35,13 @@ from craft_parts.utils import file_utils
 def organize_filesets(
     *, part_name: str, fileset: Fileset, base_dir: Path, overwrite: bool
 ):
+    """Rearrange files for part staging.
+
+    :param fileset: A fileset containing the `organize` file mapping.
+    :param base_dir: Where the installed files are located.
+    :param overwrite: Whether existing files should be overwritten.
+    """
+
     for key in sorted(fileset.entries, key=lambda x: ["*" in x, x]):
         src = str(base_dir / key)
         # Remove the leading slash so the path actually joins
