@@ -32,7 +32,7 @@ from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import PartState, states
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import StepInfo, options_from_step_info
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -68,10 +68,10 @@ class PartHandler:
 
         self._part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = _get_source_handler(
-            step_info.application_name,
-            part.source,
-            part.part_src_dir,
-            self._part_properties,
+            application_name=step_info.application_name,
+            source=part.source,
+            source_dir=part.part_src_dir,
+            properties=self._part_properties,
         )
         self._package_repo = packages.Repository()
 
@@ -188,8 +188,8 @@ class PartHandler:
 
         # TODO: check what else should be part of the pull state
         state = states.PullState(
-            property_names={},
             part_properties=self._part_properties,
+            project_options=options_from_step_info(step_info),
             stage_packages=fetched_packages,
             source_details=getattr(self._source_handler, "source_details", None),
         )
@@ -202,16 +202,22 @@ class PartHandler:
         build_packages = _get_build_packages(self._part, self._package_repo)
         packages.Repository.install_build_packages(build_packages)
 
-        # unpack stage packages/snaps
+        # TODO: install build snaps
+
+        # Unpack stage packages/snaps to part install dir
+        # (stage packages are fetched and unpacked in the pull step, but we'll
+        # unpack again here just in case the build step has been cleaned.)
         self._package_repo.unpack_stage_packages(
             stage_packages_path=self._part.part_package_dir,
             install_path=Path(self._part.part_install_dir),
         )
 
+        # Copy source from the part source dir to the part build dir
         shutil.copytree(
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
         )
 
+        # Perform the build step
         self._run_step(
             step_info=step_info,
             scriptlet_name="override-build",
@@ -238,8 +244,9 @@ class PartHandler:
 
         # TODO: check what else should be part of the build state
         state = states.BuildState(
-            property_names={},
             part_properties=self._part_properties,
+            project_options=options_from_step_info(step_info),
+            build_packages=build_packages,
             machine_assets=_get_machine_manifest(),
         )
         return state

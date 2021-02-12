@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""State definitions for the prime state."""
+
+from typing import Any, Dict
+
 from .part_state import PartState
 
 
@@ -27,17 +31,12 @@ class PrimeState(PartState):
         directories,
         dependency_paths=None,
         part_properties=None,
-        project=None,
         scriptlet_metadata=None,
         primed_stage_packages=None,
     ):
         super().__init__(
             part_properties=part_properties, files=files, directories=directories
         )
-
-        # TODO: verify how to deal with metadata
-        # if not scriptlet_metadata:
-        #     scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
 
         self.dependency_paths = set()
         self.scriptlet_metadata = scriptlet_metadata
@@ -48,7 +47,7 @@ class PrimeState(PartState):
         if dependency_paths:
             self.dependency_paths = dependency_paths
 
-    def properties_of_interest(self, part_properties):
+    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties.
 
         The only property of interest to the prime step is the `prime` keyword
@@ -60,7 +59,9 @@ class PrimeState(PartState):
             "prime": part_properties.get("prime", ["*"]) or ["*"],
         }
 
-    def project_options_of_interest(self, project):
+    def project_options_of_interest(
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Extract the options concerning this step from the project.
 
         The prime step doesn't care about any project options.

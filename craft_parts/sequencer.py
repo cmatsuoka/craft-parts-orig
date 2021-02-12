@@ -150,6 +150,7 @@ class Sequencer:
     ) -> None:
         self._prepare_step(part, step)
 
+        # FIXME: update properties
         state = states.PartState()
 
         if step is Step.PULL:

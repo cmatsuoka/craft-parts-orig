@@ -14,85 +14,65 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""State definitions for the pull step."""
+
+from typing import Any, Dict, List
+
 from .part_state import PartState
 
 
-def _schema_properties():
-    return {
-        "override-pull",
-        "parse-info",
-        "plugin",
-        "source",
-        "source-commit",
-        "source-depth",
-        "source-tag",
-        "source-type",
-        "source-branch",
-        "source-subdir",
-        "stage-packages",
-    }
-
-
 class PullState(PartState):
+    """Hold context information for the pull step."""
+
     yaml_tag = "!PullState"
 
     def __init__(
         self,
         *,
-        property_names,
-        part_properties=None,
-        project=None,
-        stage_packages=None,
-        build_snaps=None,
-        build_packages=None,
+        part_properties: Dict[str, Any] = None,
+        project_options: Dict[str, Any] = None,
+        stage_packages: List[str] = None,
         source_details=None,
-        metadata=None,
-        metadata_files=None,
-        scriptlet_metadata=None,
     ):
-        # Save this off before calling super() since we'll need it
-        # FIXME: for 3.x the name `schema_properties` is leaking
-        #        implementation details from a higher layer.
-        self.schema_properties = property_names
-        self.assets = {
+        assets = {
             "stage-packages": stage_packages,
-            "build-snaps": build_snaps,
-            "build-packages": build_packages,
             "source-details": source_details,
         }
 
-        # TODO: verify how metadata should be handled
-        # if not scriptlet_metadata:
-        #     scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
-        #
-        # if not metadata:
-        #     metadata = snapcraft.extractors.ExtractedMetadata()
-        #
-        # if not metadata_files:
-        #    metadata_files = []
-        #
-        # self.extracted_metadata = {"metadata": metadata, "files": metadata_files}
-        #
-        # self.scriptlet_metadata = scriptlet_metadata
+        super().__init__(
+            part_properties=part_properties,
+            project_options=project_options,
+            assets=assets,
+        )
 
-        super().__init__(part_properties=part_properties, project=project)
-
-    def properties_of_interest(self, part_properties):
+    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties."""
 
-        properties = {}
-        for name in self.schema_properties:
-            properties[name] = part_properties.get(name)
+        schema_properties = [
+            "override-pull",
+            "parse-info",
+            "plugin",
+            "source",
+            "source-commit",
+            "source-depth",
+            "source-tag",
+            "source-type",
+            "source-branch",
+            "source-subdir",
+        ]
 
-        for name in _schema_properties():
+        properties: Dict[str, Any] = {}
+        for name in schema_properties:
             properties[name] = part_properties.get(name)
 
         return properties
 
-    def project_options_of_interest(self, project):
+    def project_options_of_interest(
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Extract the options concerning this step from the project.
 
         The pull step only cares about the target architecture.
         """
 
-        return {"deb_arch": getattr(project, "deb_arch", None)}
+        return {"deb_arch": project_options.get("deb_arch")}

@@ -17,6 +17,8 @@
 """The part crafter lifecycle manager."""
 
 import logging
+from collections import namedtuple
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from craft_parts import errors, parts, steps
@@ -37,13 +39,17 @@ _DirtyReports = Dict[str, Dict[Step, Optional[DirtyReport]]]
 _OutdatedReports = Dict[str, Dict[Step, Optional[OutdatedReport]]]
 
 
+StateTimestamp = namedtuple("StateTimestamp", ["state", "timestamp"])
+
+
 class _EphemeralState:
     def __init__(self):
-        self._state = {}  # type: Dict[str, Dict[Step, PartState]]
+        self._state: Dict[str, Dict[Step, StateTimestamp]] = {}
 
-    def set(self, *, part_name: str, step: Step, state: Optional[PartState]) -> None:
+    def set(
+        self, *, part_name: str, step: Step, state: Optional[StateTimestamp]
+    ) -> None:
         """Set a state for a given part and step."""
-
         if not state:
             self.remove(part_name=part_name, step=step)
             return
@@ -55,19 +61,17 @@ class _EphemeralState:
 
     def remove(self, *, part_name: str, step: Step) -> None:
         """Remove the state for a given part and step."""
-
-        self._state[part_name].pop(step, None)
+        if part_name in self._state:
+            self._state[part_name].pop(step, None)
 
     def test(self, *, part_name: str, step: Step) -> bool:
         """Verify if there is a state for a given part and step."""
-
         if part_name not in self._state:
             return False
         return step in self._state[part_name]
 
-    def get(self, *, part_name: str, step: Step) -> Optional[PartState]:
+    def get(self, *, part_name: str, step: Step) -> Optional[StateTimestamp]:
         """Retrieve the state for a give part and step."""
-
         if self.test(part_name=part_name, step=step):
             return self._state[part_name][step]
         return None
@@ -83,14 +87,19 @@ class StateManager:
         for part in all_parts:
             # Initialize from persistent state
             for step in list(Step):
-                state = load_state(part, step)
+                state, timestamp = load_state(part, step)
                 if state:
-                    self._state.set(part_name=part.name, step=step, state=state)
+                    self._state.set(
+                        part_name=part.name,
+                        step=step,
+                        state=StateTimestamp(state, timestamp),
+                    )
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
-
-        self._state.set(part_name=part.name, step=step, state=state)
+        self._state.set(
+            part_name=part.name, step=step, state=StateTimestamp(state, datetime.now())
+        )
 
     def should_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part should run.

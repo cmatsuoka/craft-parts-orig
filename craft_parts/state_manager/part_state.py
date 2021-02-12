@@ -44,22 +44,27 @@ class _State(yaml_utils.YAMLObject):
 
 
 class PartState(_State):
-    """The context used to run a step for a given part."""
+    """The context used to run a step for a given part.
+
+    The part state contains environmental and project-specific configuration
+    data collected at step run time. If those properties are different in a
+    new lifecycle execution the step will run again.
+    """
 
     def __init__(
         self,
         *,
-        part_properties=None,
-        project=None,
-        data: Dict[str, Any] = None,
+        part_properties: Dict[str, Any] = None,
+        project_options: Dict[str, Any] = None,
         files: Set[str] = None,
-        directories: Set[str] = None
+        directories: Set[str] = None,
+        assets: Dict[str, Any] = None,
+        with_timestamp=False,
     ):
-        if data:
-            super().__init__(data)
-            return
-
         super().__init__()
+
+        if assets:
+            self.assets = assets
 
         if not files:
             files = set()
@@ -69,7 +74,9 @@ class PartState(_State):
 
         self.files = files
         self.directories = directories
-        self.timestamp: datetime = datetime.now()
+
+        if with_timestamp:
+            self.timestamp: datetime = datetime.now()
 
         if not part_properties:
             part_properties = {}
@@ -78,8 +85,8 @@ class PartState(_State):
         if part_properties:
             self.properties = self.properties_of_interest(part_properties)
 
-        if project:
-            self.project_options = self.project_options_of_interest(project)
+        if project_options:
+            self.project_options = self.project_options_of_interest(project_options)
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.
@@ -89,19 +96,23 @@ class PartState(_State):
 
         raise NotImplementedError
 
-    def project_options_of_interest(self, project):
+    def project_options_of_interest(
+        self, project_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Extract the options concerning this step from the project."""
 
         raise NotImplementedError
 
-    def diff_properties_of_interest(self, other_properties):
+    def diff_properties_of_interest(self, other_properties: Dict[str, Any]) -> Set[str]:
         """Return set of properties that differ."""
 
         return _get_differing_keys(
             self.properties, self.properties_of_interest(other_properties)
         )
 
-    def diff_project_options_of_interest(self, other_project_options):
+    def diff_project_options_of_interest(
+        self, other_project_options: Dict[str, Any]
+    ) -> Set[str]:
         """Return set of project options that differ."""
 
         return _get_differing_keys(
@@ -114,12 +125,12 @@ class PartState(_State):
 
         os.makedirs(filepath.parent, exist_ok=True)
         with open(filepath, "w") as f:
-            data = yaml_utils.dump(self.__dict__)
+            data = yaml_utils.dump(self)
             if data:
                 f.write(data)
 
 
-def _get_differing_keys(dict1, dict2):
+def _get_differing_keys(dict1, dict2) -> Set[str]:
     differing_keys = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)

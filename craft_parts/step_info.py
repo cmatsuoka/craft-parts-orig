@@ -22,7 +22,7 @@ import copy
 import logging
 import platform
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import errors, utils
 from craft_parts.parts import Part
@@ -143,6 +143,18 @@ class StepInfo:
 
         self.__target_machine = target_arch
         self.__machine_info = machine
+
+
+def options_from_step_info(step_info: StepInfo) -> Dict[str, Any]:
+    """Obtain project-wide options from the given step info."""
+
+    options = {
+        "application_name": step_info.application_name,
+        "arch_triplet": step_info.arch_triplet,
+        "deb_arch": step_info.deb_arch,
+    }
+
+    return options
 
 
 def _get_platform_architecture() -> str:

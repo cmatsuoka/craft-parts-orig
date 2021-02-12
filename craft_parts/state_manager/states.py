@@ -18,36 +18,52 @@
 
 import contextlib
 import os
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple, cast
 
+from craft_parts import errors
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, yaml_utils
 
+from .build_state import BuildState
 from .part_state import PartState
-
-# pylint: disable=unused-import
-from .build_state import BuildState  # noqa: F401, isort: skip
-from .prime_state import PrimeState  # noqa: F401, isort: skip
-from .pull_state import PullState  # noqa: F401, isort: skip
-from .stage_state import StageState  # noqa: F401, isort: skip
+from .prime_state import PrimeState
+from .pull_state import PullState
+from .stage_state import StageState
 
 
-def load_state(part: Part, step: Step) -> Optional[PartState]:
+def load_state(
+    part: Part, step: Step
+) -> Tuple[Optional[PartState], Optional[datetime]]:
     """Retrieve the persistent state for the given part and step."""
 
     state_data = {}
     filename = os.path.join(part.part_state_dir, step.name.lower())
     if not os.path.isfile(filename):
-        return None
+        return None, None
 
     with open(filename, "r") as state_file:
         data = yaml_utils.load(state_file)
         if data:
             state_data.update(data)
 
-    state_data["timestamp"] = file_utils.timestamp(filename)
-    return PartState(data=state_data)
+    timestamp = file_utils.timestamp(filename)
+
+    state: PartState
+
+    if step == Step.PULL:
+        state = cast(PullState, state_data)
+    elif step == Step.BUILD:
+        state = cast(BuildState, state_data)
+    elif step == Step.STAGE:
+        state = cast(StageState, state_data)
+    elif step == Step.PRIME:
+        state = cast(PrimeState, state_data)
+    else:
+        raise errors.InternalError(f"invalid step {step!r}")
+
+    return state, timestamp
 
 
 def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
@@ -55,7 +71,7 @@ def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
 
     states: Dict[str, PartState] = {}
     for part in part_list:
-        state = load_state(part, step)
+        state, _ = load_state(part, step)
         if state:
             states[part.name] = state
     return states
