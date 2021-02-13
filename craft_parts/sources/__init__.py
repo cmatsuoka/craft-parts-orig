@@ -81,6 +81,7 @@ import sys
 from typing import Any, Dict, Type, Union
 
 from . import errors
+from .base import SourceHandler
 
 if sys.platform == "linux":
     # from .bazaar import Bazaar  # noqa: F401
@@ -98,7 +99,6 @@ if sys.platform == "linux":
     # from .rpm import Rpm  # noqa: F401
     # from .snap import Snap  # noqa: F401
 
-    SourceHandler = Union[Local, Tar]
     SourceHandlerType = Type[SourceHandler]
 
     _source_handler: Dict[str, SourceHandlerType] = {

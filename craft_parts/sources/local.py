@@ -23,10 +23,10 @@ from typing import List, Optional
 
 from craft_parts.utils import file_utils
 
-from .base import Base
+from .base import SourceHandler
 
 
-class Local(Base):
+class Local(SourceHandler):
     """The local source handler."""
 
     def __init__(self, *args, copy_function=file_utils.link_or_copy, **kwargs):
@@ -39,7 +39,7 @@ class Local(Base):
         self._updated_directories = set()
 
     def pull(self):
-        """Pull the local source files."""
+        """Retrieve the local source files."""
 
         file_utils.link_or_copy_tree(
             self.source_abspath,

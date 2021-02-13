@@ -23,11 +23,11 @@ import tarfile
 import tempfile
 
 from . import errors
-from .base import FileBase
+from .base import FileSourceHandler
 
 
 # pylint: disable=too-many-arguments
-class Tar(FileBase):
+class Tar(FileSourceHandler):
     """The tar source handler."""
 
     def __init__(

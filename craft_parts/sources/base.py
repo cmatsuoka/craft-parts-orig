@@ -20,6 +20,7 @@ import abc
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from typing import List, Optional
 
 import requests
@@ -32,15 +33,14 @@ from . import errors
 from .checksum import split_checksum, verify_checksum
 
 
-class Base:
+class SourceHandler(abc.ABC):
     """The base class for source type handlers."""
 
-    # pylint: disable=too-many-instance-attributes
     # pylint: disable=too-many-arguments
     def __init__(
         self,
         source: str,
-        source_dir: str,
+        source_dir: Path,
         *,
         application_name: Optional[str] = None,
         source_tag: Optional[str] = None,
@@ -55,7 +55,7 @@ class Base:
 
         self._application_name = application_name
         self.source = source
-        self.source_dir = source_dir
+        self.source_dir = str(source_dir)
         self.source_tag = source_tag
         self.source_commit = source_commit
         self.source_branch = source_branch
@@ -66,8 +66,11 @@ class Base:
         self.command = command
         self._checked = False
 
-    # pylint: enable=too-many-instance-attributes
     # pylint: enable=too-many-arguments
+
+    @abc.abstractmethod
+    def pull(self):
+        """Retrieve the source file."""
 
     def check(self, target: str, ignore_files: Optional[List[str]] = None) -> bool:
         """Check if pulled sources have changed since target was created.
@@ -118,14 +121,14 @@ class Base:
     # pylint: enable=no-self-use
 
 
-class FileBase(Base):
+class FileSourceHandler(SourceHandler, abc.ABC):
     """Base class for file source types."""
 
     # pylint: disable=too-many-arguments
     def __init__(
         self,
         source: str,
-        source_dir: str,
+        source_dir: Path,
         *,
         application_name: Optional[str],
         source_tag: Optional[str] = None,
