@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 def get_build_packages(part: Part, repository) -> List[str]:
     """Obtain the list of build packages from part, source, and plugin."""
 
-    packages: List[str] = []
+    all_packages: List[str] = []
 
     build_packages = part.build_packages
     if build_packages:
         logger.debug("part build packages: %s", build_packages)
-        packages.extend(build_packages)
+        all_packages.extend(build_packages)
 
     source = part.source
     if source:
@@ -42,15 +42,15 @@ def get_build_packages(part: Part, repository) -> List[str]:
         source_build_packages = repository.get_packages_for_source_type(source_type)
         if source_build_packages:
             logger.debug("source build packages: %s", source_build_packages)
-            packages.extend(source_build_packages)
+            all_packages.extend(source_build_packages)
 
     if isinstance(part.plugin, plugins.PluginV2):
         plugin_build_packages = part.plugin.get_build_packages()
         if plugin_build_packages:
             logger.debug("plugin build packages: %s", plugin_build_packages)
-            packages.extend(plugin_build_packages)
+            all_packages.extend(plugin_build_packages)
 
-    return packages
+    return all_packages
 
 
 def get_machine_manifest() -> Dict[str, Any]:
