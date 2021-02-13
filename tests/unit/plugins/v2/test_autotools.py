@@ -19,9 +19,10 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors, schemas
+from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.plugins.v2 import AutotoolsPlugin
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import PartInfo, ProjectInfo
 
 _SCHEMA_DIR = Path(__file__).parents[4] / "craft_parts" / "data" / "schema"
 
@@ -39,12 +40,15 @@ class TestPluginAutotools:
 
     def setup_method(self):
         options = PluginOptions(properties={}, schema=self._schema)
-        step_info = StepInfo()
-        step_info.part_install_dir = Path("install/dir")
-        step_info._parallel_build_count = 42
-        self._plugin = AutotoolsPlugin(
-            part_name="foo", options=options, step_info=step_info
-        )
+        part = Part("foo", {})
+
+        project_info = ProjectInfo()
+        project_info._parallel_build_count = 42
+
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info.part_install_dir = Path("install/dir")
+
+        self._plugin = AutotoolsPlugin(options=options, part_info=part_info)
 
     def test_schema(self):
         schema = AutotoolsPlugin.get_schema()
@@ -97,10 +101,15 @@ class TestPluginAutotools:
             },
             schema=self._schema,
         )
-        step_info = StepInfo()
-        step_info.part_install_dir = Path("/tmp")
-        step_info._parallel_build_count = 8
-        plugin = AutotoolsPlugin(part_name="foo", options=options, step_info=step_info)
+
+        project_info = ProjectInfo()
+        project_info._parallel_build_count = 8
+
+        part = Part("bar", {})
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info.part_install_dir = Path("/tmp")
+
+        plugin = AutotoolsPlugin(options=options, part_info=part_info)
 
         assert plugin.get_build_commands() == [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",

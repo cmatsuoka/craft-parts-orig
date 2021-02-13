@@ -18,7 +18,7 @@ import pytest
 
 from craft_parts import callbacks, errors
 from craft_parts.parts import Part
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import PartInfo, ProjectInfo, StepInfo
 from craft_parts.steps import Step
 
 
@@ -94,20 +94,22 @@ class TestCallbackExecution:
 
     # pylint: disable=attribute-defined-outside-init
     def setup_method(self):
-        self._part = Part("foo", {})
-        self._info = StepInfo(
+        part = Part("foo", {})
+        project_info = ProjectInfo(
             application_name="test",
             target_arch="x86_64",
             parallel_build_count=4,
             local_plugins_dir=None,
             greet="hello",
         )
+        part_info = PartInfo(project_info=project_info, part=part)
+        self._info = StepInfo(part_info=part_info, step=Step.BUILD)
         callbacks.clear()
 
     def test_run_pre(self, capfd):
         callbacks.register_pre(_callback_1)
         callbacks.register_pre(_callback_2)
-        callbacks.run_pre(self._part, Step.BUILD, step_info=self._info)
+        callbacks.run_pre(step_info=self._info)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
@@ -115,7 +117,7 @@ class TestCallbackExecution:
     def test_run_post(self, capfd):
         callbacks.register_post(_callback_1)
         callbacks.register_post(_callback_2)
-        callbacks.run_post(self._part, Step.BUILD, step_info=self._info)
+        callbacks.run_post(step_info=self._info)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"

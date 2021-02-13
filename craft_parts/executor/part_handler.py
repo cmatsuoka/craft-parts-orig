@@ -32,7 +32,7 @@ from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import PartState, states
-from craft_parts.step_info import StepInfo, options_from_step_info
+from craft_parts.step_info import PartInfo, StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -50,25 +50,23 @@ class PartHandler:
         part: Part,
         *,
         plugin_version: str,
-        step_info: StepInfo,
+        part_info: PartInfo,
         validator: Validator,
         part_list: List[Part],
     ):
         self._part = part
-        self._step_info = step_info
+        self._part_info = part_info
         self._part_list = part_list
 
         plugin_class = plugins.get_plugin(part.plugin, version=plugin_version)
         plugin_schema = validator.merge_schema(plugin_class.get_schema())
 
         options = PluginOptions(properties=part.properties, schema=plugin_schema)
-        self._plugin = plugin_class(
-            part_name=part.name, options=options, step_info=step_info
-        )
+        self._plugin = plugin_class(options=options, part_info=part_info)
 
         self._part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = _get_source_handler(
-            application_name=step_info.application_name,
+            application_name=part_info.application_name,
             source=part.source,
             source_dir=part.part_src_dir,
             properties=self._part_properties,
@@ -141,9 +139,9 @@ class PartHandler:
 
         os_utils.reset_env()
 
-        step_info = self._step_info.for_step(action.step)
+        step_info = StepInfo(part_info=self._part_info, step=action.step)
 
-        callbacks.run_pre(self._part, action.step, step_info=step_info)
+        callbacks.run_pre(step_info=step_info)
 
         run_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
             Step.PULL: self._run_pull,
@@ -155,7 +153,7 @@ class PartHandler:
             state = run_handlers[action.step](step_info)
             state.write(self._part.part_state_dir / action.step.name.lower())
 
-        callbacks.run_post(self._part, action.step, step_info=step_info)
+        callbacks.run_post(step_info=step_info)
 
     def _run_pull(self, step_info: StepInfo) -> PartState:
         _remove(self._part.part_src_dir)
@@ -170,7 +168,7 @@ class PartHandler:
                 fetched_packages = self._package_repo.fetch_stage_packages(
                     application_name=step_info.application_name,
                     package_names=stage_packages,
-                    target_arch=self._step_info.deb_arch,
+                    target_arch=step_info.deb_arch,
                     base=os_utils.get_build_base(),
                     stage_packages_path=self._part.part_package_dir,
                 )
@@ -189,7 +187,7 @@ class PartHandler:
         # TODO: check what else should be part of the pull state
         state = states.PullState(
             part_properties=self._part_properties,
-            project_options=options_from_step_info(step_info),
+            project_options=step_info.project_options,
             stage_packages=fetched_packages,
             source_details=getattr(self._source_handler, "source_details", None),
         )
@@ -245,7 +243,7 @@ class PartHandler:
         # TODO: check what else should be part of the build state
         state = states.BuildState(
             part_properties=self._part_properties,
-            project_options=options_from_step_info(step_info),
+            project_options=step_info.project_options,
             build_packages=build_packages,
             machine_assets=common.get_machine_manifest(),
         )

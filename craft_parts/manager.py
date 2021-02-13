@@ -23,7 +23,7 @@ from craft_parts import errors, executor, packages, parts, sequencer
 from craft_parts.actions import Action
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
@@ -71,7 +71,7 @@ class LifecycleManager:
         self._validator = Validator(_SCHEMA_DIR / "parts.json")
         self._validator.validate(all_parts)
 
-        self._step_info = StepInfo(
+        self._project_info = ProjectInfo(
             application_name=application_name,
             target_arch=target_arch,
             parallel_build_count=parallel_build_count,
@@ -84,10 +84,12 @@ class LifecycleManager:
             Part(name, p, work_dir=work_dir) for name, p in parts_data.items()
         ]
         self._application_name = application_name
-        self._target_arch = self._step_info.deb_arch
+        self._target_arch = self._project_info.deb_arch
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
-            part_list=self._parts, validator=self._validator, step_info=self._step_info
+            part_list=self._parts,
+            validator=self._validator,
+            project_info=self._project_info,
         )
         self._executor = executor.Executor(
             part_list=self._parts,
@@ -116,7 +118,7 @@ class LifecycleManager:
             raise errors.InvalidPartName(part_names[0])
 
         self._executor.clean(
-            initial_step=step, part_list=selected_parts, step_info=self._step_info
+            initial_step=step, part_list=selected_parts, project_info=self._project_info
         )
 
     def update(self) -> None:
@@ -158,4 +160,4 @@ class LifecycleManager:
 
         for act in actions:
             part = parts.part_by_name(act.part_name, self._parts)
-            self._executor.run_action(act, part=part, step_info=self._step_info)
+            self._executor.run_action(act, part=part, project_info=self._project_info)

@@ -67,7 +67,7 @@ class MakePlugin(PluginV2):
         return dict()
 
     def _get_make_command(self, target: str = "") -> str:
-        cmd = ["make", f'-j"{self._step_info.parallel_build_count}"']
+        cmd = ["make", f'-j"{self._part_info.parallel_build_count}"']
 
         if target:
             cmd.append(target)
@@ -81,6 +81,6 @@ class MakePlugin(PluginV2):
             self._get_make_command(),
             '{} DESTDIR="{}"'.format(
                 self._get_make_command(target="install"),
-                self._step_info.part_install_dir,
+                self._part_info.part_install_dir,
             ),
         ]

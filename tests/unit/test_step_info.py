@@ -20,7 +20,7 @@ import pytest
 
 from craft_parts import errors
 from craft_parts.parts import Part
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import PartInfo, ProjectInfo, StepInfo
 from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"
@@ -39,10 +39,10 @@ _MOCK_NATIVE_ARCH = "aarch64"
         ("x86_64", "amd64", "x86_64-linux-gnu", True),
     ],
 )
-def test_step_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
+def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
-    info = StepInfo(
+    x = ProjectInfo(
         application_name="test",
         target_arch=tc_arch,
         parallel_build_count=16,
@@ -51,17 +51,19 @@ def test_step_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
         bar=["bar"],
     )
 
-    assert info.application_name == "test"
-    assert info.arch_triplet == tc_triplet
-    assert info.is_cross_compiling == tc_cross
-    assert info.parallel_build_count == 16
-    assert info.local_plugins_dir == Path("/some/path")
-    assert info.deb_arch == tc_deb_arch
+    assert x.application_name == "test"
+    assert x.arch_triplet == tc_triplet
+    assert x.is_cross_compiling == tc_cross
+    assert x.parallel_build_count == 16
+    assert x.local_plugins_dir == Path("/some/path")
+    assert x.deb_arch == tc_deb_arch
 
 
-def test_step_info_application_name():
-    info = StepInfo()
-    assert info.application_name == "craft_parts"
+def test_project_info_default():
+    x = ProjectInfo()
+
+    assert x.application_name == "craft_parts"
+    assert x.parallel_build_count == 1
 
 
 @pytest.mark.parametrize(
@@ -73,7 +75,7 @@ def test_step_info_application_name():
     ],
 )
 def test_local_plugin_dir(tc_param, tc_result):
-    info = StepInfo(
+    info = ProjectInfo(
         target_arch="x86_64",
         local_plugins_dir=tc_param,
     )
@@ -82,17 +84,22 @@ def test_local_plugin_dir(tc_param, tc_result):
 
 def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as raised:
-        StepInfo(
+        ProjectInfo(
             target_arch="invalid",
         )
     assert str(raised.value) == "Architecture 'invalid' is not supported."
 
 
-def test_update_part_data():
-    info = StepInfo()
+def test_part_info():
+    info = ProjectInfo()
     part = Part("foo", {})
-    x = info.for_part(part)
+    x = PartInfo(project_info=info, part=part)
     cwd = Path().absolute()
+
+    assert x.application_name == "craft_parts"
+    assert x.parallel_build_count == 1
+
+    assert x.part_name == "foo"
     assert x.part_src_dir == cwd / "parts/foo/src"
     assert x.part_src_work_dir == cwd / "parts/foo/src"
     assert x.part_build_dir == cwd / "parts/foo/build"
@@ -101,18 +108,28 @@ def test_update_part_data():
     assert x.stage_dir == cwd / "stage"
     assert x.prime_dir == cwd / "prime"
 
-    # The original info shouldn't change
-    assert info.part_src_dir == Path()
-    assert info.part_src_work_dir == Path()
-    assert info.part_build_dir == Path()
-    assert info.part_build_work_dir == Path()
-    assert info.part_install_dir == Path()
-    assert info.stage_dir == Path()
-    assert info.prime_dir == Path()
 
+def test_step_info():
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+    part = Part("foo", {})
+    part_info = PartInfo(project_info=info, part=part)
+    x = StepInfo(part_info=part_info, step=Step.BUILD)
+    cwd = Path().absolute()
 
-def test_update_step_data():
-    info = StepInfo()
-    x = info.for_step(Step.BUILD)
+    assert x.application_name == "craft_parts"
+    assert x.parallel_build_count == 1
+
+    assert x.part_name == "foo"
+    assert x.part_src_dir == cwd / "parts/foo/src"
+    assert x.part_src_work_dir == cwd / "parts/foo/src"
+    assert x.part_build_dir == cwd / "parts/foo/build"
+    assert x.part_build_work_dir == cwd / "parts/foo/build"
+    assert x.part_install_dir == cwd / "parts/foo/install"
+    assert x.stage_dir == cwd / "stage"
+    assert x.prime_dir == cwd / "prime"
+
     assert x.step == Step.BUILD
-    assert info.step is None
+
+    assert x.custom_args == ["custom1", "custom2"]
+    assert x.custom1 == "foobar"
+    assert x.custom2 == [1, 2]

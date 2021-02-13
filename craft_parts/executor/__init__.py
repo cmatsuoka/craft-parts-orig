@@ -23,7 +23,7 @@ from typing import Dict, List, Optional
 from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import PartInfo, ProjectInfo
 from craft_parts.steps import Step
 
 from .collisions import check_for_stage_collisions
@@ -43,7 +43,7 @@ class Executor:
         self._validator = validator
         self._handler: Dict[str, PartHandler] = {}
 
-    def run_action(self, action: Action, *, part: Part, step_info: StepInfo):
+    def run_action(self, action: Action, *, part: Part, project_info: ProjectInfo):
         """Execute the given action for a part using the provided step information."""
 
         logger.debug("execute action %s:%s", part.name, action)
@@ -55,7 +55,7 @@ class Executor:
         if action.step == Step.STAGE:
             check_for_stage_collisions(self._part_list)
 
-        self._create_part_handler(part, step_info=step_info)
+        self._create_part_handler(part, project_info=project_info)
 
         handler = self._handler[part.name]
         handler.run_action(action)
@@ -65,7 +65,7 @@ class Executor:
         *,
         initial_step: Optional[Step],
         part_list: List[Part],
-        step_info: StepInfo
+        project_info: ProjectInfo
     ):
         """Clean the given parts, or all parts if none is specified."""
 
@@ -77,7 +77,7 @@ class Executor:
         selected_steps.reverse()
 
         for part in part_list:
-            self._create_part_handler(part, step_info=step_info)
+            self._create_part_handler(part, project_info=project_info)
             handler = self._handler[part.name]
 
             for step in selected_steps:
@@ -86,13 +86,13 @@ class Executor:
             shutil.rmtree(part.prime_dir)
             shutil.rmtree(part.stage_dir)
 
-    def _create_part_handler(self, part: Part, *, step_info: StepInfo):
+    def _create_part_handler(self, part: Part, *, project_info: ProjectInfo):
         if part.name not in self._handler:
             # create the part handler for a new part
             self._handler[part.name] = PartHandler(
                 part,
                 plugin_version=self._plugin_version,
-                step_info=step_info.for_part(part),
+                part_info=PartInfo(project_info=project_info, part=part),
                 validator=self._validator,
                 part_list=self._part_list,
             )

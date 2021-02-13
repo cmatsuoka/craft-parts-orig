@@ -16,13 +16,11 @@
 
 """Register and execute callback functions."""
 
-import copy
 import logging
 from collections import namedtuple
 from typing import Callable, List
 
 from craft_parts import errors
-from craft_parts.parts import Part
 from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 
@@ -72,37 +70,27 @@ def clear() -> None:
     # pylint: enable=global-statement
 
 
-def run_pre(part: Part, step: Step, *, step_info: StepInfo) -> None:
+def run_pre(*, step_info: StepInfo) -> None:
     """Run all registered pre-step callback functions.
     :param step: the step being processed.
     :param step_info: the step information to be sent to the callback functions."
     """
 
-    return _run(part, step, hook_list=_PRE_HOOKS, step_info=step_info)
+    return _run(hook_list=_PRE_HOOKS, step_info=step_info)
 
 
-def run_post(part: Part, step: Step, *, step_info: StepInfo) -> None:
+def run_post(*, step_info: StepInfo) -> None:
     """Run all registered post-step callback functions.
     :param step: the step being processed.
     :param step_info: the step information to be sent to the callback functions."
     """
 
-    return _run(part, step, hook_list=_POST_HOOKS, step_info=step_info)
+    return _run(hook_list=_POST_HOOKS, step_info=step_info)
 
 
-def _run(part: Part, step: Step, *, hook_list: List[CallbackHook], step_info: StepInfo):
-    info = copy.deepcopy(step_info)
-    info.step = step
-
-    # Populate part directories
-    info.part_src_dir = part.part_src_dir
-    info.part_build_dir = part.part_build_dir
-    info.part_install_dir = part.part_install_dir
-    info.stage_dir = part.stage_dir
-    info.prime_dir = part.prime_dir
-
+def _run(*, hook_list: List[CallbackHook], step_info: StepInfo):
     for hook in hook_list:
-        if not hook.step_list or step in hook.step_list:
+        if not hook.step_list or step_info.step in hook.step_list:
             hook.function(step_info)
 
 

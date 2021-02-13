@@ -19,9 +19,10 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors, schemas
+from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.plugins.v2 import NilPlugin
-from craft_parts.step_info import StepInfo
+from craft_parts.step_info import PartInfo, ProjectInfo
 
 _SCHEMA_DIR = Path(__file__).parents[4] / "craft_parts" / "data" / "schema"
 
@@ -39,8 +40,12 @@ class TestPluginNil:
     def setup_method(self):
         schema = NilPlugin.get_schema()
         options = PluginOptions(properties={}, schema=schema)
-        step_info = StepInfo()
-        self._plugin = NilPlugin(part_name="foo", options=options, step_info=step_info)
+        part = Part("foo", {})
+
+        project_info = ProjectInfo()
+        part_info = PartInfo(project_info=project_info, part=part)
+
+        self._plugin = NilPlugin(options=options, part_info=part_info)
 
     def test_schema(self):
         schema = NilPlugin.get_schema()

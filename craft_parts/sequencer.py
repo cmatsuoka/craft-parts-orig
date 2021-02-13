@@ -24,7 +24,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.parts import Part, sort_parts
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
-from craft_parts.step_info import StepInfo, options_from_step_info
+from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
@@ -34,11 +34,11 @@ class Sequencer:
     """Obtain a list of actions from the parts specification."""
 
     def __init__(
-        self, *, part_list: List[Part], validator: Validator, step_info: StepInfo
+        self, *, part_list: List[Part], validator: Validator, project_info: ProjectInfo
     ):
         self._part_list = sort_parts(part_list)
         self._validator = validator
-        self._step_info = step_info
+        self._project_info = project_info
         self._sm = StateManager(part_list)
         self._actions = []  # type: List[Action]
 
@@ -163,7 +163,7 @@ class Sequencer:
         if step == Step.PULL:
             state = states.PullState(
                 part_properties=part.properties,
-                project_options=options_from_step_info(self._step_info),
+                project_options=self._project_info.project_options,
             )
 
         elif step == Step.BUILD:
@@ -172,7 +172,7 @@ class Sequencer:
 
             state = states.BuildState(
                 part_properties=part_properties,
-                project_options=options_from_step_info(self._step_info),
+                project_options=self._project_info.project_options,
                 build_packages=build_packages,
                 machine_assets=common.get_machine_manifest(),
             )

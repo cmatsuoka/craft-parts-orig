@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import copy
 import logging
 import platform
 from pathlib import Path
@@ -31,9 +30,8 @@ from craft_parts.steps import Step
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes
-class StepInfo:
-    """All the information needed by part handlers."""
+class ProjectInfo:
+    """Project-level information containing project-specific fields."""
 
     def __init__(
         self,
@@ -46,31 +44,13 @@ class StepInfo:
     ):
         self._application_name = application_name
         self._set_machine(target_arch)
-
         self._parallel_build_count = parallel_build_count
+        self._custom_args = custom_args
 
         if not local_plugins_dir:
             self._local_plugins_dir = None
-        elif isinstance(local_plugins_dir, Path):
-            self._local_plugins_dir = local_plugins_dir
         else:
             self._local_plugins_dir = Path(local_plugins_dir)
-
-        # Attributes set before step execution
-        self.step: Optional[Step] = None
-        self.part_src_dir = Path()
-        self.part_src_work_dir = Path()
-        self.part_build_dir = Path()
-        self.part_build_work_dir = Path()
-        self.part_install_dir = Path()
-        self.part_state_dir = Path()
-        self.stage_dir = Path()
-        self.prime_dir = Path()
-        self._custom_args: List[str] = []
-
-        for key, value in custom_args.items():
-            self._custom_args.append(key)
-            setattr(self, key, value)
 
     @property
     def application_name(self) -> str:
@@ -102,34 +82,14 @@ class StepInfo:
         """The architecture used for deb packages."""
         return self.__machine_info["deb"]
 
-    def for_part(self, part: Part) -> StepInfo:
-        """Return a copy of this object adding part-specific fields.
-
-        :param part: the part containing the information to add.
-        """
-
-        info = copy.deepcopy(self)
-        info.part_src_dir = part.part_src_dir
-        info.part_src_work_dir = part.part_src_work_dir
-        info.part_build_dir = part.part_build_dir
-        info.part_build_work_dir = part.part_build_work_dir
-        info.part_install_dir = part.part_install_dir
-        info.part_state_dir = part.part_state_dir
-        info.stage_dir = part.stage_dir
-        info.prime_dir = part.prime_dir
-
-        return info
-
-    def for_step(self, step: Step) -> StepInfo:
-        """Return a copy of this object adding step-specific fields.
-
-        :param step: the step information to add.
-        """
-
-        info = copy.deepcopy(self)
-        info.step = step
-
-        return info
+    @property
+    def project_options(self) -> Dict[str, Any]:
+        """Obtain a project-wide options dictionary."""
+        return {
+            "application_name": self.application_name,
+            "arch_triplet": self.arch_triplet,
+            "deb_arch": self.deb_arch,
+        }
 
     def _set_machine(self, target_arch):
         self.__platform_arch = _get_platform_architecture()
@@ -145,16 +105,50 @@ class StepInfo:
         self.__machine_info = machine
 
 
-def options_from_step_info(step_info: StepInfo) -> Dict[str, Any]:
-    """Obtain project-wide options from the given step info."""
+class PartInfo:
+    """Part-level information containing project and part fields."""
 
-    options = {
-        "application_name": step_info.application_name,
-        "arch_triplet": step_info.arch_triplet,
-        "deb_arch": step_info.deb_arch,
-    }
+    def __init__(
+        self,
+        *,
+        project_info: ProjectInfo,
+        part: Part,
+    ):
+        self._project_info = project_info
+        self.part_name = part.name
+        self.part_src_dir = part.part_src_dir
+        self.part_src_work_dir = part.part_src_work_dir
+        self.part_build_dir = part.part_build_dir
+        self.part_build_work_dir = part.part_build_work_dir
+        self.part_install_dir = part.part_install_dir
+        self.part_state_dir = part.part_state_dir
+        self.stage_dir = part.stage_dir
+        self.prime_dir = part.prime_dir
 
-    return options
+    def __getattr__(self, name):
+        return getattr(self._project_info, name)
+
+
+class StepInfo:
+    """Step-level information containing project, part, and step fields."""
+
+    def __init__(
+        self,
+        *,
+        part_info: PartInfo,
+        step: Step,
+    ):
+        self._part_info = part_info
+        self.step = step
+        self.custom_args: List[str] = []
+
+        # set custom arguments defined in the project info
+        for key, value in self._custom_args.items():
+            self.custom_args.append(key)
+            setattr(self, key, value)
+
+    def __getattr__(self, name):
+        return getattr(self._part_info, name)
 
 
 def _get_platform_architecture() -> str:

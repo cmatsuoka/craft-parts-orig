@@ -78,6 +78,6 @@ class AutotoolsPlugin(PluginV2):
             "[ ! -f ./configure ] && [ -f ./bootstrap ] && env NOCONFIGURE=1 ./bootstrap",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
-            "make -j{}".format(self._step_info.parallel_build_count),
-            'make install DESTDIR="{}"'.format(self._step_info.part_install_dir),
+            "make -j{}".format(self._part_info.parallel_build_count),
+            'make install DESTDIR="{}"'.format(self._part_info.part_install_dir),
         ]
