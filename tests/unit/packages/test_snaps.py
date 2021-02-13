@@ -237,6 +237,7 @@ class TestSnapPackageIsValid:
         )
 
 
+@pytest.mark.usefixtures("new_dir")
 class TestSnapPackageLifecycle:
     def test_install_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
