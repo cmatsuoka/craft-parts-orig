@@ -37,6 +37,7 @@ class SourceHandler(abc.ABC):
     """The base class for source type handlers."""
 
     # pylint: disable=too-many-arguments
+
     def __init__(
         self,
         source: str,

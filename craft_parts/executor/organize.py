@@ -61,7 +61,8 @@ def organize_filesets(
                 # deletions.
                 shutil.rmtree(src)
                 continue
-            elif os.path.isfile(dst):
+
+            if os.path.isfile(dst):
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(dst)
@@ -81,6 +82,7 @@ def organize_filesets(
                             key=key, dst=os.path.relpath(dst, base_dir)
                         ),
                     )
+
             if os.path.isdir(dst) and overwrite:
                 real_dst = os.path.join(dst, os.path.basename(src))
                 if os.path.isdir(real_dst):
@@ -88,5 +90,6 @@ def organize_filesets(
                 else:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(real_dst)
+
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.move(src, dst)
