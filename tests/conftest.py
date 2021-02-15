@@ -24,6 +24,7 @@ import pytest
 import xdg  # type: ignore
 
 from . import fake_servers
+from .fake_elf import FakeElf
 from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
@@ -117,3 +118,13 @@ def fake_snapd():
 def fake_snap_command(mocker):
     """Mock the snap command."""
     return FakeSnapCommand(mocker)
+
+
+@pytest.fixture
+def fake_elf(tmpdir, mocker):
+    fake_elf = FakeElf(root_path=tmpdir, mocker=mocker)
+    current_path = os.environ.get("PATH")
+    new_path = "{}:{}".format(tmpdir, current_path)
+
+    with mock.patch.dict(os.environ, {"PATH": new_path}):
+        yield fake_elf
