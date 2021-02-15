@@ -40,7 +40,6 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
@@ -205,7 +204,7 @@ class Library:
         # Resolve path, if possible.
         self.path = self._crawl_for_path()
 
-        if core_base_path is not None and self.path.startswith(core_base_path):
+        if core_base_path is not None and self.path.startswith(str(core_base_path)):
             self.in_base_snap = True
         else:
             self.in_base_snap = False
@@ -243,7 +242,7 @@ class Library:
 
         valid_search_paths = [p for p in self.search_paths if os.path.exists(p)]
         in_search_paths = any(
-            self.soname_path.startswith(p) for p in valid_search_paths
+            self.soname_path.startswith(str(p)) for p in valid_search_paths
         )
 
         # Expedite path crawling if we have a valid elf file that lives
