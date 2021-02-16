@@ -37,7 +37,7 @@ from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
 from .organize import organize_filesets
-from .runner import FilesAndDirs, Runner
+from .step_handler import FilesAndDirs, StepHandler
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +279,7 @@ class PartHandler:
         if not step_info.step:
             raise errors.InternalError("request to run an undefined step")
 
-        runner = Runner(
+        step_handler = StepHandler(
             self._part,
             step_info=step_info,
             plugin=self._plugin,
@@ -287,12 +287,12 @@ class PartHandler:
         )
         scriptlet = self._part.get_scriptlet(step_info.step)
         if scriptlet:
-            runner.run_scriptlet(
+            step_handler.run_scriptlet(
                 scriptlet, scriptlet_name=scriptlet_name, workdir=workdir
             )
             return FilesAndDirs(set(), set())
 
-        return runner.run_builtin()
+        return step_handler.run_builtin()
 
     def _update_pull(self):
         # TODO: implement update pull

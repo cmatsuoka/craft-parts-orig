@@ -20,7 +20,7 @@ import stat
 import pytest
 
 from craft_parts import filesets
-from craft_parts.executor import runner
+from craft_parts.executor import step_handler
 from craft_parts.filesets import Fileset
 
 
@@ -39,7 +39,9 @@ class TestFileMigration:
             f.write("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the staged file is the one that was staged last
         with open("stage/foo", "r") as f:
@@ -57,7 +59,7 @@ class TestFileMigration:
         os.symlink("foo", os.path.join("install", "bar"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(
+        step_handler._migrate_files(
             files=files,
             dirs=dirs,
             srcdir="install",
@@ -84,7 +86,9 @@ class TestFileMigration:
         os.symlink("foo", os.path.join("install", "bar"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert os.path.islink(
@@ -101,7 +105,9 @@ class TestFileMigration:
         os.symlink("usr/bin", os.path.join("install", "bin"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["-usr"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert files == {"bin"}
@@ -122,7 +128,9 @@ class TestFileMigration:
         os.symlink(os.path.join("foo"), os.path.join("install", "a", "bar"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert os.path.islink(
@@ -140,7 +148,9 @@ class TestFileMigration:
         os.symlink("foo", os.path.join("install", "bar"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert os.path.islink(
@@ -157,7 +167,9 @@ class TestFileMigration:
             f.write("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert os.path.islink(
@@ -175,7 +187,9 @@ class TestFileMigration:
             f.write("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(files=files, dirs=dirs, srcdir="install", destdir="stage")
+        step_handler._migrate_files(
+            files=files, dirs=dirs, srcdir="install", destdir="stage"
+        )
 
         # Verify that the symlinks were preserved
         assert os.path.islink(
@@ -196,7 +210,7 @@ class TestFileMigration:
         os.symlink("foo", os.path.join("install", "bar"))
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(
+        step_handler._migrate_files(
             files=files,
             dirs=dirs,
             srcdir="install",
@@ -230,7 +244,7 @@ class TestFileMigration:
         assert mode != new_mode
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(
+        step_handler._migrate_files(
             files=files,
             dirs=dirs,
             srcdir="install",
@@ -259,7 +273,7 @@ class TestFileMigration:
         os.chmod(foo, new_mode)
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        runner._migrate_files(
+        step_handler._migrate_files(
             files=files,
             dirs=dirs,
             srcdir="install",

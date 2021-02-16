@@ -41,7 +41,7 @@ from . import environment
 FilesAndDirs = namedtuple("FilesAndDirs", ["files", "dirs"])
 
 
-class Runner:
+class StepHandler:
     """Executes built-in or user-specified step commands.
 
     Default commands to be executed in a step can be overridden by the user
