@@ -19,10 +19,10 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors, schemas
+from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.plugins.v2 import DumpPlugin
-from craft_parts.step_info import PartInfo, ProjectInfo
 
 _SCHEMA_DIR = Path(__file__).parents[4] / "craft_parts" / "data" / "schema"
 

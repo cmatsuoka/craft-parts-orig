@@ -19,7 +19,7 @@
 import abc
 from typing import Any, Dict, List, Set
 
-from craft_parts.step_info import PartInfo
+from craft_parts.infos import PartInfo
 
 from .options import PluginOptions
 

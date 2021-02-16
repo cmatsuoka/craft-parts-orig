@@ -26,13 +26,13 @@ from typing import Any, Callable, Dict, List, Optional
 from craft_parts import callbacks, common, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.filesets import Fileset
+from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import PartState, states
-from craft_parts.step_info import PartInfo, StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 

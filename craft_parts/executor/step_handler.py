@@ -29,10 +29,10 @@ from typing import Callable, Dict, Optional
 
 from craft_parts import errors, filesets, packages, plugins
 from craft_parts.filesets import Fileset
+from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.sources import SourceHandler
-from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 

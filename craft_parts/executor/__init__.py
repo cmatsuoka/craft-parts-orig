@@ -21,9 +21,9 @@ import shutil
 from typing import Dict, List, Optional
 
 from craft_parts.actions import Action, ActionType
+from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.step_info import PartInfo, ProjectInfo
 from craft_parts.steps import Step
 
 from .collisions import check_for_stage_collisions

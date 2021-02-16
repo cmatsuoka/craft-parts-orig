@@ -23,7 +23,7 @@ import textwrap
 import pytest
 
 from craft_parts import errors
-from craft_parts.step_info import ProjectInfo
+from craft_parts.infos import ProjectInfo
 from craft_parts.utils import elf_utils
 
 # pylint: disable=missing-class-docstring

@@ -21,7 +21,7 @@ from collections import namedtuple
 from typing import Callable, List
 
 from craft_parts import errors
-from craft_parts.step_info import StepInfo
+from craft_parts.infos import StepInfo
 from craft_parts.steps import Step
 
 CallbackHook = namedtuple("CallbackHook", ["function", "step_list"])

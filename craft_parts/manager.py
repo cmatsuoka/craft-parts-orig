@@ -21,9 +21,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import errors, executor, packages, parts, sequencer
 from craft_parts.actions import Action
+from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"

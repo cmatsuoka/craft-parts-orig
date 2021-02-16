@@ -22,9 +22,9 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from craft_parts import errors, parts, steps
+from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 from .dependencies import Dependency

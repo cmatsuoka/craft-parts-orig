@@ -19,8 +19,8 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
-from craft_parts.step_info import PartInfo, ProjectInfo, StepInfo
 from craft_parts.steps import Step
 
 _MOCK_NATIVE_ARCH = "aarch64"

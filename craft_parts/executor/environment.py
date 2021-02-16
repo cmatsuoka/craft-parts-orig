@@ -21,9 +21,9 @@ import logging
 from typing import Dict
 
 from craft_parts import errors, plugins
+from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
-from craft_parts.step_info import StepInfo
 from craft_parts.steps import Step
 from craft_parts.utils import formatting_utils, os_utils
 

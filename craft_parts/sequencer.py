@@ -21,10 +21,10 @@ from typing import List, Optional
 
 from craft_parts import common, errors, packages, parts, steps
 from craft_parts.actions import Action, ActionType
+from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part, sort_parts
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
-from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
