@@ -32,16 +32,18 @@ class PrimeState(PartState):
         files,
         directories,
         dependency_paths=None,
-        part_properties=None,
-        scriptlet_metadata=None,
+        part_properties: Dict[str, Any] = None,
+        project_options: Dict[str, Any] = None,
         primed_stage_packages=None,
     ):
         super().__init__(
-            part_properties=part_properties, files=files, directories=directories
+            part_properties=part_properties,
+            project_options=project_options,
+            files=files,
+            directories=directories,
         )
 
         self.dependency_paths = set()
-        self.scriptlet_metadata = scriptlet_metadata
         self.primed_stage_packages = primed_stage_packages
         if self.primed_stage_packages is None:
             self.primed_stage_packages = set()

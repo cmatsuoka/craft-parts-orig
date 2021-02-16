@@ -78,16 +78,17 @@ class PartState(_State):
         if with_timestamp:
             self.timestamp: datetime = datetime.now()
 
-        if not part_properties:
-            part_properties = {}
-
         if part_properties:
             self.properties = self.properties_of_interest(part_properties)
+        else:
+            self.properties = {}
 
         if project_options:
             self.project_options = self.project_options_of_interest(project_options)
+        else:
+            self.project_options = {}
 
-    def properties_of_interest(self, part_properties):
+    def properties_of_interest(self, part_properties) -> Dict[str, Any]:
         """Extract the properties concerning this step from the options.
 
         Note that these options come from the YAML for a given part.

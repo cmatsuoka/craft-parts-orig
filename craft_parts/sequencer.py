@@ -39,8 +39,8 @@ class Sequencer:
         self._part_list = sort_parts(part_list)
         self._validator = validator
         self._project_info = project_info
-        self._sm = StateManager(part_list)
-        self._actions = []  # type: List[Action]
+        self._sm = StateManager(project_info, part_list, validator)
+        self._actions: List[Action] = []
 
     def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
         """Determine the list of steps to execute for each part."""
@@ -178,10 +178,20 @@ class Sequencer:
             )
 
         elif step == Step.STAGE:
-            state = states.StageState(files=set(), directories=set())
+            state = states.StageState(
+                part_properties=part_properties,
+                project_options=self._project_info.project_options,
+                files=set(),
+                directories=set(),
+            )
 
         elif step == Step.PRIME:
-            state = states.PrimeState(files=set(), directories=set())
+            state = states.PrimeState(
+                part_properties=part_properties,
+                project_options=self._project_info.project_options,
+                files=set(),
+                directories=set(),
+            )
 
         else:
             raise errors.InternalError("invalid step {step!r}")

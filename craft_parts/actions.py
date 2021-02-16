@@ -100,4 +100,5 @@ class Action:
         return self._reason
 
     def __repr__(self):
-        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r})"
+        reason = f", {self._reason!r}" if self._reason else ""
+        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r}{reason})"

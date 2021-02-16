@@ -23,6 +23,8 @@ from typing import Dict, List, Optional
 
 from craft_parts import errors, parts, steps
 from craft_parts.parts import Part
+from craft_parts.schemas import Validator
+from craft_parts.step_info import ProjectInfo
 from craft_parts.steps import Step
 
 from .dependencies import Dependency
@@ -80,9 +82,13 @@ class _EphemeralState:
 class StateManager:
     """Keep track of parts execution state."""
 
-    def __init__(self, all_parts: List[Part]):
+    def __init__(
+        self, project_info: ProjectInfo, all_parts: List[Part], validator: Validator
+    ):
         self._state = _EphemeralState()
+        self._project_info = project_info
         self._all_parts = all_parts
+        self._validator = validator
 
         for part in all_parts:
             # Initialize from persistent state
@@ -158,7 +164,7 @@ class StateManager:
 
         # Get the dirty report from the PluginHandler. If it's dirty, we can
         # stop here
-        report = self._dirty_report_for_part(part_name=part.name, step=step)
+        report = self._dirty_report_for_part(part, step)
         if report:
             return report
 
@@ -220,9 +226,7 @@ class StateManager:
 
         return self._outdated_report_for_part(part_name=part.name, step=step)
 
-    def _dirty_report_for_part(
-        self, *, part_name: str, step: Step
-    ) -> Optional[DirtyReport]:
+    def _dirty_report_for_part(self, part: Part, step: Step) -> Optional[DirtyReport]:
         """Return a DirtyReport class describing why the step is dirty.
 
         A step is considered to be dirty if either YAML properties used by it
@@ -238,21 +242,23 @@ class StateManager:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = self._state.get(part_name=part_name, step=step)
-        if state:
+        stts = self._state.get(part_name=part.name, step=step)
+        if stts:
+            state = stts.state
             # state properties contains the old state that this step cares
             # about, and we're comparing it to those same keys in the current
             # state (current_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            # properties = diff_properties_of_interest(current_properties)
-            properties: List[str] = []
+            part_properties = self._validator.expand_part_properties(part.properties)
+            properties = state.diff_properties_of_interest(part_properties)
 
             # state project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current state. If they've changed, then this step is dirty
             # and needs to run again.
-            # options = diff_project_options_of_interest(current_project_options)
-            options: List[str] = []
+            options = state.diff_project_options_of_interest(
+                self._project_info.project_options
+            )
 
             if properties or options:
                 return DirtyReport(

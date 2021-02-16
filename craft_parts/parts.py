@@ -36,7 +36,13 @@ class Part:
     information used during step processing.
     """
 
-    def __init__(self, name: str, data: Dict[str, Any], *, work_dir: str = "."):
+    def __init__(
+        self,
+        name: str,
+        data: Dict[str, Any],
+        *,
+        work_dir: str = ".",
+    ):
         self._name = name
         self._data = data
         self._work_dir = Path(work_dir).absolute()

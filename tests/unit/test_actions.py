@@ -27,7 +27,7 @@ def test_action_type():
 
 def test_action_representation():
     action = Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="is tired")
-    assert f"{action!r}" == "Action('foo', Step.PULL, ActionType.SKIP)"
+    assert f"{action!r}" == "Action('foo', Step.PULL, ActionType.SKIP, 'is tired')"
 
 
 def test_action_default_parameters():

@@ -258,7 +258,13 @@ class PartHandler:
             workdir=self._part.stage_dir,
         )
 
-        return states.StageState(files=files, directories=dirs)
+        state = states.StageState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            files=files,
+            directories=dirs,
+        )
+        return state
 
     def _run_prime(self, step_info: StepInfo) -> PartState:
         self._make_dirs()
@@ -269,7 +275,13 @@ class PartHandler:
             workdir=self._part.prime_dir,
         )
 
-        return states.PrimeState(files=files, directories=dirs)
+        state = states.PrimeState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            files=files,
+            directories=dirs,
+        )
+        return state
 
     def _run_step(
         self, *, step_info: StepInfo, scriptlet_name: str, workdir: Path

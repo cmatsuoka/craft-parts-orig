@@ -31,10 +31,14 @@ class StageState(PartState):
         *,
         files,
         directories,
-        part_properties=None,
+        part_properties: Dict[str, Any] = None,
+        project_options: Dict[str, Any] = None,
     ):
         super().__init__(
-            part_properties=part_properties, files=files, directories=directories
+            part_properties=part_properties,
+            project_options=project_options,
+            files=files,
+            directories=directories,
         )
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
