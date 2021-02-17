@@ -43,7 +43,7 @@ _DirtyReports = Dict[str, Dict[Step, Optional[DirtyReport]]]
 _OutdatedReports = Dict[str, Dict[Step, Optional[OutdatedReport]]]
 
 
-class _StateTimestamp:
+class _StateWrapper:
     """A wrapper for the in-memory PartState class with extra metadata.
 
     This is a wrapper class for PartState that stores additional metadata
@@ -73,10 +73,10 @@ class _StateTimestamp:
 
 class _EphemeralState:
     def __init__(self):
-        self._state: Dict[str, Dict[Step, _StateTimestamp]] = {}
+        self._state: Dict[str, Dict[Step, _StateWrapper]] = {}
 
     def set(
-        self, *, part_name: str, step: Step, state: Optional[_StateTimestamp]
+        self, *, part_name: str, step: Step, state: Optional[_StateWrapper]
     ) -> None:
         """Set a state for a given part and step."""
         if not state:
@@ -99,7 +99,7 @@ class _EphemeralState:
             return False
         return step in self._state[part_name]
 
-    def get(self, *, part_name: str, step: Step) -> Optional[_StateTimestamp]:
+    def get(self, *, part_name: str, step: Step) -> Optional[_StateWrapper]:
         """Retrieve the state for a give part and step."""
         if self.test(part_name=part_name, step=step):
             return self._state[part_name][step]
@@ -137,13 +137,13 @@ class StateManager:
                     self._state.set(
                         part_name=part.name,
                         step=step,
-                        state=_StateTimestamp(state, timestamp),
+                        state=_StateWrapper(state, timestamp),
                     )
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
         self._state.set(
-            part_name=part.name, step=step, state=_StateTimestamp(state, datetime.now())
+            part_name=part.name, step=step, state=_StateWrapper(state, datetime.now())
         )
 
     def should_step_run(self, part: Part, step: Step) -> bool:

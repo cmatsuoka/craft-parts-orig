@@ -22,18 +22,6 @@ import yaml
 import craft_parts
 from craft_parts import Action, ActionType, Step, StepInfo, callbacks
 
-_parts_yaml = textwrap.dedent(
-    """\
-    parts:
-      foo:
-        plugin: nil
-        override-pull: echo "override Step.PULL"
-        override-build: echo "override Step.BUILD"
-        override-stage: echo "override Step.STAGE"
-        override-prime: echo "override Step.PRIME"
-    """
-)
-
 
 def setup_function():
     callbacks.clear()
@@ -43,56 +31,12 @@ def teardown_module():
     callbacks.clear()
 
 
-def _my_callback(info: StepInfo) -> bool:
-    msg = getattr(info, "message")
-    print(msg)
-    return True
-
-
 def _info_callback(info: StepInfo) -> bool:
     print(f"step = {info.step!r}")
     print(f"part_src_dir = {info.part_src_dir}")
     print(f"part_build_dir = {info.part_build_dir}")
     print(f"part_install_dir = {info.part_install_dir}")
     return True
-
-
-@pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(ActionType))
-def test_callback_pre(tmpdir, capfd, step, action_type):
-    callbacks.register_pre(_my_callback, step_list=[step])
-
-    parts = yaml.safe_load(_parts_yaml)
-    lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
-    )
-
-    lf.execute(Action("foo", step, action_type=action_type))
-    out, err = capfd.readouterr()
-    assert not err
-    if action_type in [ActionType.SKIP, ActionType.UPDATE]:
-        assert not out
-    else:
-        assert out == f"callback\noverride {step!r}\n"
-
-
-@pytest.mark.parametrize("step", list(Step))
-@pytest.mark.parametrize("action_type", list(ActionType))
-def test_callback_post(tmpdir, capfd, step, action_type):
-    callbacks.register_post(_my_callback, step_list=[step])
-
-    parts = yaml.safe_load(_parts_yaml)
-    lf = craft_parts.LifecycleManager(
-        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
-    )
-
-    lf.execute(Action("foo", step, action_type=action_type))
-    out, err = capfd.readouterr()
-    assert not err
-    if action_type in [ActionType.SKIP, ActionType.UPDATE]:
-        assert not out
-    else:
-        assert out == f"override {step!r}\ncallback\n"
 
 
 @pytest.mark.parametrize("step", list(Step))
@@ -114,3 +58,108 @@ def test_callback_step_info(tmpdir, capfd, step):
         f"part_install_dir = {tmpdir}/parts/foo/install\n"
         f"override {step!r}\n"
     )
+
+
+_parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      foo:
+        plugin: nil
+        override-pull: echo "override Step.PULL"
+        override-build: echo "override Step.BUILD"
+        override-stage: echo "override Step.STAGE"
+        override-prime: echo "override Step.PRIME"
+    """
+)
+
+
+def _my_callback(info: StepInfo) -> bool:
+    msg = getattr(info, "message")
+    print(msg)
+    return True
+
+
+# Test the update action separately because it's only defined
+# for steps PULL and BUILD.
+
+
+@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+def test_callback_pre(tmpdir, capfd, step, action_type):
+    callbacks.register_pre(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    lf.execute(Action("foo", step, action_type=action_type))
+    out, err = capfd.readouterr()
+    assert not err
+    if action_type == ActionType.SKIP:
+        assert not out
+    else:
+        assert out == f"callback\noverride {step!r}\n"
+
+
+@pytest.mark.parametrize("step", list(Step))
+@pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
+def test_callback_post(tmpdir, capfd, step, action_type):
+    callbacks.register_post(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    lf.execute(Action("foo", step, action_type=action_type))
+    out, err = capfd.readouterr()
+    assert not err
+    if action_type == ActionType.SKIP:
+        assert not out
+    else:
+        assert out == f"override {step!r}\ncallback\n"
+
+
+_update_yaml = textwrap.dedent(
+    """\
+    parts:
+      foo:
+        plugin: nil
+        source: .
+        override-pull: echo "override Step.PULL"
+        override-build: echo "override Step.BUILD"
+        override-stage: echo "override Step.STAGE"
+        override-prime: echo "override Step.PRIME"
+    """
+)
+
+
+@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD])
+def test_update_callback_pre(tmpdir, capfd, step):
+    callbacks.register_pre(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_update_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    out, err = capfd.readouterr()
+    assert not err
+    assert out == f"callback\noverride {step!r}\n"
+
+
+@pytest.mark.parametrize("step", [Step.PULL, Step.BUILD])
+def test_update_callback_post(tmpdir, capfd, step):
+    callbacks.register_post(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_update_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    out, err = capfd.readouterr()
+    assert not err
+    assert out == f"override {step!r}\ncallback\n"

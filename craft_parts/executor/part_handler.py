@@ -21,7 +21,7 @@ import os
 import os.path
 import shutil
 from pathlib import Path
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 from craft_parts import callbacks, common, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
@@ -33,7 +33,7 @@ from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import PartState, states
 from craft_parts.steps import Step
-from craft_parts.utils import os_utils
+from craft_parts.utils import file_utils, os_utils
 
 from .organize import organize_filesets
 from .step_handler import FilesAndDirs, StepHandler
@@ -120,45 +120,7 @@ class PartHandler:
             part_states=part_states,
         )
 
-    def run_action(self, action: Action) -> None:
-        """Run the given action for this part using a plugin."""
-
-        if action.type == ActionType.UPDATE:
-            update_handlers: Dict[Step, Callable[[], None]] = {
-                Step.PULL: self._update_pull,
-                Step.BUILD: self._update_build,
-            }
-            if action.step in update_handlers:
-                handler = update_handlers[action.step]
-                handler()
-            return
-
-        if action.type == ActionType.RERUN:
-            self.clean_step(step=action.step)
-
-        os_utils.reset_env()
-
-        step_info = StepInfo(part_info=self._part_info, step=action.step)
-
-        callbacks.run_pre(step_info=step_info)
-
-        run_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
-            Step.PULL: self._run_pull,
-            Step.BUILD: self._run_build,
-            Step.STAGE: self._run_stage,
-            Step.PRIME: self._run_prime,
-        }
-        if action.step in run_handlers:
-            state = run_handlers[action.step](step_info)
-            state.write(self._part.part_state_dir / action.step.name.lower())
-
-        callbacks.run_post(step_info=step_info)
-
-    def _run_pull(self, step_info: StepInfo) -> PartState:
-        _remove(self._part.part_src_dir)
-        self._make_dirs()
-
-        # Fetch stage packages
+    def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
         stage_packages = self._part.stage_packages
         fetched_packages = None
 
@@ -173,6 +135,47 @@ class PartHandler:
                 )
             except packages_errors.PackageNotFound as err:
                 raise errors.StagePackageError(self._part.name, err.message)
+
+        return fetched_packages
+
+    def _unpack_stage_packages(self):
+        self._package_repo.unpack_stage_packages(
+            stage_packages_path=self._part.part_package_dir,
+            install_path=Path(self._part.part_install_dir),
+        )
+        # TODO: unpack stage snaps
+
+    def run_action(self, action: Action) -> None:
+        """Run the given action for this part using a plugin."""
+
+        os_utils.reset_env()
+        step_info = StepInfo(part_info=self._part_info, step=action.step)
+
+        if action.type == ActionType.UPDATE:
+            self._update_action(action, step_info=step_info)
+            return
+
+        if action.type == ActionType.RERUN:
+            self.clean_step(step=action.step)
+
+        run_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
+            Step.PULL: self._run_pull,
+            Step.BUILD: self._run_build,
+            Step.STAGE: self._run_stage,
+            Step.PRIME: self._run_prime,
+        }
+        if action.step in run_handlers:
+            callbacks.run_pre(step_info=step_info)
+            state = run_handlers[action.step](step_info)
+            state_file = states.state_file_path(self._part, action.step)
+            state.write(state_file)
+            callbacks.run_post(step_info=step_info)
+
+    def _run_pull(self, step_info: StepInfo) -> PartState:
+        _remove(self._part.part_src_dir)
+        self._make_dirs()
+
+        fetched_packages = self._fetch_stage_packages(step_info=step_info)
 
         # We don't need to expand environment variables in plugin options here because
         # the build script execution will expand them (assuming we're using plugins V2).
@@ -198,16 +201,9 @@ class PartHandler:
 
         build_packages = common.get_build_packages(self._part, self._package_repo)
         packages.Repository.install_build_packages(build_packages)
-
         # TODO: install build snaps
 
-        # Unpack stage packages/snaps to part install dir
-        # (stage packages are fetched and unpacked in the pull step, but we'll
-        # unpack again here just in case the build step has been cleaned.)
-        self._package_repo.unpack_stage_packages(
-            stage_packages_path=self._part.part_package_dir,
-            install_path=Path(self._part.part_install_dir),
-        )
+        self._unpack_stage_packages()
 
         # Copy source from the part source dir to the part build dir
         shutil.copytree(
@@ -305,13 +301,86 @@ class PartHandler:
 
         return step_handler.run_builtin()
 
-    def _update_pull(self):
-        # TODO: implement update pull
-        pass
+    def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
+        update_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
+            Step.PULL: self._update_pull,
+            Step.BUILD: self._update_build,
+        }
+        if action.step in update_handlers:
+            callbacks.run_pre(step_info=step_info)
+            state = update_handlers[action.step](step_info)
+            state_file = states.state_file_path(self._part, action.step)
+            state.write(state_file)
+            callbacks.run_post(step_info=step_info)
 
-    def _update_build(self):
-        # TODO: implement update build
-        pass
+    def _update_pull(self, step_info: StepInfo) -> PartState:
+        self._make_dirs()
+
+        fetched_packages = self._fetch_stage_packages(step_info=step_info)
+
+        self._run_step(
+            step_info=step_info,
+            scriptlet_name="override-pull",
+            workdir=self._part.part_src_dir,
+        )
+
+        # consistency check
+        if not self._source_handler:
+            raise errors.InternalError(
+                f"Update requested on part {self._part.name!r} without a source handler."
+            )
+
+        # the update action is sequenced only if an update is required and the
+        # source knows how to update
+        state_file = states.state_file_path(self._part, step_info.step)
+        self._source_handler.check(str(state_file))  # required by source.update()
+        self._source_handler.update()
+
+        state = states.PullState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            stage_packages=fetched_packages,
+            source_details=getattr(self._source_handler, "source_details", None),
+        )
+        return state
+
+    def _update_build(self, step_info: StepInfo) -> PartState:
+        self._make_dirs()
+
+        build_packages = common.get_build_packages(self._part, self._package_repo)
+        packages.Repository.install_build_packages(build_packages)
+        # TODO: install build snaps
+
+        self._unpack_stage_packages()
+
+        if not self._plugin.out_of_source_build:
+            # Use the local source to update. It's important to use
+            # file_utils.copy instead of link_or_copy, as the build process
+            # may modify these files
+            source = sources.Local(
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                copy_function=file_utils.copy,
+            )
+            state_file = states.state_file_path(self._part, step_info.step)
+            source.check(str(state_file))  # required by source.update()
+            source.update()
+
+        self._run_step(
+            step_info=step_info,
+            scriptlet_name="override-build",
+            workdir=self._part.part_build_dir,
+        )
+
+        self._organize(overwrite=True)
+
+        state = states.BuildState(
+            part_properties=self._part_properties,
+            project_options=step_info.project_options,
+            build_packages=build_packages,
+            machine_assets=common.get_machine_manifest(),
+        )
+        return state
 
     def _make_dirs(self):
         dirs = [
