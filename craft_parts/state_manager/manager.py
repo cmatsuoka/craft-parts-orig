@@ -158,15 +158,15 @@ class StateManager:
         :return: Dirty report (could be None)
         """
 
-        prerequisite_step = steps.dependency_prerequisite_step(step)
-        if not prerequisite_step:
-            return None
-
         # Get the dirty report from the PluginHandler. If it's dirty, we can
         # stop here
         report = self._dirty_report_for_part(part, step)
         if report:
             return report
+
+        prerequisite_step = steps.dependency_prerequisite_step(step)
+        if not prerequisite_step:
+            return None
 
         # The dirty report from the PluginHandler only takes into account
         # properties specific to that part. If it's not dirty because of those,

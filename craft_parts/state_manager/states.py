@@ -17,6 +17,7 @@
 """Helpers and definitions for lifecycle states."""
 
 import contextlib
+import logging
 import os
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, cast
@@ -32,17 +33,21 @@ from .prime_state import PrimeState
 from .pull_state import PullState
 from .stage_state import StageState
 
+logger = logging.getLogger(__name__)
+
 
 def load_state(
     part: Part, step: Step
 ) -> Tuple[Optional[PartState], Optional[datetime]]:
     """Retrieve the persistent state for the given part and step."""
 
-    state_data = {}
     filename = os.path.join(part.part_state_dir, step.name.lower())
     if not os.path.isfile(filename):
         return None, None
 
+    logger.debug("load state file: %s", filename)
+
+    state_data = {}
     with open(filename, "r") as state_file:
         data = yaml_utils.load(state_file)
         if data:

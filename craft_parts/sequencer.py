@@ -138,7 +138,6 @@ class Sequencer:
             return
 
         deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
-
         for dep in deps:
             self._add_all_actions(
                 target_step=prerequisite_step,
