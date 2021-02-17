@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+from pathlib import Path
 
 import yaml
 
@@ -32,29 +33,33 @@ parts_yaml = textwrap.dedent(
 
       foo:
         plugin: nil
+        source: a.tar.gz
 
       foobar:
         plugin: nil"""
 )
 
 
-def test_actions_simple(tmpdir):
+def test_actions_simple(new_dir, mocker):
     parts = yaml.safe_load(parts_yaml)
-    lf = craft_parts.LifecycleManager(
-        parts, application_name="test_demo", work_dir=tmpdir
-    )
+
+    Path("a.tar.gz").touch()
+    mocker.patch("craft_parts.sources.Tar.provision")  # don't try to untar the file
 
     # first run
     # command: pull
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
     actions = lf.plan(Step.PULL)
     assert actions == [
         Action("foo", Step.PULL),
         Action("bar", Step.PULL),
         Action("foobar", Step.PULL),
     ]
+    lf.execute(actions)
 
     # foobar part depends on nothing
     # command: prime foobar
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
     actions = lf.plan(Step.PRIME, ["foobar"])
     assert actions == [
         Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -62,9 +67,11 @@ def test_actions_simple(tmpdir):
         Action("foobar", Step.STAGE),
         Action("foobar", Step.PRIME),
     ]
+    lf.execute(actions)
 
     # Then running build for bar that depends on foo
     # command: build bar
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -73,8 +80,10 @@ def test_actions_simple(tmpdir):
         Action("foo", Step.STAGE, reason="required to build bar"),
         Action("bar", Step.BUILD),
     ]
+    lf.execute(actions)
 
     # Building bar again rebuilds it (explicit request)
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
     actions = lf.plan(Step.BUILD, ["bar"])
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
@@ -82,7 +91,22 @@ def test_actions_simple(tmpdir):
             "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
         ),
     ]
+    lf.execute(actions)
 
     # Modifying foo’s source marks bar as dirty
-    # command: build bar
-    # TODO: add this test
+    Path("b.tar.gz").touch()
+    new_yaml = parts_yaml.replace("source: a.tar.gz", "source: b.tar.gz")
+    parts = yaml.safe_load(new_yaml)
+
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    actions = lf.plan(Step.BUILD, ["bar"])
+    assert actions == [
+        # fmt: off
+        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
+        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build bar"),
+        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build bar"),
+        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        # fmt: on
+    ]
+    lf.execute(actions)
