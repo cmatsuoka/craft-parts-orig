@@ -16,15 +16,17 @@
 
 """The part crafter lifecycle manager."""
 
+import contextlib
 import logging
-from collections import namedtuple
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from craft_parts import errors, parts, steps
+from craft_parts import errors, parts, sources, steps
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
+from craft_parts.sources import SourceHandler
+from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
 from .dependencies import Dependency
@@ -41,15 +43,40 @@ _DirtyReports = Dict[str, Dict[Step, Optional[DirtyReport]]]
 _OutdatedReports = Dict[str, Dict[Step, Optional[OutdatedReport]]]
 
 
-StateTimestamp = namedtuple("StateTimestamp", ["state", "timestamp"])
+class _StateTimestamp:
+    """A wrapper for the in-memory PartState class with extra metadata.
+
+    This is a wrapper class for PartState that stores additional metadata
+    such as the file timestamp when loading the persistent state from a
+    previous lifecycle run. The update status is used to check if an
+    outdated step was scheduled to be updated. This is stored as metadata
+    because the outdated step verification checks data on disk which will
+    only be updated when the update action runs (later, in the execution
+    phase).
+    """
+
+    def __init__(self, state: PartState, timestamp: datetime):
+        self._state = state
+        self._timestamp = timestamp
+        self.updated = False
+
+    @property
+    def state(self) -> PartState:
+        """The wrapped state data."""
+        return self._state
+
+    @property
+    def timestamp(self) -> datetime:
+        """The state timestamp metadata."""
+        return self._timestamp
 
 
 class _EphemeralState:
     def __init__(self):
-        self._state: Dict[str, Dict[Step, StateTimestamp]] = {}
+        self._state: Dict[str, Dict[Step, _StateTimestamp]] = {}
 
     def set(
-        self, *, part_name: str, step: Step, state: Optional[StateTimestamp]
+        self, *, part_name: str, step: Step, state: Optional[_StateTimestamp]
     ) -> None:
         """Set a state for a given part and step."""
         if not state:
@@ -72,11 +99,22 @@ class _EphemeralState:
             return False
         return step in self._state[part_name]
 
-    def get(self, *, part_name: str, step: Step) -> Optional[StateTimestamp]:
+    def get(self, *, part_name: str, step: Step) -> Optional[_StateTimestamp]:
         """Retrieve the state for a give part and step."""
         if self.test(part_name=part_name, step=step):
             return self._state[part_name][step]
         return None
+
+    def set_updated(self, *, part_name: str, step: Step):
+        """Mark this part and step as updated."""
+        if self.test(part_name=part_name, step=step):
+            self._state[part_name][step].updated = True
+
+    def was_updated(self, *, part_name: str, step: Step) -> bool:
+        """Verify whether the part and step was updated."""
+        if self.test(part_name=part_name, step=step):
+            return self._state[part_name][step].updated
+        return False
 
 
 class StateManager:
@@ -89,22 +127,23 @@ class StateManager:
         self._project_info = project_info
         self._all_parts = all_parts
         self._validator = validator
+        self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
         for part in all_parts:
             # Initialize from persistent state
             for step in list(Step):
                 state, timestamp = load_state(part, step)
-                if state:
+                if state and timestamp:
                     self._state.set(
                         part_name=part.name,
                         step=step,
-                        state=StateTimestamp(state, timestamp),
+                        state=_StateTimestamp(state, timestamp),
                     )
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
         self._state.set(
-            part_name=part.name, step=step, state=StateTimestamp(state, datetime.now())
+            part_name=part.name, step=step, state=_StateTimestamp(state, datetime.now())
         )
 
     def should_step_run(self, part: Part, step: Step) -> bool:
@@ -178,17 +217,13 @@ class StateManager:
 
         changed_dependencies: List[Dependency] = []
 
-        this_state = self._state.get(part_name=part.name, step=step)
-        logger.debug("state for %s:%s: %s", part.name, step, this_state)
+        stts = self._state.get(part_name=part.name, step=step)
+        logger.debug("state for %s:%s: %s", part.name, step, stts)
 
         # consistency check
-        if not this_state:
+        if not stts:
             raise errors.InternalError(
                 f"{part.name}:{step} should already have been run"
-            )
-        if not this_state.timestamp:
-            raise errors.InternalError(
-                f"state for {part.name}:{step} doesn't have a timestamp"
             )
 
         for dependency in dependencies:
@@ -198,9 +233,9 @@ class StateManager:
             prerequisite_state = self._state.get(
                 part_name=dependency.name, step=prerequisite_step
             )
-            if prerequisite_state:  # and this_state and this_state.timestamp:
+            if prerequisite_state:
                 prerequisite_timestamp = prerequisite_state.timestamp
-                dependency_changed = this_state.timestamp < prerequisite_timestamp
+                dependency_changed = stts.timestamp < prerequisite_timestamp
             else:
                 dependency_changed = True
 
@@ -224,7 +259,10 @@ class StateManager:
         :return: Outdated report (could be None)
         """
 
-        return self._outdated_report_for_part(part_name=part.name, step=step)
+        if self._state.was_updated(part_name=part.name, step=step):
+            return None
+
+        return self._outdated_report_for_part(part, step)
 
     def _dirty_report_for_part(self, part: Part, step: Step) -> Optional[DirtyReport]:
         """Return a DirtyReport class describing why the step is dirty.
@@ -262,13 +300,18 @@ class StateManager:
 
             if properties or options:
                 return DirtyReport(
-                    dirty_properties=properties, dirty_project_options=options
+                    dirty_properties=list(properties),
+                    dirty_project_options=list(options),
                 )
 
         return None
 
+    def mark_step_updated(self, part: Part, step: Step):
+        """Mark the given part and step as updated."""
+        self._state.set_updated(part_name=part.name, step=step)
+
     def _outdated_report_for_part(
-        self, *, part_name: str, step: Step
+        self, part: Part, step: Step
     ) -> Optional[OutdatedReport]:
         """Return an OutdatedReport class describing why the step is outdated.
 
@@ -282,6 +325,38 @@ class StateManager:
         :returns: OutdatedReport if the step is outdated, None otherwise.
         """
 
-        # TODO: implement outdated check
+        stts = self._state.get(part_name=part.name, step=step)
+        if not stts:
+            return None
+
+        if step == Step.PULL:
+            if part.name in self._source_handler_cache:
+                source_handler = self._source_handler_cache[part.name]
+            else:
+                source_handler = sources.get_source_handler(
+                    application_name=self._project_info.application_name,
+                    source=part.source,
+                    source_dir=part.part_src_dir,
+                    properties=self._validator.expand_part_properties(part.properties),
+                )
+                self._source_handler_cache[part.name] = source_handler
+
+            state_file = states.state_file_path(part, step)
+
+            if source_handler:
+                # Not all sources support checking for updates
+                with contextlib.suppress(sources.errors.SourceUpdateUnsupported):
+                    if source_handler.check(str(state_file)):
+                        return OutdatedReport(source_updated=True)
+
+            return None
+
+        for previous_step in reversed(step.previous_steps()):
+            # Has a previous step run since this one ran? Then this
+            # step needs to be updated.
+            previous_stts = self._state.get(part_name=part.name, step=previous_step)
+
+            if previous_stts and stts.timestamp < previous_stts.timestamp:
+                return OutdatedReport(previous_step_modified=previous_step)
 
         return None

@@ -117,11 +117,13 @@ class Sequencer:
         outdated_report = self._sm.outdated_report(part, current_step)
         if outdated_report:
             logger.debug("%s:%s is outdated", part.name, current_step)
+
             if current_step in (Step.PULL, Step.BUILD):
                 self._update_step(part, current_step, reason=outdated_report.summary())
             else:
                 self._rerun_step(part, current_step, reason=outdated_report.summary())
 
+            self._sm.mark_step_updated(part, current_step)
             return
 
         # 4. Otherwise just skip it

@@ -21,7 +21,7 @@ import os
 import os.path
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from craft_parts import callbacks, common, errors, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
@@ -31,7 +31,6 @@ from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
 from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
-from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import PartState, states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -65,7 +64,7 @@ class PartHandler:
         self._plugin = plugin_class(options=options, part_info=part_info)
 
         self._part_properties = validator.expand_part_properties(part.properties)
-        self._source_handler = _get_source_handler(
+        self._source_handler = sources.get_source_handler(
             application_name=part_info.application_name,
             source=part.source,
             source_dir=part.part_src_dir,
@@ -335,37 +334,6 @@ class PartHandler:
             base_dir=self._part.part_install_dir,
             overwrite=overwrite,
         )
-
-
-def _get_source_handler(
-    application_name: str,
-    source: Optional[str],
-    source_dir: Path,
-    properties: Optional[Dict[str, Any]],
-) -> Optional[SourceHandler]:
-    """Returns a source_handler for the source in properties."""
-
-    if not properties:
-        properties = dict()
-
-    source_handler = None
-    if source:
-        handler_class = sources.get_source_handler(
-            source,
-            source_type=properties["source-type"],
-        )
-        source_handler = handler_class(
-            application_name=application_name,
-            source=source,
-            source_dir=source_dir,
-            source_checksum=properties["source-checksum"],
-            source_branch=properties["source-branch"],
-            source_tag=properties["source-tag"],
-            source_depth=properties["source-depth"],
-            source_commit=properties["source-commit"],
-        )
-
-    return source_handler
 
 
 def _remove(filename: Path) -> None:

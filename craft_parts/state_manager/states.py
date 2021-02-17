@@ -20,6 +20,7 @@ import contextlib
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, cast
 
 from craft_parts import errors
@@ -41,19 +42,19 @@ def load_state(
 ) -> Tuple[Optional[PartState], Optional[datetime]]:
     """Retrieve the persistent state for the given part and step."""
 
-    filename = os.path.join(part.part_state_dir, step.name.lower())
-    if not os.path.isfile(filename):
+    filename = state_file_path(part, step)
+    if not filename.is_file():
         return None, None
 
     logger.debug("load state file: %s", filename)
 
     state_data = {}
-    with open(filename, "r") as state_file:
+    with filename.open() as state_file:
         data = yaml_utils.load(state_file)
         if data:
             state_data = data
 
-    timestamp = file_utils.timestamp(filename)
+    timestamp = file_utils.timestamp(str(filename))
 
     state: PartState
 
@@ -85,11 +86,16 @@ def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
 def is_clean(part: Part, step: Step) -> bool:
     """Verify whether the persistent state for the given part and step is clean."""
 
-    filename = os.path.join(part.part_state_dir, step.name.lower())
-    return not os.path.isfile(filename)
+    filename = state_file_path(part, step)
+    return not filename.is_file()
 
 
 def remove(part: Part, step: Step):
     """Remove the persistent state file for the given part and step."""
     with contextlib.suppress(FileNotFoundError):
         os.remove(part.part_state_dir / step.name.lower())
+
+
+def state_file_path(part: Part, step: Step) -> Path:
+    """Return the path to the state file for the give part and step."""
+    return part.part_state_dir / step.name.lower()

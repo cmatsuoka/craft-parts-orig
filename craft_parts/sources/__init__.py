@@ -75,10 +75,10 @@ cases you want to refer to the help text for the specific plugin.
 """
 import logging
 import os
-import os.path
 import re
 import sys
-from typing import Any, Dict, Type, Union
+from pathlib import Path
+from typing import Any, Dict, Optional, Type, Union
 
 from . import errors
 from .base import SourceHandler
@@ -154,8 +154,39 @@ def get_source_defaults() -> Dict[str, Any]:
     return __SOURCE_DEFAULTS.copy()
 
 
-def get_source_handler(source, *, source_type: str = "") -> SourceHandlerType:
-    """Return the appropriate handler for the given source.
+def get_source_handler(
+    application_name: str,
+    source: Optional[str],
+    source_dir: Path,
+    properties: Optional[Dict[str, Any]],
+) -> Optional[SourceHandler]:
+    """Return the appropriate handler for the given source."""
+
+    if not properties:
+        properties = dict()
+
+    source_handler = None
+    if source:
+        handler_class = _get_source_handler_class(
+            source,
+            source_type=properties["source-type"],
+        )
+        source_handler = handler_class(
+            application_name=application_name,
+            source=source,
+            source_dir=source_dir,
+            source_checksum=properties["source-checksum"],
+            source_branch=properties["source-branch"],
+            source_tag=properties["source-tag"],
+            source_depth=properties["source-depth"],
+            source_commit=properties["source-commit"],
+        )
+
+    return source_handler
+
+
+def _get_source_handler_class(source, *, source_type: str = "") -> SourceHandlerType:
+    """Return the appropriate handler class for the given source.
 
     :param source: The source specification.
     :param source_type: The source type to use. If not specified, the

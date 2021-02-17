@@ -21,14 +21,14 @@ from craft_parts.sources import errors
 
 
 @pytest.mark.parametrize("tc_url,tc_handler", [(".", sources.Local)])
-def test_get_source_handler(tc_url, tc_handler):
-    h = sources.get_source_handler(tc_url)
+def test_get_source_handler_class(tc_url, tc_handler):
+    h = sources._get_source_handler_class(tc_url)
     assert h == tc_handler
 
 
-def test_get_source_handler_with_invalid_type():
+def test_get_source_handler_class_with_invalid_type():
     with pytest.raises(errors.InvalidSourceType) as raised:
-        sources.get_source_handler(".", source_type="invalid")
+        sources._get_source_handler_class(".", source_type="invalid")
     assert (
         str(raised.value)
         == "Failed to pull source: unable to determine source type of '.'."
