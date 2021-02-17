@@ -368,12 +368,6 @@ def _get_source_handler(
     return source_handler
 
 
-def _save_state_file(part: Part, name: str) -> None:
-    os.makedirs(part.part_state_dir, exist_ok=True)
-    state_file = os.path.join(part.part_state_dir, name)
-    Path(state_file).touch()
-
-
 def _remove(filename: Path) -> None:
     if filename.is_symlink() or filename.is_file():
         logger.debug("remove file %s", filename)
