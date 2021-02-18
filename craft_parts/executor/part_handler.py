@@ -329,7 +329,8 @@ class PartHandler:
         # consistency check
         if not self._source_handler:
             raise errors.InternalError(
-                f"Update requested on part {self._part.name!r} without a source handler."
+                f"Update requested on part {self._part.name!r} without "
+                f"a source handler."
             )
 
         # the update action is sequenced only if an update is required and the

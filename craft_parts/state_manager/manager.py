@@ -29,8 +29,7 @@ from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
-from .dependencies import Dependency
-from .dirty_report import DirtyReport
+from .dirty_report import Dependency, DirtyReport
 from .outdated_report import OutdatedReport
 from .part_state import PartState
 from .states import load_state

@@ -4,18 +4,22 @@ max_bacon = 1
 
 exclude =
     craft_parts.actions
+    craft_parts.common
     craft_parts.errors
     craft_parts.parts
+    craft_parts.infos
+    craft_parts.filesets
     craft_parts.plugins.*
     craft_parts.sources.*
-    craft_parts.cache*
-    craft_parts.state_manager.states
-    craft_parts.state_manager.*_state
-    craft_parts.step_info
+    craft_parts.cache
+    craft_parts.state_manager.*
     craft_parts.steps
     craft_parts.utils
     craft_parts.schemas
-    craft_parts.packages.*
+    craft_parts.packages
+    craft_parts.executor.collisions
+    craft_parts.executor.environment
+    craft_parts.executor.organize
 
 rmprefix = craft_parts.
 

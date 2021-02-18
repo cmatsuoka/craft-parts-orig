@@ -16,16 +16,12 @@
 
 """Provide a report on why a step is dirty."""
 
+from collections import namedtuple
 from typing import List
 
 from craft_parts.utils import formatting_utils
 
-from .dependencies import Dependency
-
-# Ideally we'd just use Collection from typing, but that wasn't introduced
-# until 3.6
-# StrCollection = Union[List[str], St[str]]
-# DependencyCollection = Union[List["Dependency"], Set["Dependency"]]
+Dependency = namedtuple("Dependency", ["part_name", "step"])
 
 
 class DirtyReport:
