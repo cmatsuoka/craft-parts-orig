@@ -29,7 +29,6 @@ from craft_parts.filesets import Fileset
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
-from craft_parts.plugins.options import PluginOptions
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import PartState, states
 from craft_parts.steps import Step
@@ -57,11 +56,12 @@ class PartHandler:
         self._part_info = part_info
         self._part_list = part_list
 
-        plugin_class = plugins.get_plugin(part.plugin, version=plugin_version)
-        plugin_schema = validator.merge_schema(plugin_class.get_schema())
-
-        options = PluginOptions(properties=part.properties, schema=plugin_schema)
-        self._plugin = plugin_class(options=options, part_info=part_info)
+        self._plugin = plugins.get_plugin(
+            part=part,
+            plugin_version=plugin_version,
+            validator=validator,
+            part_info=part_info,
+        )
 
         self._part_properties = validator.expand_part_properties(part.properties)
         self._source_handler = sources.get_source_handler(
@@ -149,7 +149,7 @@ class PartHandler:
         """Run the given action for this part using a plugin."""
 
         os_utils.reset_env()
-        step_info = StepInfo(part_info=self._part_info, step=action.step)
+        step_info = StepInfo(self._part_info, action.step)
 
         if action.type == ActionType.UPDATE:
             self._update_action(action, step_info=step_info)
@@ -199,7 +199,9 @@ class PartHandler:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
-        build_packages = common.get_build_packages(self._part, self._package_repo)
+        build_packages = common.get_build_packages(
+            part=self._part, repository=self._package_repo, plugin=self._plugin
+        )
         packages.Repository.install_build_packages(build_packages)
         # TODO: install build snaps
 
@@ -347,7 +349,9 @@ class PartHandler:
     def _update_build(self, step_info: StepInfo) -> PartState:
         self._make_dirs()
 
-        build_packages = common.get_build_packages(self._part, self._package_repo)
+        build_packages = common.get_build_packages(
+            part=self._part, repository=self._package_repo, plugin=self._plugin
+        )
         packages.Repository.install_build_packages(build_packages)
         # TODO: install build snaps
 

@@ -19,9 +19,9 @@
 import logging
 from typing import List, Optional
 
-from craft_parts import common, errors, packages, parts, steps
+from craft_parts import common, errors, packages, parts, plugins, steps
 from craft_parts.actions import Action, ActionType
-from craft_parts.infos import ProjectInfo
+from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, sort_parts
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
@@ -169,7 +169,18 @@ class Sequencer:
 
         elif step == Step.BUILD:
             package_repo = packages.Repository()
-            build_packages = common.get_build_packages(part, package_repo)
+            part_info = PartInfo(self._project_info, part)
+
+            plugin = plugins.get_plugin(
+                part=part,
+                plugin_version=self._project_info.plugin_version,
+                validator=self._validator,
+                part_info=part_info,
+            )
+
+            build_packages = common.get_build_packages(
+                part=part, repository=package_repo, plugin=plugin
+            )
 
             state = states.BuildState(
                 part_properties=part_properties,

@@ -103,7 +103,7 @@ class InvalidPlugin(CraftPartsError):
     :param plugin_name: The invalid plugin name."
     """
 
-    fmt = "A plugin named {plugin_name!r} does not exist."
+    fmt = "A plugin named {plugin_name!r} is not registered."
 
     def __init__(self, plugin_name: str):
         super().__init__(plugin_name=plugin_name)

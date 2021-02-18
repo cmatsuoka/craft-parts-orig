@@ -16,11 +16,16 @@
 
 """Definitions and helpers to handle plugins."""
 
+import copy
 from typing import Dict, Type, Union
 
 from craft_parts import errors
+from craft_parts.infos import PartInfo
+from craft_parts.parts import Part
+from craft_parts.schemas import Validator
 
 from . import v2
+from .options import PluginOptions
 from .plugin_v2 import PluginV2
 
 Plugin = Union[PluginV2]
@@ -28,7 +33,7 @@ PluginType = Type[Plugin]
 
 
 # Plugin registry by plugin API version
-_PLUGINS: Dict[str, Dict[str, PluginType]] = {
+_BUILTIN_PLUGINS: Dict[str, Dict[str, PluginType]] = {
     "v2": {
         "autotools": v2.AutotoolsPlugin,
         "dump": v2.DumpPlugin,
@@ -37,8 +42,22 @@ _PLUGINS: Dict[str, Dict[str, PluginType]] = {
     }
 }
 
+_PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
-def get_plugin(name: str, *, version: str) -> PluginType:
+
+def get_plugin(
+    *, part: Part, plugin_version: str, validator: Validator, part_info: PartInfo
+) -> Plugin:
+    """Obtain a plugin instance for the specified part."""
+
+    plugin_class = _get_plugin_class(part.plugin, version=plugin_version)
+    plugin_schema = validator.merge_schema(plugin_class.get_schema())
+    options = PluginOptions(properties=part.properties, schema=plugin_schema)
+
+    return plugin_class(options=options, part_info=part_info)
+
+
+def _get_plugin_class(name: str, *, version: str) -> PluginType:
     """Obtain a plugin class given the name and plugin API version."""
 
     if version not in _PLUGINS:
@@ -63,3 +82,9 @@ def register(plugins: Dict[str, PluginType], *, version: str = "v2") -> None:
         raise errors.InvalidPluginAPIVersion(version)
 
     _PLUGINS[version].update(plugins)
+
+
+def unregister_all() -> None:
+    """Unregister all user-registered plugins."""
+    global _PLUGINS  # pylint: disable=global-statement
+    _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)

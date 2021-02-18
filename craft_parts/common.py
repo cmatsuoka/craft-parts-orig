@@ -21,12 +21,13 @@ from typing import Any, Dict, List
 
 from craft_parts import packages, plugins, sources
 from craft_parts.parts import Part
+from craft_parts.plugins import Plugin
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
 
-def get_build_packages(part: Part, repository) -> List[str]:
+def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
     """Obtain the list of build packages from part, source, and plugin."""
 
     all_packages: List[str] = []
@@ -44,8 +45,8 @@ def get_build_packages(part: Part, repository) -> List[str]:
             logger.debug("source build packages: %s", source_build_packages)
             all_packages.extend(source_build_packages)
 
-    if isinstance(part.plugin, plugins.PluginV2):
-        plugin_build_packages = part.plugin.get_build_packages()
+    if isinstance(plugin, plugins.PluginV2):
+        plugin_build_packages = plugin.get_build_packages()
         if plugin_build_packages:
             logger.debug("plugin build packages: %s", plugin_build_packages)
             all_packages.extend(plugin_build_packages)
