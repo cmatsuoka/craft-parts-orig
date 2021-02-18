@@ -120,17 +120,22 @@ class LifecycleManager:
 
         self._executor.clean(initial_step=step, part_list=selected_parts)
 
-    def update(self) -> None:
+    def update(self, update_system_package_list=False) -> None:
         """Refresh the available packages list.
 
         The list of available packages should be updated before planning the
         sequence of actions to take. To ensure consistency between the scenarios,
         it shouldn't be updated between planning and execution.
-        """
 
+        :param update_system_package_list: Also refresh the list of available
+            build packages to install on the system.
+        """
         packages.Repository().update_package_list(
             application_name=self._application_name, target_arch=self._target_arch
         )
+
+        if update_system_package_list:
+            packages.Repository.refresh_build_packages()
 
     def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.

@@ -183,6 +183,8 @@ class TestBuildPackages:
             ("dependency-package", "1.0"),
         ]
 
+        _deb.Ubuntu.refresh_build_packages()
+
         build_packages = _deb.Ubuntu.install_build_packages(
             ["package-installed", "package", "versioned-package=2.0"]
         )
@@ -260,6 +262,8 @@ class TestBuildPackages:
             ("package-installed", "3.0")
         ]
 
+        _deb.Ubuntu.refresh_build_packages()
+
         build_packages = _deb.Ubuntu.install_build_packages(["package-installed=3.0"])
 
         assert build_packages == ["package-installed=3.0"]
@@ -298,6 +302,8 @@ class TestBuildPackages:
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
+
+        _deb.Ubuntu.refresh_build_packages()
 
         build_packages = _deb.Ubuntu.install_build_packages(["virtual-package"])
 
@@ -338,6 +344,8 @@ class TestBuildPackages:
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
+
+        _deb.Ubuntu.refresh_build_packages()
 
         _deb.Ubuntu.install_build_packages(["package"])
 
