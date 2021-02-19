@@ -203,7 +203,9 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
     raise errors.InvalidPartName(name)
 
 
-def part_list_by_name(part_names: List[str], part_list: List[Part]) -> List[Part]:
+def part_list_by_name(
+    part_names: Optional[List[str]], part_list: List[Part]
+) -> List[Part]:
     """Return a list of parts from part_list that are named in part_names."""
 
     if part_names:

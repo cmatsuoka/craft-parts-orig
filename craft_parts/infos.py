@@ -102,7 +102,7 @@ class ProjectInfo:
         self.__platform_arch = _get_platform_architecture()
         if not target_arch:
             target_arch = self.__platform_arch
-            logger.info("Setting target machine to %s", target_arch)
+            logger.debug("Setting target machine to %s", target_arch)
 
         machine = _ARCH_TRANSLATIONS.get(target_arch, None)
         if not machine:
