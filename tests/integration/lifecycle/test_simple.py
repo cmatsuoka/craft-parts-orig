@@ -76,8 +76,8 @@ def test_actions_simple(new_dir, mocker):
     assert actions == [
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, reason="required to build bar"),
-        Action("foo", Step.STAGE, reason="required to build bar"),
+        Action("foo", Step.BUILD, reason="required to build 'bar'"),
+        Action("foo", Step.STAGE, reason="required to build 'bar'"),
         Action("bar", Step.BUILD),
     ]
     lf.execute(actions)
@@ -94,8 +94,7 @@ def test_actions_simple(new_dir, mocker):
     lf.execute(actions)
 
     # Modifying foo’s source marks bar as dirty
-    Path("b.tar.gz").touch()
-    new_yaml = parts_yaml.replace("source: a.tar.gz", "source: b.tar.gz")
+    new_yaml = parts_yaml.replace("source: a.tar.gz", "source: .")
     parts = yaml.safe_load(new_yaml)
 
     lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
@@ -104,9 +103,40 @@ def test_actions_simple(new_dir, mocker):
         # fmt: off
         Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.PULL, action_type=ActionType.RERUN, reason="'source' property changed"),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build bar"),
-        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build bar"),
+        Action("foo", Step.BUILD, action_type=ActionType.RUN, reason="required to build 'bar'"),
+        Action("foo", Step.STAGE, action_type=ActionType.RUN, reason="required to build 'bar'"),
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
+        # fmt: on
+    ]
+    lf.execute(actions)
+
+    # A request to build all parts skips everything
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    actions = lf.plan(Step.BUILD)
+    assert actions == [
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("bar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+    ]
+
+    # Touching a source file triggers an update
+    Path("a.tar.gz").touch()
+    lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
+    actions = lf.plan(Step.BUILD)
+    assert actions == [
+        # fmt: off
+        Action("foo", Step.PULL, action_type=ActionType.UPDATE, reason="source changed"),
+        Action("bar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.UPDATE, reason="'PULL' step changed"),
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.STAGE, action_type=ActionType.RERUN, reason="required to build 'bar'"),
+        Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="'foo' changed"),
+        Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
     lf.execute(actions)
