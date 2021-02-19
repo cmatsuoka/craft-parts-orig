@@ -257,7 +257,6 @@ class StateManager:
         :param Step step: Step in question.
         :return: Outdated report (could be None)
         """
-
         if self._state.was_updated(part_name=part.name, step=step):
             return None
 

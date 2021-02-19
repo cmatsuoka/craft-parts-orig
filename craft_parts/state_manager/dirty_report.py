@@ -62,7 +62,7 @@ class DirtyReport:
         :return: Report why the part is dirty.
         :rtype: str
         """
-        messages = []  # type: List[str]
+        messages: List[str] = []
 
         if self.dirty_properties:
             humanized_properties = formatting_utils.humanize_list(

@@ -95,7 +95,9 @@ class Sequencer:
         #    explicitly listed, run it again.
 
         if part_names and current_step == target_step and part.name in part_names:
-            self._rerun_step(part, current_step, reason="requested step")
+            if not reason:
+                reason = "requested step"
+            self._rerun_step(part, current_step, reason=reason)
             return
 
         # 2. If the step is dirty, run it again. A step is considered dirty if
@@ -144,7 +146,7 @@ class Sequencer:
             self._add_all_actions(
                 target_step=prerequisite_step,
                 part_names=[dep.name],
-                reason=f"required to {_step_verb(step)} {part.name}",
+                reason=f"required to {_step_verb(step)} {part.name!r}",
             )
 
     def _run_step(
@@ -153,17 +155,21 @@ class Sequencer:
         step: Step,
         *,
         reason: Optional[str] = None,
-        rerun: bool = False,
+        action_type: ActionType = ActionType.RUN,
     ) -> None:
         self._prepare_step(part, step)
 
-        # FIXME: update properties
+        if action_type in [ActionType.RERUN, ActionType.UPDATE]:
+            self._add_action(part, step, action_type=action_type, reason=reason)
+        else:
+            self._add_action(part, step, reason=reason)
+
         state: states.PartState
         part_properties = self._validator.expand_part_properties(part.properties)
 
         if step == Step.PULL:
             state = states.PullState(
-                part_properties=part.properties,
+                part_properties=part_properties,
                 project_options=self._project_info.project_options,
             )
 
@@ -208,11 +214,6 @@ class Sequencer:
         else:
             raise errors.InternalError("invalid step {step!r}")
 
-        if rerun:
-            self._add_action(part, step, action_type=ActionType.RERUN, reason=reason)
-        else:
-            self._add_action(part, step, reason=reason)
-
         self._sm.set_state(part, step, state=state)
 
     def _rerun_step(
@@ -222,10 +223,11 @@ class Sequencer:
 
         # clean the step and later steps for this part, then run it again
         self._sm.clean_part(part, step)
-        self._run_step(part, step, reason=reason, rerun=True)
+        self._run_step(part, step, reason=reason, action_type=ActionType.RERUN)
 
     def _update_step(self, part: Part, step: Step, *, reason: Optional[str] = None):
-        pass
+        logger.debug("update step %s:%s", part.name, step)
+        self._run_step(part, step, reason=reason, action_type=ActionType.UPDATE)
 
     def _add_action(
         self,
