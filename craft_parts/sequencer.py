@@ -155,12 +155,12 @@ class Sequencer:
         step: Step,
         *,
         reason: Optional[str] = None,
-        action_type: ActionType = ActionType.RUN,
+        rerun: bool = False,
     ) -> None:
         self._prepare_step(part, step)
 
-        if action_type in [ActionType.RERUN, ActionType.UPDATE]:
-            self._add_action(part, step, action_type=action_type, reason=reason)
+        if rerun:
+            self._add_action(part, step, action_type=ActionType.RERUN, reason=reason)
         else:
             self._add_action(part, step, reason=reason)
 
@@ -223,11 +223,12 @@ class Sequencer:
 
         # clean the step and later steps for this part, then run it again
         self._sm.clean_part(part, step)
-        self._run_step(part, step, reason=reason, action_type=ActionType.RERUN)
+        self._run_step(part, step, reason=reason, rerun=True)
 
     def _update_step(self, part: Part, step: Step, *, reason: Optional[str] = None):
         logger.debug("update step %s:%s", part.name, step)
-        self._run_step(part, step, reason=reason, action_type=ActionType.UPDATE)
+        self._add_action(part, step, action_type=ActionType.UPDATE, reason=reason)
+        self._sm.update_state_timestamp(part, step)
 
     def _add_action(
         self,

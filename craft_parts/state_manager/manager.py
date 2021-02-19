@@ -69,6 +69,10 @@ class _StateWrapper:
         """The state timestamp metadata."""
         return self._timestamp
 
+    def update_timestamp(self) -> None:
+        """Update the timestamp metadata with the current time."""
+        self._timestamp = datetime.now()
+
 
 class _EphemeralState:
     def __init__(self):
@@ -104,10 +108,16 @@ class _EphemeralState:
             return self._state[part_name][step]
         return None
 
-    def set_updated(self, *, part_name: str, step: Step):
+    def update_timestamp(self, *, part_name: str, step: Step) -> None:
+        """Update the state timestamp."""
+        if self.test(part_name=part_name, step=step):
+            self._state[part_name][step].update_timestamp()
+
+    def set_updated(self, *, part_name: str, step: Step) -> None:
         """Mark this part and step as updated."""
         if self.test(part_name=part_name, step=step):
             self._state[part_name][step].updated = True
+            self.update_timestamp(part_name=part_name, step=step)
 
     def was_updated(self, *, part_name: str, step: Step) -> bool:
         """Verify whether the part and step was updated."""
@@ -144,6 +154,10 @@ class StateManager:
         self._state.set(
             part_name=part.name, step=step, state=_StateWrapper(state, datetime.now())
         )
+
+    def update_state_timestamp(self, part: Part, step: Step) -> None:
+        """Update the given part and step state's timestamp."""
+        self._state.update_timestamp(part_name=part.name, step=step)
 
     def should_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part should run.

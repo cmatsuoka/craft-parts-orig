@@ -304,21 +304,19 @@ class PartHandler:
         return step_handler.run_builtin()
 
     def _update_action(self, action: Action, *, step_info: StepInfo) -> None:
-        update_handlers: Dict[Step, Callable[[StepInfo], PartState]] = {
+        update_handlers: Dict[Step, Callable[[StepInfo], None]] = {
             Step.PULL: self._update_pull,
             Step.BUILD: self._update_build,
         }
         if action.step in update_handlers:
             callbacks.run_pre(step_info=step_info)
-            state = update_handlers[action.step](step_info)
+            update_handlers[action.step](step_info)
             state_file = states.state_file_path(self._part, action.step)
-            state.write(state_file)
+            state_file.touch()
             callbacks.run_post(step_info=step_info)
 
-    def _update_pull(self, step_info: StepInfo) -> PartState:
+    def _update_pull(self, step_info: StepInfo) -> None:
         self._make_dirs()
-
-        fetched_packages = self._fetch_stage_packages(step_info=step_info)
 
         self._run_step(
             step_info=step_info,
@@ -339,15 +337,7 @@ class PartHandler:
         self._source_handler.check(str(state_file))  # required by source.update()
         self._source_handler.update()
 
-        state = states.PullState(
-            part_properties=self._part_properties,
-            project_options=step_info.project_options,
-            stage_packages=fetched_packages,
-            source_details=getattr(self._source_handler, "source_details", None),
-        )
-        return state
-
-    def _update_build(self, step_info: StepInfo) -> PartState:
+    def _update_build(self, step_info: StepInfo) -> None:
         self._make_dirs()
 
         build_packages = common.get_build_packages(
@@ -378,14 +368,6 @@ class PartHandler:
         )
 
         self._organize(overwrite=True)
-
-        state = states.BuildState(
-            part_properties=self._part_properties,
-            project_options=step_info.project_options,
-            build_packages=build_packages,
-            machine_assets=common.get_machine_manifest(),
-        )
-        return state
 
     def _make_dirs(self):
         dirs = [
