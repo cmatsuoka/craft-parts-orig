@@ -62,6 +62,11 @@ class Part:
         return self._data.copy()
 
     @property
+    def parts_dir(self) -> Path:
+        """The directory containing work files for each part."""
+        return self._work_dir / "parts"
+
+    @property
     def part_src_dir(self) -> Path:
         """The subdirectory containing this part's source code."""
         return self._part_dir / "src"
@@ -110,7 +115,7 @@ class Part:
 
     @property
     def stage_dir(self) -> Path:
-        """The staging area containing the installed file for all parts."""
+        """The staging area containing the installed files from all parts."""
         return self._work_dir / "stage"
 
     @property
@@ -196,6 +201,23 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
             return part
 
     raise errors.InvalidPartName(name)
+
+
+def part_list_by_name(part_names: List[str], part_list: List[Part]) -> List[Part]:
+    """Return a list of parts from part_list that are named in part_names."""
+
+    if part_names:
+        # check if all part names are valid
+        valid_part_names = [p.name for p in part_list]
+        for name in part_names:
+            if name not in valid_part_names:
+                raise errors.InvalidPartName(name)
+
+        selected_parts = [p for p in part_list if p.name in part_names]
+    else:
+        selected_parts = part_list
+
+    return selected_parts
 
 
 def sort_parts(part_list: List[Part]) -> List[Part]:

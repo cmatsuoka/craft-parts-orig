@@ -16,13 +16,15 @@
 
 """The parts lifecycle manager definition and helpers."""
 
+import contextlib
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from craft_parts import errors, executor, packages, parts, sequencer
+from craft_parts import executor, packages, parts, sequencer
 from craft_parts.actions import Action
 from craft_parts.infos import ProjectInfo
-from craft_parts.parts import Part
+from craft_parts.parts import Part, part_list_by_name
 from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
@@ -81,19 +83,19 @@ class LifecycleManager:
         )
 
         parts_data = all_parts.get("parts", {})
-        self._parts = [
+        self._part_list = [
             Part(name, p, work_dir=work_dir) for name, p in parts_data.items()
         ]
         self._application_name = application_name
         self._target_arch = project_info.deb_arch
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
-            part_list=self._parts,
+            part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
         )
         self._executor = executor.Executor(
-            part_list=self._parts,
+            part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
         )
@@ -109,16 +111,23 @@ class LifecycleManager:
             all parts will be cleaned.
         """
 
-        if part_names:
-            selected_parts = [p for p in self._parts if p.name in part_names]
-        else:
-            selected_parts = self._parts
+        clean_all_parts = not part_names
+        selected_parts = part_list_by_name(part_names, self._part_list)
 
-        if not selected_parts and part_names:
-            # all part names are invalid, use the first one
-            raise errors.InvalidPartName(part_names[0])
+        if not step:
+            step = Step.PULL
 
         self._executor.clean(initial_step=step, part_list=selected_parts)
+
+        # remove any existing leftovers
+        if clean_all_parts:
+            with contextlib.suppress(FileNotFoundError):
+                for part in selected_parts:
+                    shutil.rmtree(part.prime_dir)
+                    if step <= Step.STAGE:
+                        shutil.rmtree(part.stage_dir)
+                    if step <= Step.PULL:
+                        shutil.rmtree(part.parts_dir)
 
     def update(self, update_system_package_list=False) -> None:
         """Refresh the available packages list.
@@ -165,5 +174,5 @@ class LifecycleManager:
             actions = [actions]
 
         for act in actions:
-            part = parts.part_by_name(act.part_name, self._parts)
+            part = parts.part_by_name(act.part_name, self._part_list)
             self._executor.run_action(act, part=part)

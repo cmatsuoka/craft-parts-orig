@@ -22,7 +22,7 @@ from typing import List, Optional
 from craft_parts import common, errors, packages, parts, plugins, steps
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.parts import Part, sort_parts
+from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
@@ -55,10 +55,7 @@ class Sequencer:
         part_names: List[str] = None,
         reason: Optional[str] = None,
     ) -> None:
-        if part_names:
-            selected_parts = [p for p in self._part_list if p.name in part_names]
-        else:
-            selected_parts = self._part_list
+        selected_parts = part_list_by_name(part_names, self._part_list)
 
         for current_step in target_step.previous_steps() + [target_step]:
             # We check for stage collisions when executing the step actions

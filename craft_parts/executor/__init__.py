@@ -17,8 +17,7 @@
 """Definitions and helpers for the action executor."""
 
 import logging
-import shutil
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
@@ -60,14 +59,10 @@ class Executor:
         handler = self._handler[part.name]
         handler.run_action(action)
 
-    def clean(self, *, initial_step: Optional[Step], part_list: List[Part]):
+    def clean(self, *, initial_step: Step, part_list: List[Part]):
         """Clean the given parts, or all parts if none is specified."""
 
-        if initial_step:
-            selected_steps = [initial_step] + initial_step.next_steps()
-        else:
-            selected_steps = list(Step)
-
+        selected_steps = [initial_step] + initial_step.next_steps()
         selected_steps.reverse()
 
         for part in part_list:
@@ -76,9 +71,6 @@ class Executor:
 
             for step in selected_steps:
                 handler.clean_step(step=step)
-
-            shutil.rmtree(part.prime_dir)
-            shutil.rmtree(part.stage_dir)
 
     def _create_part_handler(self, part: Part):
         if part.name not in self._handler:
