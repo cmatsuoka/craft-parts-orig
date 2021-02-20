@@ -126,7 +126,7 @@ class PluginBuildError(CraftPartsReportableError):
 
     fmt = "Failed to run the build script for part {part_name!r}."
 
-    def __init__(self, *, part_name: str) -> None:
+    def __init__(self, part_name: str) -> None:
         super().__init__(part_name=part_name)
 
 
@@ -213,21 +213,25 @@ class FilesetError(CraftPartsError):
 
 
 class OsReleaseIdError(CraftPartsError):
+    """Failed to determine the host operating system identification string."""
 
     fmt = "Unable to determine host OS ID"
 
 
 class OsReleaseNameError(CraftPartsError):
+    """Failed to deterime the host operating system name."""
 
     fmt = "Unable to determine host OS name"
 
 
 class OsReleaseVersionIdError(CraftPartsError):
+    """Failed to deterime the host operating system version."""
 
     fmt = "Unable to determine host OS version ID"
 
 
 class OsReleaseCodenameError(CraftPartsError):
+    """Failed to deterime the host operating system version codename."""
 
     fmt = "Unable to determine host OS version codename"
 
@@ -251,6 +255,7 @@ class StagePackageError(CraftPartsError):
 
 
 class CorruptedElfFile(CraftPartsError):
+    """Failed to parse an ELF header from a binary file."""
 
     fmt = "Unable to parse ELF file {path!r}: {message}"
 
@@ -259,6 +264,7 @@ class CorruptedElfFile(CraftPartsError):
 
 
 class FileOrganizeError(CraftPartsError):
+    """Failed to organize a file layout."""
 
     fmt = "Failed to organize part {part_name!r}: {message}"
 
@@ -267,6 +273,7 @@ class FileOrganizeError(CraftPartsError):
 
 
 class PartConflictError(CraftPartsError):
+    """Different parts list the same files with different contents."""
 
     fmt = (
         "Failed to stage: "
@@ -287,6 +294,7 @@ class PartConflictError(CraftPartsError):
 
 
 class SchemaNotFound(CraftPartsReportableError):
+    """Failed to find a schema definition."""
 
     fmt = "Unable to find the schema definition file {path!r}."
 
