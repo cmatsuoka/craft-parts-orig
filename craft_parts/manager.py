@@ -157,6 +157,8 @@ class LifecycleManager:
 
         :param actions: An :class:`Action` object or list of :class:`Action`
            objects specifying steps to execute.
+
+        :raises InvalidActionException: If the action parameters are invalid.
         """
 
         if isinstance(actions, Action):

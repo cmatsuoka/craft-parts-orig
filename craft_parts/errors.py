@@ -85,6 +85,15 @@ class InvalidPartName(CraftPartsError):
         super().__init__(part_name=part_name)
 
 
+class InvalidAction(CraftPartsError):
+    """An attempt was made to execute an action with invalid parameters."""
+
+    fmt = "Action is invalid: {message}"
+
+    def __init__(self, message: str):
+        super().__init__(message=message)
+
+
 class InvalidPluginAPIVersion(CraftPartsError):
     """A request was made to use an unsupported plugin API version.
 

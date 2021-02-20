@@ -20,7 +20,7 @@ import pytest
 import yaml
 
 import craft_parts
-from craft_parts import Action, ActionType, Step, StepInfo, callbacks
+from craft_parts import Action, ActionType, Step, StepInfo, callbacks, errors
 
 
 def setup_function():
@@ -163,3 +163,39 @@ def test_update_callback_post(tmpdir, capfd, step):
     out, err = capfd.readouterr()
     assert not err
     assert out == f"override {step!r}\ncallback\n"
+
+
+@pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
+def test_invalid_update_callback_pre(tmpdir, step):
+    callbacks.register_pre(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_update_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    with pytest.raises(errors.InvalidAction) as raised:
+        lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+
+    name = step.name.lower()
+    assert (
+        str(raised.value) == f"Action is invalid: cannot update step {name!r} of 'foo'."
+    )
+
+
+@pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
+def test_invalid_update_callback_post(tmpdir, step):
+    callbacks.register_post(_my_callback, step_list=[step])
+
+    parts = yaml.safe_load(_update_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts, application_name="test_callback", work_dir=tmpdir, message="callback"
+    )
+
+    with pytest.raises(errors.InvalidAction) as raised:
+        lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+
+    name = step.name.lower()
+    assert (
+        str(raised.value) == f"Action is invalid: cannot update step {name!r} of 'foo'."
+    )

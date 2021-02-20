@@ -314,6 +314,11 @@ class PartHandler:
             state_file = states.state_file_path(self._part, action.step)
             state_file.touch()
             callbacks.run_post(step_info=step_info)
+        else:
+            step_name = action.step.name.lower()
+            raise errors.InvalidAction(
+                f"cannot update step {step_name!r} of {self._part.name!r}."
+            )
 
     def _update_pull(self, step_info: StepInfo) -> None:
         self._make_dirs()
