@@ -59,18 +59,14 @@ def main():
 
 def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
     target_step = _parse_step(options.command) if options.command else Step.PRIME
-
-    try:
-        part_names = options.parts
-    except AttributeError:
-        part_names = []
+    part_names = vars(options).get("parts", [])
 
     if options.update:
         lf.update()
 
     actions = lf.plan(target_step, part_names)
 
-    if vars(options).get("plan_only"):
+    if options.plan_only:
         printed = False
         for a in actions:
             if options.show_skipped or a.type != ActionType.SKIP:
@@ -81,13 +77,13 @@ def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> N
         sys.exit()
 
     for a in actions:
-        if vars(options).get("show_skipped") or a.type != ActionType.SKIP:
+        if options.show_skipped or a.type != ActionType.SKIP:
             print(f"Execute: {_action_message(a)}")
             lf.execute(a)
 
 
 def _do_clean(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
-    if vars(options).get("plan_only"):
+    if options.plan_only:
         raise ValueError("Clean operations cannot be planned.")
 
     if not options.parts:
