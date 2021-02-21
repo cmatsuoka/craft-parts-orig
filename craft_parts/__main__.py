@@ -23,7 +23,8 @@ import sys
 import yaml
 
 import craft_parts
-from craft_parts import ActionType, Step, errors
+import craft_parts.errors
+from craft_parts import ActionType, Step
 
 
 def main():
@@ -37,24 +38,34 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
+    try:
+        _process_parts(options)
+    except OSError as err:
+        print(f"Error: {err.strerror}.", file=sys.stderr)
+        sys.exit(1)
+    except craft_parts.errors.SchemaValidationError:
+        print("Error: invalid parts specification.", file=sys.stderr)
+        sys.exit(2)
+    except craft_parts.errors.InvalidPartName as err:
+        print(f"Error: {err}", file=sys.stderr)
+        sys.exit(3)
+    except ValueError as err:
+        print(f"Error: {err}", file=sys.stderr)
+        sys.exit(4)
+
+
+def _process_parts(options: argparse.Namespace) -> None:
     with open(options.file) as f:
         part_data = yaml.safe_load(f)
 
     lf = craft_parts.LifecycleManager(part_data, application_name="craft-parts")
 
-    try:
-        command = options.command if options.command else "prime"
-        if command == "clean":
-            _do_clean(lf, options)
-            sys.exit()
+    command = options.command if options.command else "prime"
+    if command == "clean":
+        _do_clean(lf, options)
+        sys.exit()
 
-        _do_step(lf, options)
-    except errors.InvalidPartName as err:
-        print(f"Error: {err}", file=sys.stderr)
-        sys.exit(1)
-    except ValueError as err:
-        print(f"Error: {err}", file=sys.stderr)
-        sys.exit(2)
+    _do_step(lf, options)
 
 
 def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:

@@ -70,6 +70,60 @@ def setup_new_dir(new_dir):  # pylint: disable=unused-argument
     pass
 
 
+def test_main_no_args(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+
+    mocker.patch.object(sys, "argv", ["cmd"])
+    main.main()
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == execute_result[3]
+    assert Path("parts").is_dir()
+    assert Path("parts/foo").is_dir()
+    assert Path("parts/bar").is_dir()
+    assert Path("stage").is_dir()
+    assert Path("prime").is_dir()
+
+
+def test_main_missing_parts_file(mocker, capfd):
+    mocker.patch.object(sys, "argv", ["cmd"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 1
+
+    out, err = capfd.readouterr()
+    assert err == "Error: No such file or directory.\n"
+    assert out == ""
+
+
+def test_main_unreadable_parts_file(mocker, capfd):
+    Path("parts.yaml").touch()
+    Path("parts.yaml").chmod(0o111)
+
+    mocker.patch.object(sys, "argv", ["cmd"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 1
+
+    out, err = capfd.readouterr()
+    assert err == "Error: Permission denied.\n"
+    assert out == ""
+
+
+def test_main_invalid_parts_file(mocker, capfd):
+    Path("parts.yaml").write_text("not yaml data")
+
+    mocker.patch.object(sys, "argv", ["cmd"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 2
+
+    out, err = capfd.readouterr()
+    assert err == "Error: invalid parts specification.\n"
+    assert out == ""
+
+
 def test_main_version(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "--version"])
     with pytest.raises(SystemExit) as raised:
@@ -81,10 +135,10 @@ def test_main_version(mocker, capfd):
     assert out == f"craft-parts {craft_parts.__version__}\n"
 
 
-def test_main_no_args(mocker, capfd):
-    Path("parts.yaml").write_text(parts_yaml)
+def test_main_alternative_file(mocker, capfd):
+    Path("other.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd"])
+    mocker.patch.object(sys, "argv", ["cmd", "--file", "other.yaml"])
     main.main()
 
     out, err = capfd.readouterr()
@@ -296,7 +350,7 @@ def test_main_step_invalid_part(mocker, capfd, step):
     mocker.patch.object(sys, "argv", ["cmd", step, "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
@@ -310,7 +364,7 @@ def test_main_step_invalid_multiple_parts(mocker, capfd, step):
     mocker.patch.object(sys, "argv", ["cmd", step, "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
@@ -325,7 +379,7 @@ def test_main_step_invalid_part_plan_only(mocker, capfd, step):
     mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
@@ -340,7 +394,7 @@ def test_main_step_invalid_multiple_parts_plan_only(mocker, capfd, step):
     mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
@@ -389,7 +443,7 @@ def test_main_clean_plan_only(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "clean"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 2
+    assert raised.value.code == 4
 
     out, err = capfd.readouterr()
     assert err == "Error: Clean operations cannot be planned.\n"
@@ -477,7 +531,7 @@ def test_main_clean_invalid_part(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "clean", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
@@ -491,7 +545,7 @@ def test_main_clean_invalid_multiple_part(mocker, capfd):
     mocker.patch.object(sys, "argv", ["cmd", "clean", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
-    assert raised.value.code == 1
+    assert raised.value.code == 3
 
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
