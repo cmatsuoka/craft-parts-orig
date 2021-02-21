@@ -43,6 +43,9 @@ plan_steps = [
 
 plan_result = ["".join(plan_steps[0:n]) for n in range(1, 5)]
 
+
+# pylint: disable=line-too-long
+
 execute_steps = [
     "Execute: Pull foo\nExecute: Pull bar\n",
     "Execute: Build foo\nExecute: Stage foo (required to build 'bar')\nExecute: Build bar\n",
@@ -209,15 +212,12 @@ def test_main_step_plan_only_show_skip(mocker, capfd, step, result):
 @pytest.mark.parametrize(
     "step,result",
     [
-        # nofmt: on
+        # fmt: off
         ("pull", "Execute: Pull foo\n"),
         ("build", "Execute: Pull foo\nExecute: Build foo\n"),
         ("stage", "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\n"),
-        (
-            "prime",
-            "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\nExecute: Prime foo\n",
-        ),
-        # nofmt: off
+        ("prime", "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\nExecute: Prime foo\n"),
+        # fmt: on
     ],
 )
 def test_main_step_specify_part(mocker, capfd, step, result):
