@@ -52,6 +52,9 @@ def main():
     except errors.InvalidPartName as err:
         print(f"Error: {err}", file=sys.stderr)
         sys.exit(1)
+    except ValueError as err:
+        print(f"Error: {err}", file=sys.stderr)
+        sys.exit(2)
 
 
 def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
@@ -84,6 +87,9 @@ def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> N
 
 
 def _do_clean(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:
+    if vars(options).get("plan_only"):
+        raise ValueError("Clean operations cannot be planned.")
+
     if not options.parts:
         print("Clean all parts.")
 
@@ -154,6 +160,16 @@ def _parse_arguments() -> argparse.Namespace:
         help="Refresh the stage packages list before procceeding",
     )
     parser.add_argument(
+        "--plan-only",
+        action="store_true",
+        help="Show planned actions to be executed and exit",
+    )
+    parser.add_argument(
+        "--show-skipped",
+        action="store_true",
+        help="Also display skipped actions",
+    )
+    parser.add_argument(
         "--version",
         action="store_true",
         help="Display the craft-parts version and exit",
@@ -161,36 +177,16 @@ def _parse_arguments() -> argparse.Namespace:
 
     subparsers = parser.add_subparsers(dest="command")
 
-    step_parser = argparse.ArgumentParser(add_help=False)
-    step_parser.add_argument(
-        "--plan-only",
-        action="store_true",
-        help="Show planned actions to be executed and exit",
-    )
-    step_parser.add_argument(
-        "--show-skipped",
-        action="store_true",
-        help="Also display skipped actions",
-    )
-
-    pull_parser = subparsers.add_parser(
-        "pull", parents=[step_parser], help="Pull the specified parts"
-    )
+    pull_parser = subparsers.add_parser("pull", help="Pull the specified parts")
     pull_parser.add_argument("parts", nargs="*", help="The list of parts to pull")
 
-    build_parser = subparsers.add_parser(
-        "build", parents=[step_parser], help="Build the specified parts"
-    )
+    build_parser = subparsers.add_parser("build", help="Build the specified parts")
     build_parser.add_argument("parts", nargs="*", help="The list of parts to build")
 
-    stage_parser = subparsers.add_parser(
-        "stage", parents=[step_parser], help="Stage the specified parts"
-    )
+    stage_parser = subparsers.add_parser("stage", help="Stage the specified parts")
     stage_parser.add_argument("parts", nargs="*", help="The list of parts to stage")
 
-    prime_parser = subparsers.add_parser(
-        "prime", parents=[step_parser], help="Prime the specified parts"
-    )
+    prime_parser = subparsers.add_parser("prime", help="Prime the specified parts")
     prime_parser.add_argument("parts", nargs="*", help="The list of parts to prime")
 
     clean_parser = subparsers.add_parser(
