@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import runpy
 import sys
 import textwrap
 from pathlib import Path
@@ -135,22 +136,6 @@ def test_main_version(mocker, capfd):
     assert out == f"craft-parts {craft_parts.__version__}\n"
 
 
-def test_main_alternative_file(mocker, capfd):
-    Path("other.yaml").write_text(parts_yaml)
-
-    mocker.patch.object(sys, "argv", ["cmd", "--file", "other.yaml"])
-    main.main()
-
-    out, err = capfd.readouterr()
-    assert err == ""
-    assert out == execute_result[3]
-    assert Path("parts").is_dir()
-    assert Path("parts/foo").is_dir()
-    assert Path("parts/bar").is_dir()
-    assert Path("stage").is_dir()
-    assert Path("prime").is_dir()
-
-
 def test_main_plan_only(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
@@ -165,6 +150,37 @@ def test_main_plan_only(mocker, capfd):
     assert Path("parts").is_dir() is False
     assert Path("stage").is_dir() is False
     assert Path("prime").is_dir() is False
+
+
+@pytest.mark.parametrize("opt", ["--f", "--file"])
+def test_main_alternative_parts_file(mocker, capfd, opt):
+    Path("other.yaml").write_text(parts_yaml)
+
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", opt, "other.yaml"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code is None
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == plan_result[3]
+
+
+def test_main_update(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+
+    mock_update = mocker.patch("craft_parts.packages.apt_cache.AptCache.update")
+
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "--update"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code is None
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == plan_result[3]
+
+    mock_update.assert_called_with()
 
 
 @pytest.mark.parametrize(
@@ -550,3 +566,13 @@ def test_main_clean_invalid_multiple_part(mocker, capfd):
     out, err = capfd.readouterr()
     assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
     assert out == ""
+
+
+def test_main_import(mocker, capfd):
+    mocker.patch.object(sys, "argv", ["cmd", "--version"])
+    with pytest.raises(SystemExit):
+        runpy.run_module("craft_parts", run_name="__main__")
+
+    out, err = capfd.readouterr()
+    assert out == f"craft-parts {craft_parts.__version__}\n"
+    assert err == ""
