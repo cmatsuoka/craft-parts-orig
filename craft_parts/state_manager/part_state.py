@@ -17,7 +17,6 @@
 """The part state for a given step."""
 
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Set
 
@@ -59,7 +58,6 @@ class PartState(_State):
         files: Set[str] = None,
         directories: Set[str] = None,
         assets: Dict[str, Any] = None,
-        with_timestamp=False,
     ):
         super().__init__()
 
@@ -74,9 +72,6 @@ class PartState(_State):
 
         self.files = files
         self.directories = directories
-
-        if with_timestamp:
-            self.timestamp: datetime = datetime.now()
 
         if part_properties:
             self.properties = self.properties_of_interest(part_properties)
