@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
-
 import pytest
 
 from craft_parts import errors, parts
@@ -26,39 +24,39 @@ from craft_parts.steps import Step
 class TestPartBasics:
     """Test basic part creation and representation."""
 
-    # pylint: disable=attribute-defined-outside-init
-    def setup_method(self):
-        self._cwd = Path.cwd()
-
-    def test_part(self):
+    def test_part(self, new_dir):
         p = Part("foo", {"bar": "baz"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.properties == {"bar": "baz"}
-        assert p.part_src_dir == self._cwd / "parts/foo/src"
-        assert p.part_build_dir == self._cwd / "./parts/foo/build"
-        assert p.part_state_dir == self._cwd / "./parts/foo/state"
-        assert p.part_package_dir == self._cwd / "./parts/foo/stage_packages"
-        assert p.part_run_dir == self._cwd / "./parts/foo/run"
-        assert p.stage_dir == self._cwd / "./stage"
-        assert p.prime_dir == self._cwd / "./prime"
+        assert p.parts_dir == new_dir / "parts"
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_state_dir == new_dir / "parts/foo/state"
+        assert p.part_packages_dir == new_dir / "parts/foo/stage_packages"
+        assert p.part_snaps_dir == new_dir / "parts/foo/stage_snaps"
+        assert p.part_run_dir == new_dir / "parts/foo/run"
+        assert p.stage_dir == new_dir / "stage"
+        assert p.prime_dir == new_dir / "prime"
 
-    def test_part_work_dir(self):
+    def test_part_work_dir(self, new_dir):
         p = Part("foo", {}, work_dir="foobar")
-        assert p.part_src_dir == self._cwd / "foobar/parts/foo/src"
-        assert p.part_build_dir == self._cwd / "foobar/parts/foo/build"
-        assert p.part_state_dir == self._cwd / "foobar/parts/foo/state"
-        assert p.part_package_dir == self._cwd / "foobar/parts/foo/stage_packages"
-        assert p.part_run_dir == self._cwd / "foobar/parts/foo/run"
-        assert p.stage_dir == self._cwd / "foobar/stage"
-        assert p.prime_dir == self._cwd / "foobar/prime"
+        assert p.parts_dir == new_dir / "foobar/parts"
+        assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
+        assert p.part_build_dir == new_dir / "foobar/parts/foo/build"
+        assert p.part_state_dir == new_dir / "foobar/parts/foo/state"
+        assert p.part_packages_dir == new_dir / "foobar/parts/foo/stage_packages"
+        assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
+        assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
+        assert p.stage_dir == new_dir / "foobar/stage"
+        assert p.prime_dir == new_dir / "foobar/prime"
 
-    def test_part_src_build_work_dir(self):
+    def test_part_src_build_work_dir(self, new_dir):
         p = Part("foo", {"source-subdir": "foobar"})
-        assert p.part_src_dir == self._cwd / "./parts/foo/src"
-        assert p.part_src_work_dir == self._cwd / "./parts/foo/src/foobar"
-        assert p.part_build_dir == self._cwd / "./parts/foo/build"
-        assert p.part_build_work_dir == self._cwd / "./parts/foo/build/foobar"
+        assert p.part_src_dir == new_dir / "parts/foo/src"
+        assert p.part_src_work_dir == new_dir / "parts/foo/src/foobar"
+        assert p.part_build_dir == new_dir / "parts/foo/build"
+        assert p.part_build_work_dir == new_dir / "parts/foo/build/foobar"
 
     def test_part_source(self):
         p = Part("foo", {})
@@ -93,6 +91,15 @@ class TestPartBasics:
         # should be immutable
         x.append("extra")
         assert p.prime_fileset == ["a", "b", "c"]
+
+    def test_part_organize_fileset(self):
+        p = Part("foo", {"organize": {"a": "b", "c": "d"}})
+        x = p.organize_fileset
+        assert p.organize_fileset == {"a": "b", "c": "d"}
+
+        # should be immutable
+        x["a"] = "foo"
+        assert p.organize_fileset == {"a": "b", "c": "d"}
 
     def test_part_dependencies(self):
         p = Part("foo", {"after": ["bar"]})
@@ -240,6 +247,28 @@ class TestPartHelpers:
 
         with pytest.raises(errors.InvalidPartName) as raised:
             parts.part_by_name("invalid", [p1, p2, p3])
+        assert (
+            str(raised.value) == "A part named 'invalid' is not defined "
+            "in the parts list."
+        )
+
+    def test_part_list_by_name(self):
+        p1 = Part("foo", {})
+        p2 = Part("bar", {})
+        p3 = Part("baz", {})
+
+        x = parts.part_list_by_name(["bar", "baz"], [p1, p2, p3])
+        assert x == [p2, p3]
+
+        # If the list is empty or not defined, return all parts
+        x = parts.part_list_by_name([], [p1, p2, p3])
+        assert x == [p1, p2, p3]
+
+        x = parts.part_list_by_name(None, [p1, p2, p3])
+        assert x == [p1, p2, p3]
+
+        with pytest.raises(errors.InvalidPartName) as raised:
+            parts.part_list_by_name(["bar", "invalid"], [p1, p2, p3])
         assert (
             str(raised.value) == "A part named 'invalid' is not defined "
             "in the parts list."

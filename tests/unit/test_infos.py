@@ -54,9 +54,15 @@ def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
     assert x.application_name == "test"
     assert x.arch_triplet == tc_triplet
     assert x.is_cross_compiling == tc_cross
+    assert x.plugin_version == "v2"
     assert x.parallel_build_count == 16
     assert x.local_plugins_dir == Path("/some/path")
     assert x.deb_arch == tc_deb_arch
+    assert x.project_options == {
+        "application_name": "test",
+        "arch_triplet": tc_triplet,
+        "deb_arch": tc_deb_arch,
+    }
 
 
 def test_project_info_default():
@@ -90,43 +96,41 @@ def test_invalid_arch():
     assert str(raised.value) == "Architecture 'invalid' is not supported."
 
 
-def test_part_info():
+def test_part_info(new_dir):
     info = ProjectInfo()
     part = Part("foo", {})
     x = PartInfo(project_info=info, part=part)
-    cwd = Path().absolute()
 
     assert x.application_name == "craft_parts"
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
-    assert x.part_src_dir == cwd / "parts/foo/src"
-    assert x.part_src_work_dir == cwd / "parts/foo/src"
-    assert x.part_build_dir == cwd / "parts/foo/build"
-    assert x.part_build_work_dir == cwd / "parts/foo/build"
-    assert x.part_install_dir == cwd / "parts/foo/install"
-    assert x.stage_dir == cwd / "stage"
-    assert x.prime_dir == cwd / "prime"
+    assert x.part_src_dir == new_dir / "parts/foo/src"
+    assert x.part_src_work_dir == new_dir / "parts/foo/src"
+    assert x.part_build_dir == new_dir / "parts/foo/build"
+    assert x.part_build_work_dir == new_dir / "parts/foo/build"
+    assert x.part_install_dir == new_dir / "parts/foo/install"
+    assert x.stage_dir == new_dir / "stage"
+    assert x.prime_dir == new_dir / "prime"
 
 
-def test_step_info():
+def test_step_info(new_dir):
     info = ProjectInfo(custom1="foobar", custom2=[1, 2])
     part = Part("foo", {})
     part_info = PartInfo(project_info=info, part=part)
     x = StepInfo(part_info=part_info, step=Step.BUILD)
-    cwd = Path().absolute()
 
     assert x.application_name == "craft_parts"
     assert x.parallel_build_count == 1
 
     assert x.part_name == "foo"
-    assert x.part_src_dir == cwd / "parts/foo/src"
-    assert x.part_src_work_dir == cwd / "parts/foo/src"
-    assert x.part_build_dir == cwd / "parts/foo/build"
-    assert x.part_build_work_dir == cwd / "parts/foo/build"
-    assert x.part_install_dir == cwd / "parts/foo/install"
-    assert x.stage_dir == cwd / "stage"
-    assert x.prime_dir == cwd / "prime"
+    assert x.part_src_dir == new_dir / "parts/foo/src"
+    assert x.part_src_work_dir == new_dir / "parts/foo/src"
+    assert x.part_build_dir == new_dir / "parts/foo/build"
+    assert x.part_build_work_dir == new_dir / "parts/foo/build"
+    assert x.part_install_dir == new_dir / "parts/foo/install"
+    assert x.stage_dir == new_dir / "stage"
+    assert x.prime_dir == new_dir / "prime"
 
     assert x.step == Step.BUILD
 

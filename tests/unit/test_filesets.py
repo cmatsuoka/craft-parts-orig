@@ -112,3 +112,6 @@ def test_filesets_excludes_without_relative_paths():
         "File specification error in 'test fileset': "
         "path '/abs/exclude' must be relative."
     )
+
+
+# migratable_filesets tested in tests/unit/executor/test_step_handler.py

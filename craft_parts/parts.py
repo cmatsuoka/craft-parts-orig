@@ -194,7 +194,11 @@ class Part:
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:
-    """Obtain the part with the given name from the part list."""
+    """Obtain the part with the given name from the part list.
+
+    :param name: The name of the part to return.
+    :param part_list: The list of all known parts.
+    """
 
     for part in part_list:
         if part.name == name:
@@ -206,7 +210,12 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
 def part_list_by_name(
     part_names: Optional[List[str]], part_list: List[Part]
 ) -> List[Part]:
-    """Return a list of parts from part_list that are named in part_names."""
+    """Return a list of parts from part_list that are named in part_names.
+
+    :param part_names: The list of part names. If the list is empty or not
+        defined, return all parts from part_list.
+    :param part_list: The list of all known parts.
+    """
 
     if part_names:
         # check if all part names are valid

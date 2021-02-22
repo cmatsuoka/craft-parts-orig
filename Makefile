@@ -70,6 +70,13 @@ coverage:
 	coverage html
 	#$(BROWSER) htmlcov/index.html
 
+.PHONY: unit-coverage
+unit-coverage:
+	coverage run --source craft_parts -m pytest tests/unit
+	coverage report -m
+	coverage html
+	#$(BROWSER) htmlcov/index.html
+
 .PHONY: docs
 docs:
 	rm -f docs/craft_parts.rst
