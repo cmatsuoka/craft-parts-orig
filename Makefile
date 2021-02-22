@@ -136,7 +136,7 @@ test-flake8:
 
 .PHONY: test-integrations
 test-integrations:
-	pytest -W ignore::DeprecationWarning tests/integration
+	pytest tests/integration
 
 .PHONY: test-isort
 test-isort:
@@ -157,7 +157,7 @@ test-pyright:
 
 .PHONY: test-units
 test-units:
-	pytest -W ignore::DeprecationWarning tests/unit
+	pytest tests/unit
 
 .PHONY: tests
 tests: lint test-units test-integrations
