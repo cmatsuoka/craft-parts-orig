@@ -99,7 +99,7 @@ class Part:
         return self._part_dir / "state"
 
     @property
-    def part_package_dir(self) -> Path:
+    def part_packages_dir(self) -> Path:
         """The subdirectory containing this part's stage packages directory."""
         return self._part_dir / "stage_packages"
 

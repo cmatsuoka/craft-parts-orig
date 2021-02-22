@@ -94,7 +94,7 @@ class PartHandler:
 
     def _clean_pull(self) -> None:
         # remove dirs where stage packages and snaps are fetched
-        _remove(self._part.part_package_dir)
+        _remove(self._part.part_packages_dir)
         _remove(self._part.part_snaps_dir)
 
         # remove the source tree
@@ -131,7 +131,7 @@ class PartHandler:
                     package_names=stage_packages,
                     target_arch=step_info.deb_arch,
                     base=os_utils.get_build_base(),
-                    stage_packages_path=self._part.part_package_dir,
+                    stage_packages_path=self._part.part_packages_dir,
                 )
             except packages_errors.PackageNotFound as err:
                 raise errors.StagePackageError(self._part.name, err.message)
@@ -140,7 +140,7 @@ class PartHandler:
 
     def _unpack_stage_packages(self):
         self._package_repo.unpack_stage_packages(
-            stage_packages_path=self._part.part_package_dir,
+            stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )
         # TODO: unpack stage snaps
