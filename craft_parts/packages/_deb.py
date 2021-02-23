@@ -386,6 +386,9 @@ class Ubuntu(BaseRepository):
     ) -> List[str]:
         logger.debug("Requested stage-packages: %s", sorted(package_names))
 
+        if not package_names:
+            return []
+
         installed: Set[str] = set()
 
         stage_packages_path.mkdir(exist_ok=True)

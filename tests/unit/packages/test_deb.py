@@ -158,6 +158,22 @@ class TestPackages:
             ["fake-package=1.0", "fake-package-dep=2.0"]
         )
 
+    def test_fetch_stage_package_empty_list(self, tmpdir, fake_apt_cache):
+        _, debs_path = _deb.get_cache_dirs("test")
+        fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = (
+            []
+        )
+
+        fetched_packages = _deb.Ubuntu.fetch_stage_packages(
+            application_name="test",
+            package_names=[],
+            stage_packages_path=Path(tmpdir),
+            base="core",
+            target_arch="amd64",
+        )
+
+        assert fetched_packages == []
+
     def test_get_package_fetch_error(self, tmpdir, fake_apt_cache):
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
             "foo"
@@ -175,7 +191,7 @@ class TestPackages:
 
 
 class TestBuildPackages:
-    def test_install_build_package(self, fake_apt_cache, fake_run):
+    def test_install_build_packages(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0"),
             ("package-installed", "1.0"),
@@ -236,6 +252,16 @@ class TestBuildPackages:
                 ),
             ]
         )
+
+    def test_install_build_packages_empty_list(self, fake_apt_cache, fake_run):
+        fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = (
+            []
+        )
+
+        build_packages = _deb.Ubuntu.install_build_packages([])
+
+        assert build_packages == []
+        fake_run.assert_has_calls([])
 
     def test_already_installed_no_specified_version(self, fake_apt_cache, fake_run):
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
