@@ -17,9 +17,10 @@
 """The part crafter lifecycle manager."""
 
 import contextlib
+import itertools
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Final, List, Optional
 
 from craft_parts import errors, parts, sources, steps
 from craft_parts.infos import ProjectInfo
@@ -54,10 +55,20 @@ class _StateWrapper:
     phase).
     """
 
-    def __init__(self, state: PartState, timestamp: datetime):
-        self._state = state
-        self._timestamp = timestamp
-        self.updated = False
+    def __init__(
+        self,
+        state: PartState,
+        timestamp: Optional[datetime] = None,
+        serial: int = 0,
+        updated: bool = False,
+    ):
+        if (timestamp and serial) or not (timestamp or serial):
+            raise errors.InternalError("either timestamp or serial must be provided")
+
+        self._state: Final[PartState] = state
+        self._timestamp: Final[Optional[datetime]] = timestamp
+        self._serial: Final[int] = serial
+        self._updated: Final[bool] = updated
 
     @property
     def state(self) -> PartState:
@@ -65,18 +76,55 @@ class _StateWrapper:
         return self._state
 
     @property
-    def timestamp(self) -> datetime:
-        """The state timestamp metadata."""
+    def timestamp(self) -> Optional[datetime]:
+        """The state timestamp metadata set from the state file."""
         return self._timestamp
 
-    def update_timestamp(self) -> None:
-        """Update the timestamp metadata with the current time."""
-        self._timestamp = datetime.now()
+    @property
+    def updated(self) -> bool:
+        """Verify whether this state was updated after reported outdated."""
+        return self._updated
+
+    def is_newer_than(self, other: "_StateWrapper"):
+        """Verify if this state is newer than the specified state.
+
+        :param other: The state to compare this state to.
+        """
+
+        # both states have timestamps, check which is newer
+        if self.timestamp and other.timestamp:
+            return self.timestamp > other.timestamp
+
+        # we have a timestamp and the other doesn't, other is newer
+        if self.timestamp and not other.timestamp:
+            return False
+
+        # we don't have a timestamp but other does, we're newer
+        if not self.timestamp and other.timestamp:
+            return True
+
+        # neither state has a timestamp, compare serials
+        return self._serial > other._serial
 
 
-class _EphemeralState:
+class _EphemeralStates:
     def __init__(self):
         self._state: Dict[str, Dict[Step, _StateWrapper]] = {}
+        self._serial_gen = itertools.count(1)
+
+    def new_ephemeral_state(
+        self, state: PartState, updated: bool = False
+    ) -> _StateWrapper:
+        """Create a state wrapper from a pure in-memory state.
+
+        :param state: The part state to store.
+        :param updated: Whether this state was updated after an outdated report.
+        """
+
+        # We use serials instead of timestamps for in-memory states to avoid
+        # doing logic based on timestamp comparisons during the planning phase.
+        stw = _StateWrapper(state, serial=next(self._serial_gen), updated=updated)
+        return stw
 
     def set(
         self, *, part_name: str, step: Step, state: Optional[_StateWrapper]
@@ -109,15 +157,20 @@ class _EphemeralState:
         return None
 
     def update_timestamp(self, *, part_name: str, step: Step) -> None:
-        """Update the state timestamp."""
-        if self.test(part_name=part_name, step=step):
-            self._state[part_name][step].update_timestamp()
+        """Update the state timestamp (actually adds an ephemeral serial)."""
+        stw = self.get(part_name=part_name, step=step)
+        if stw:
+            # rewrap the state with new metadata
+            new_stw = self.new_ephemeral_state(stw.state)
+            self.set(part_name=part_name, step=step, state=new_stw)
 
     def set_updated(self, *, part_name: str, step: Step) -> None:
         """Mark this part and step as updated."""
-        if self.test(part_name=part_name, step=step):
-            self._state[part_name][step].updated = True
-            self.update_timestamp(part_name=part_name, step=step)
+        stw = self.get(part_name=part_name, step=step)
+        if stw:
+            # rewrap the state with new metadata
+            new_stw = self.new_ephemeral_state(stw.state, updated=True)
+            self.set(part_name=part_name, step=step, state=new_stw)
 
     def was_updated(self, *, part_name: str, step: Step) -> bool:
         """Verify whether the part and step was updated."""
@@ -132,7 +185,7 @@ class StateManager:
     def __init__(
         self, project_info: ProjectInfo, all_parts: List[Part], validator: Validator
     ):
-        self._state = _EphemeralState()
+        self._state = _EphemeralStates()
         self._project_info = project_info
         self._all_parts = all_parts
         self._validator = validator
@@ -146,14 +199,13 @@ class StateManager:
                     self._state.set(
                         part_name=part.name,
                         step=step,
-                        state=_StateWrapper(state, timestamp),
+                        state=_StateWrapper(state, timestamp=timestamp),
                     )
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
-        self._state.set(
-            part_name=part.name, step=step, state=_StateWrapper(state, datetime.now())
-        )
+        stw = self._state.new_ephemeral_state(state)
+        self._state.set(part_name=part.name, step=step, state=stw)
 
     def update_state_timestamp(self, part: Part, step: Step) -> None:
         """Update the given part and step state's timestamp."""
@@ -230,11 +282,11 @@ class StateManager:
 
         changed_dependencies: List[Dependency] = []
 
-        stts = self._state.get(part_name=part.name, step=step)
-        logger.debug("state for %s:%s: %s", part.name, step, stts)
+        stw = self._state.get(part_name=part.name, step=step)
+        logger.debug("state for %s:%s: %s", part.name, step, stw)
 
         # consistency check
-        if not stts:
+        if not stw:
             raise errors.InternalError(
                 f"{part.name}:{step} should already have been run"
             )
@@ -243,12 +295,11 @@ class StateManager:
             # Make sure the prerequisite step of this dependency has not
             # run more recently than (or should run _before_) this step.
 
-            prerequisite_state = self._state.get(
+            prerequisite_stw = self._state.get(
                 part_name=dependency.name, step=prerequisite_step
             )
-            if prerequisite_state:
-                prerequisite_timestamp = prerequisite_state.timestamp
-                dependency_changed = stts.timestamp < prerequisite_timestamp
+            if prerequisite_stw:
+                dependency_changed = prerequisite_stw.is_newer_than(stw)
             else:
                 dependency_changed = True
 
@@ -292,9 +343,9 @@ class StateManager:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        stts = self._state.get(part_name=part.name, step=step)
-        if stts:
-            state = stts.state
+        stw = self._state.get(part_name=part.name, step=step)
+        if stw:
+            state = stw.state
             # state properties contains the old state that this step cares
             # about, and we're comparing it to those same keys in the current
             # state (current_properties). If they've changed, then this step
@@ -337,8 +388,8 @@ class StateManager:
         :returns: OutdatedReport if the step is outdated, None otherwise.
         """
 
-        stts = self._state.get(part_name=part.name, step=step)
-        if not stts:
+        stw = self._state.get(part_name=part.name, step=step)
+        if not stw:
             return None
 
         if step == Step.PULL:
@@ -366,9 +417,9 @@ class StateManager:
         for previous_step in reversed(step.previous_steps()):
             # Has a previous step run since this one ran? Then this
             # step needs to be updated.
-            previous_stts = self._state.get(part_name=part.name, step=previous_step)
+            previous_stw = self._state.get(part_name=part.name, step=previous_step)
 
-            if previous_stts and stts.timestamp < previous_stts.timestamp:
+            if previous_stw and previous_stw.is_newer_than(stw):
                 return OutdatedReport(previous_step_modified=previous_step)
 
         return None
