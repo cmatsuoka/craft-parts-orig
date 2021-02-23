@@ -85,7 +85,7 @@ from .base import SourceHandler
 
 if sys.platform == "linux":
     # from .bazaar import Bazaar  # noqa: F401
-    # from .git import Git  # noqa: F401
+    from .git import Git  # noqa: F401
     from .local import Local  # noqa: F401
 
     # from .mercurial import Mercurial  # noqa: F401
@@ -103,7 +103,7 @@ if sys.platform == "linux":
 
     _source_handler: Dict[str, SourceHandlerType] = {
         # "bzr": Bazaar,
-        # "git": Git,
+        "git": Git,
         # "hg": Mercurial,
         # "mercurial": Mercurial,
         # "subversion": Subversion,
@@ -119,7 +119,7 @@ if sys.platform == "linux":
     }
 
 else:
-    # from .git import Git  # noqa
+    from .git import Git  # noqa
     from .local import Local  # noqa
 
     # from .tar import Tar  # noqa

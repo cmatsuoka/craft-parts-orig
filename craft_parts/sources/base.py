@@ -49,7 +49,7 @@ class SourceHandler(abc.ABC):
         source_branch: Optional[str] = None,
         source_depth: Optional[str] = None,
         source_checksum: Optional[str] = None,
-        command: Optional[List[str]] = None,
+        command: str = None,
     ):
         if not application_name:
             application_name = utils.package_name()
@@ -137,7 +137,7 @@ class FileSourceHandler(SourceHandler, abc.ABC):
         source_branch: Optional[str] = None,
         source_depth: Optional[str] = None,
         source_checksum: Optional[str] = None,
-        command: Optional[List[str]] = None,
+        command: Optional[str] = None,
     ):
         super().__init__(
             source,
