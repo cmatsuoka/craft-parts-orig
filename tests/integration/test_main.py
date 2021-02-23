@@ -227,8 +227,7 @@ def test_main_step_plan_only(mocker, capfd, step, result):
     assert Path("parts").is_dir() is False
 
 
-@pytest.mark.parametrize("step", ["pull", "build", "stage", "prime"])
-def test_main_step_plan_only_skip(mocker, capfd, step):
+def test_main_step_plan_only_skip(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
     # run it once to build state
@@ -239,7 +238,7 @@ def test_main_step_plan_only_skip(mocker, capfd, step):
     assert err == ""
 
     # run it again on the existing state
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step])
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "prime"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
@@ -249,16 +248,7 @@ def test_main_step_plan_only_skip(mocker, capfd, step):
     assert out == "No actions to execute.\n"
 
 
-@pytest.mark.parametrize(
-    "step,result",
-    [
-        ("pull", skip_result[0]),
-        ("build", skip_result[1]),
-        ("stage", skip_result[2]),
-        ("prime", skip_result[3]),
-    ],
-)
-def test_main_step_plan_only_show_skip(mocker, capfd, step, result):
+def test_main_step_plan_only_show_skip(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
     # run it once to build state
@@ -269,58 +259,41 @@ def test_main_step_plan_only_show_skip(mocker, capfd, step, result):
     assert err == ""
 
     # run it again on the existing state
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "--show-skip", step])
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "--show-skip", "prime"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
 
     out, err = capfd.readouterr()
     assert err == ""
-    assert out == result
+    assert out == skip_result[3]
 
 
-@pytest.mark.parametrize(
-    "step,result",
-    [
-        # fmt: off
-        ("pull", "Execute: Pull foo\n"),
-        ("build", "Execute: Pull foo\nExecute: Build foo\n"),
-        ("stage", "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\n"),
-        ("prime", "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\nExecute: Prime foo\n"),
-        # fmt: on
-    ],
-)
-def test_main_step_specify_part(mocker, capfd, step, result):
+def test_main_step_specify_part(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", step, "foo"])
+    mocker.patch.object(sys, "argv", ["cmd", "prime", "foo"])
     main.main()
 
     out, err = capfd.readouterr()
     assert err == ""
-    assert out == result
+    assert (
+        out
+        == "Execute: Pull foo\nExecute: Build foo\nExecute: Stage foo\nExecute: Prime foo\n"
+    )
 
 
-@pytest.mark.parametrize(
-    "step,result",
-    [
-        ("pull", "Pull foo\n"),
-        ("build", "Pull foo\nBuild foo\n"),
-        ("stage", "Pull foo\nBuild foo\nStage foo\n"),
-        ("prime", "Pull foo\nBuild foo\nStage foo\nPrime foo\n"),
-    ],
-)
-def test_main_step_specify_part_plan_only(mocker, capfd, step, result):
+def test_main_step_specify_part_plan_only(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "foo"])
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "prime", "foo"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
 
     out, err = capfd.readouterr()
     assert err == ""
-    assert out == result
+    assert out == "Pull foo\nBuild foo\nStage foo\nPrime foo\n"
 
     assert Path("parts").is_dir() is False
 
@@ -359,11 +332,10 @@ def test_main_step_specify_multiple_parts(mocker, capfd, step, result):
     assert Path("parts").is_dir() is False
 
 
-@pytest.mark.parametrize("step", ["pull", "build", "stage", "prime"])
-def test_main_step_invalid_part(mocker, capfd, step):
+def test_main_step_invalid_part(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", step, "invalid"])
+    mocker.patch.object(sys, "argv", ["cmd", "pull", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
@@ -373,26 +345,10 @@ def test_main_step_invalid_part(mocker, capfd, step):
     assert out == ""
 
 
-@pytest.mark.parametrize("step", ["pull", "build", "stage", "prime"])
-def test_main_step_invalid_multiple_parts(mocker, capfd, step):
+def test_main_step_invalid_multiple_parts(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", step, "foo", "invalid"])
-    with pytest.raises(SystemExit) as raised:
-        main.main()
-    assert raised.value.code == 3
-
-    out, err = capfd.readouterr()
-    assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
-    assert out == ""
-    assert Path("parts").is_dir() is False
-
-
-@pytest.mark.parametrize("step", ["pull", "build", "stage", "prime"])
-def test_main_step_invalid_part_plan_only(mocker, capfd, step):
-    Path("parts.yaml").write_text(parts_yaml)
-
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "invalid"])
+    mocker.patch.object(sys, "argv", ["cmd", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
@@ -403,11 +359,24 @@ def test_main_step_invalid_part_plan_only(mocker, capfd, step):
     assert Path("parts").is_dir() is False
 
 
-@pytest.mark.parametrize("step", ["pull", "build", "stage", "prime"])
-def test_main_step_invalid_multiple_parts_plan_only(mocker, capfd, step):
+def test_main_step_invalid_part_plan_only(mocker, capfd):
     Path("parts.yaml").write_text(parts_yaml)
 
-    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", step, "foo", "invalid"])
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "pull", "invalid"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 3
+
+    out, err = capfd.readouterr()
+    assert err == "Error: A part named 'invalid' is not defined in the parts list.\n"
+    assert out == ""
+    assert Path("parts").is_dir() is False
+
+
+def test_main_step_invalid_multiple_parts_plan_only(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+
+    mocker.patch.object(sys, "argv", ["cmd", "--plan-only", "pull", "foo", "invalid"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code == 3
