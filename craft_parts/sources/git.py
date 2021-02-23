@@ -20,7 +20,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional
 
 from . import errors
 from .base import SourceHandler
@@ -108,16 +108,19 @@ class Git(SourceHandler):
         self,
         source,
         source_dir,
-        source_tag=None,
-        source_commit=None,
-        source_branch=None,
-        source_depth=None,
-        silent=False,
-        source_checksum=None,
+        *,
+        application_name: str = None,
+        source_tag: str = None,
+        source_commit: str = None,
+        source_branch: str = None,
+        source_depth: Optional[int] = None,
+        silent: bool = False,
+        source_checksum: str = None,
     ):
         super().__init__(
             source,
             source_dir,
+            application_name=application_name,
             source_tag=source_tag,
             source_commit=source_commit,
             source_branch=source_branch,
@@ -154,7 +157,7 @@ class Git(SourceHandler):
                 "origin",
                 self.source_commit,
             ],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
     def _pull_existing(self):
@@ -178,12 +181,12 @@ class Git(SourceHandler):
                 "--prune",
                 "--recurse-submodules=yes",
             ],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
         self._run(
             [self.command, "-C", self.source_dir, "reset", "--hard", reset_spec],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
         # Merge any updates for the submodules (if any).
@@ -197,7 +200,7 @@ class Git(SourceHandler):
                 "--recursive",
                 "--force",
             ],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
     def _clone_new(self):
@@ -213,7 +216,7 @@ class Git(SourceHandler):
 
             self._run(
                 [self.command, "-C", self.source_dir, "checkout", self.source_commit],
-                **self._call_kwargs
+                **self._call_kwargs,
             )
 
     def is_local(self):

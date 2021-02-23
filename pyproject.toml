@@ -10,7 +10,7 @@ line_length = 88
 disable = "bad-continuation,bad-whitespace,too-many-ancestors,too-few-public-methods"
 
 [tool.pylint.similarities]
-min-similarity-lines=10
+min-similarity-lines=11
 
 [tool.pylint.format]
 max-line-length = "88"

@@ -159,7 +159,6 @@ class TestPackages:
         )
 
     def test_fetch_stage_package_empty_list(self, tmpdir, fake_apt_cache):
-        _, debs_path = _deb.get_cache_dirs("test")
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = (
             []
         )

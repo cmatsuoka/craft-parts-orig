@@ -21,6 +21,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+from typing import Optional
 
 from . import errors
 from .base import FileSourceHandler
@@ -35,12 +36,12 @@ class Tar(FileSourceHandler):
         source,
         source_dir,
         *,
-        application_name=None,
-        source_tag=None,
-        source_commit=None,
-        source_branch=None,
-        source_depth=None,
-        source_checksum=None,
+        application_name: str = None,
+        source_tag: str = None,
+        source_commit: str = None,
+        source_branch: str = None,
+        source_depth: Optional[int] = None,
+        source_checksum: str = None,
     ):
         super().__init__(
             source,
