@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 
 import craft_parts
-import craft_parts.__main__ as main
+from craft_parts import main
 
 parts_yaml = textwrap.dedent(
     """
