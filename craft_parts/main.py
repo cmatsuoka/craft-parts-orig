@@ -14,7 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Part crafting command line tool."""
+"""Part crafting command line tool.
+
+This is the main entry point for the craft_parts package, invoked
+when running `python -mcraft_parts`. It provides basic functionality
+to process a parts specification and display the planned sequence
+of actions (using `--plan-only`) or execute them,
+"""
 
 import argparse
 import logging
@@ -58,7 +64,9 @@ def _process_parts(options: argparse.Namespace) -> None:
     with open(options.file) as f:
         part_data = yaml.safe_load(f)
 
-    lf = craft_parts.LifecycleManager(part_data, application_name="craft-parts")
+    lf = craft_parts.LifecycleManager(
+        part_data, application_name="craft-parts", work_dir=options.work_dir
+    )
 
     command = options.command if options.command else "prime"
     if command == "clean":
@@ -177,6 +185,12 @@ def _parse_arguments() -> argparse.Namespace:
         help="Also display skipped actions",
     )
     parser.add_argument(
+        "--work-dir",
+        metavar="dirname",
+        default=".",
+        help="Use the specified work directory (default: current)",
+    )
+    parser.add_argument(
         "--version",
         action="store_true",
         help="Display the craft-parts version and exit",
@@ -204,7 +218,3 @@ def _parse_arguments() -> argparse.Namespace:
     )
 
     return parser.parse_args()
-
-
-if __name__ == "__main__":
-    main()

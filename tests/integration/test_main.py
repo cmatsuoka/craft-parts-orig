@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import runpy
 import sys
 import textwrap
@@ -150,6 +151,26 @@ def test_main_plan_only(mocker, capfd):
     assert Path("parts").is_dir() is False
     assert Path("stage").is_dir() is False
     assert Path("prime").is_dir() is False
+
+
+def test_main_alternative_work_dir(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("work_dir").mkdir()
+
+    mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir"])
+    main.main()
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == execute_result[3]
+
+    # work dirs are in the new location
+    assert Path("work_dir/parts").is_dir()
+    assert Path("work_dir/stage").is_dir()
+    assert Path("work_dir/prime").is_dir()
+
+    # no new entries in the current dir
+    assert sorted(os.listdir(".")) == ["parts.yaml", "work_dir"]
 
 
 @pytest.mark.parametrize("opt", ["--f", "--file"])
@@ -413,13 +434,45 @@ def test_main_clean(mocker, capfd):
     assert Path("stage").is_dir() is False
     assert Path("prime").is_dir() is False
 
-    # clean the again should not fail
+    # clean again should not fail
     mocker.patch.object(sys, "argv", ["cmd", "clean"])
     with pytest.raises(SystemExit) as raised:
         main.main()
     assert raised.value.code is None
     assert err == ""
     assert out == "Clean all parts.\n"
+
+
+def test_main_clean_workdir(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("work_dir").mkdir()
+
+    # run it once to build state
+    mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir"])
+    main.main()
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert Path("work_dir/parts").is_dir()
+    assert Path("work_dir/stage").is_dir()
+    assert Path("work_dir/prime").is_dir()
+
+    assert sorted(os.listdir(".")) == ["parts.yaml", "work_dir"]
+
+    # clean the existing work dirs
+    mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code is None
+
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert out == "Clean all parts.\n"
+    assert Path("work_dir/parts").is_dir() is False
+    assert Path("work_dir/stage").is_dir() is False
+    assert Path("work_dir/prime").is_dir() is False
+
+    assert sorted(os.listdir(".")) == ["parts.yaml", "work_dir"]
 
 
 def test_main_clean_plan_only(mocker, capfd):
