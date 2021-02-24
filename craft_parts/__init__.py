@@ -20,5 +20,5 @@ __version__ = "0.0.1"  # noqa: F401
 
 from .actions import Action, ActionType  # noqa: F401
 from .infos import StepInfo  # noqa: F401
-from .manager import LifecycleManager  # noqa: F401
+from .manager import ExecutionContext, LifecycleManager  # noqa: F401
 from .steps import Step  # noqa: F401

@@ -52,24 +52,26 @@ def test_run(tmpdir):
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_steps", work_dir=tmpdir
     )
-    lf.execute(Action("foo", Step.PULL))
-    lf.execute(Action("foo", Step.BUILD))
-    lf.execute(Action("foo", Step.STAGE))
-    assert list(stage_dir.rglob("*")) == [stage_dir / "foo.txt"]
 
-    lf.execute(Action("bar", Step.PULL))
-    lf.execute(Action("bar", Step.BUILD))
-    lf.execute(Action("bar", Step.STAGE))
-    assert sorted(list(stage_dir.rglob("*"))) == [
-        stage_dir / "bar.txt",
-        stage_dir / "foo.txt",
-    ]
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", Step.PULL))
+        ctx.execute(Action("foo", Step.BUILD))
+        ctx.execute(Action("foo", Step.STAGE))
+        assert list(stage_dir.rglob("*")) == [stage_dir / "foo.txt"]
 
-    lf.execute(Action("foo", Step.PRIME))
-    assert list(prime_dir.rglob("*")) == [prime_dir / "foo.txt"]
+        ctx.execute(Action("bar", Step.PULL))
+        ctx.execute(Action("bar", Step.BUILD))
+        ctx.execute(Action("bar", Step.STAGE))
+        assert sorted(list(stage_dir.rglob("*"))) == [
+            stage_dir / "bar.txt",
+            stage_dir / "foo.txt",
+        ]
 
-    lf.execute(Action("bar", Step.PRIME))
-    assert sorted(list(prime_dir.rglob("*"))) == [
-        prime_dir / "bar.txt",
-        prime_dir / "foo.txt",
-    ]
+        ctx.execute(Action("foo", Step.PRIME))
+        assert list(prime_dir.rglob("*")) == [prime_dir / "foo.txt"]
+
+        ctx.execute(Action("bar", Step.PRIME))
+        assert sorted(list(prime_dir.rglob("*"))) == [
+            prime_dir / "bar.txt",
+            prime_dir / "foo.txt",
+        ]

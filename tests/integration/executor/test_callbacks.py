@@ -48,7 +48,9 @@ def test_callback_step_info(tmpdir, capfd, step):
         parts, application_name="test_callback", work_dir=tmpdir
     )
 
-    lf.execute(Action("foo", step))
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", step))
+
     out, err = capfd.readouterr()
     assert not err
     assert out == (
@@ -93,7 +95,9 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    lf.execute(Action("foo", step, action_type=action_type))
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", step, action_type=action_type))
+
     out, err = capfd.readouterr()
     assert not err
     if action_type == ActionType.SKIP:
@@ -112,7 +116,9 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    lf.execute(Action("foo", step, action_type=action_type))
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", step, action_type=action_type))
+
     out, err = capfd.readouterr()
     assert not err
     if action_type == ActionType.SKIP:
@@ -144,7 +150,9 @@ def test_update_callback_pre(tmpdir, capfd, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
+
     out, err = capfd.readouterr()
     assert not err
     assert out == f"callback\noverride {step!r}\n"
@@ -159,7 +167,9 @@ def test_update_callback_post(tmpdir, capfd, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
+
     out, err = capfd.readouterr()
     assert not err
     assert out == f"override {step!r}\ncallback\n"
@@ -174,8 +184,8 @@ def test_invalid_update_callback_pre(tmpdir, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with pytest.raises(errors.InvalidAction) as raised:
-        lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    with lf.execution_context() as ctx, pytest.raises(errors.InvalidAction) as raised:
+        ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     name = step.name.lower()
     assert (
@@ -192,8 +202,8 @@ def test_invalid_update_callback_post(tmpdir, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with pytest.raises(errors.InvalidAction) as raised:
-        lf.execute(Action("foo", step, action_type=ActionType.UPDATE))
+    with lf.execution_context() as ctx, pytest.raises(errors.InvalidAction) as raised:
+        ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     name = step.name.lower()
     assert (

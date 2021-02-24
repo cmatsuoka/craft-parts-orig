@@ -43,7 +43,9 @@ def test_source_tar(tmpdir):
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_tar", work_dir=tmpdir
     )
-    lf.execute(Action("foo", Step.PULL))
+
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", Step.PULL))
 
     foo_src_dir = Path(tmpdir / "parts", "foo", "src")
     assert list(foo_src_dir.rglob("*")) == [foo_src_dir / "foobar.txt"]

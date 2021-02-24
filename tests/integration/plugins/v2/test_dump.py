@@ -40,8 +40,11 @@ def test_dump_source(tmpdir):
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_dump", work_dir=tmpdir
     )
-    lf.execute(Action("foo", Step.PULL))
-    lf.execute(Action("foo", Step.BUILD))
+
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", Step.PULL))
+        ctx.execute(Action("foo", Step.BUILD))
+
     install_dir = Path(tmpdir / "parts" / "foo" / "install")
 
     # only the file in subdir should be installed
@@ -63,8 +66,11 @@ def test_dump_ignore(tmpdir):
     lf = craft_parts.LifecycleManager(
         parts, application_name="test_dump", work_dir=tmpdir
     )
-    lf.execute(Action("foo", Step.PULL))
-    lf.execute(Action("foo", Step.BUILD))
+
+    with lf.execution_context() as ctx:
+        ctx.execute(Action("foo", Step.PULL))
+        ctx.execute(Action("foo", Step.BUILD))
+
     install_dir = Path(tmpdir / "parts" / "foo" / "install")
 
     # craft-parts subdirectories should be ignored

@@ -95,10 +95,11 @@ def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> N
             print("No actions to execute.")
         sys.exit()
 
-    for a in actions:
-        if options.show_skipped or a.type != ActionType.SKIP:
-            print(f"Execute: {_action_message(a)}")
-            lf.execute(a)
+    with lf.execution_context() as ctx:
+        for a in actions:
+            if options.show_skipped or a.type != ActionType.SKIP:
+                print(f"Execute: {_action_message(a)}")
+                ctx.execute(a)
 
 
 def _do_clean(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:

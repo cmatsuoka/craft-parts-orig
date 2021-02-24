@@ -55,7 +55,8 @@ def test_actions_simple(new_dir, mocker):
         Action("bar", Step.PULL),
         Action("foobar", Step.PULL),
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)
 
     # foobar part depends on nothing
     # command: prime foobar
@@ -67,7 +68,8 @@ def test_actions_simple(new_dir, mocker):
         Action("foobar", Step.STAGE),
         Action("foobar", Step.PRIME),
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)
 
     # Then running build for bar that depends on foo
     # command: build bar
@@ -80,7 +82,8 @@ def test_actions_simple(new_dir, mocker):
         Action("foo", Step.STAGE, reason="required to build 'bar'"),
         Action("bar", Step.BUILD),
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)
 
     # Building bar again rebuilds it (explicit request)
     lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
@@ -91,7 +94,8 @@ def test_actions_simple(new_dir, mocker):
             "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
         ),
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)
 
     # Modifying foo’s source marks bar as dirty
     new_yaml = parts_yaml.replace("source: a.tar.gz", "source: .")
@@ -108,7 +112,8 @@ def test_actions_simple(new_dir, mocker):
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
         # fmt: on
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)
 
     # A request to build all parts skips everything
     lf = craft_parts.LifecycleManager(parts, application_name="test_demo")
@@ -139,4 +144,5 @@ def test_actions_simple(new_dir, mocker):
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
-    lf.execute(actions)
+    with lf.execution_context() as ctx:
+        ctx.execute(actions)

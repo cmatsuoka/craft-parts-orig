@@ -72,6 +72,20 @@ class PartHandler:
         )
         self._package_repo = packages.Repository()
 
+        self._build_packages = common.get_build_packages(
+            part=self._part, repository=self._package_repo, plugin=self._plugin
+        )
+
+    @property
+    def build_packages(self) -> List[str]:
+        """Return the list of build packages defined for this part.
+
+        The list of build packages include packages defined directly in
+        the parts specification, packages required by the source handler,
+        and packages required by the plugin.
+        """
+        return self._build_packages
+
     def clean_step(self, *, step: Step) -> None:
         """Remove the work files and the state of the given step."""
 
@@ -199,12 +213,6 @@ class PartHandler:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
-        build_packages = common.get_build_packages(
-            part=self._part, repository=self._package_repo, plugin=self._plugin
-        )
-        packages.Repository.install_build_packages(build_packages)
-        # TODO: install build snaps
-
         self._unpack_stage_packages()
 
         # Copy source from the part source dir to the part build dir
@@ -241,7 +249,7 @@ class PartHandler:
         state = states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            build_packages=build_packages,
+            build_packages=self._build_packages,
             machine_assets=common.get_machine_manifest(),
         )
         return state
@@ -344,12 +352,6 @@ class PartHandler:
 
     def _update_build(self, step_info: StepInfo) -> None:
         self._make_dirs()
-
-        build_packages = common.get_build_packages(
-            part=self._part, repository=self._package_repo, plugin=self._plugin
-        )
-        packages.Repository.install_build_packages(build_packages)
-        # TODO: install build snaps
 
         self._unpack_stage_packages()
 

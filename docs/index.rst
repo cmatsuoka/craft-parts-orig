@@ -61,7 +61,7 @@ Internal APIs
 .. toctree::
    :caption: Reference:
 
-   craft_providers
+   craft_parts
 
 Indices and tables
 ==================

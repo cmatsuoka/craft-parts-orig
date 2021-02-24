@@ -33,10 +33,10 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.8",
     ],
-    description="Craft provider tooling",
+    description="Craft parts tooling",
     entry_points={
         "console_scripts": [
-            "craft_providers=craft_providers.cli:main",
+            "craft_parts=craft_parts.main:main",
         ],
     },
     install_requires=requirements,

@@ -19,7 +19,7 @@
 import contextlib
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from craft_parts import executor, packages, parts, sequencer
 from craft_parts.actions import Action
@@ -29,6 +29,37 @@ from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
+
+
+class ExecutionContext:
+    """A context manager to handle lifecycle action executions."""
+
+    def __init__(
+        self,
+        prologue: Callable[[], None],
+        epilogue: Callable[[], None],
+        execute: Callable[[Union[Action, List[Action]]], None],
+    ):
+        self._prologue = prologue
+        self._epilogue = epilogue
+        self._execute = execute
+
+    def __enter__(self) -> "ExecutionContext":
+        self._prologue()
+        return self
+
+    def __exit__(self, *exc):
+        self._epilogue()
+
+    def execute(self, actions: Union[Action, List[Action]]) -> None:
+        """Execute the specified action or list of actions.
+
+        :param actions: An :class:`Action` object or list of :class:`Action`
+           objects specifying steps to execute.
+
+        :raises InvalidActionException: If the action parameters are invalid.
+        """
+        self._execute(actions)
 
 
 class LifecycleManager:
@@ -161,7 +192,12 @@ class LifecycleManager:
         act = self._sequencer.plan(target_step, part_names)
         return act
 
-    def execute(self, actions: Union[Action, List[Action]]) -> None:
+    def execution_context(self) -> ExecutionContext:
+        return ExecutionContext(
+            self._execution_prologue, self._execution_epilogue, self._execute
+        )
+
+    def _execute(self, actions: Union[Action, List[Action]]) -> None:
         """Execute the specified action or list of actions.
 
         :param actions: An :class:`Action` object or list of :class:`Action`
@@ -176,3 +212,23 @@ class LifecycleManager:
         for act in actions:
             part = parts.part_by_name(act.part_name, self._part_list)
             self._executor.run_action(act, part=part)
+
+    def _execution_prologue(self) -> None:
+        """Prepare the execution environment.
+
+        This method should be called before executing lifecycle actions.
+        Alternatively, calls to :method:`execute` can be placed inside a
+        :class:`ExecutionContext` context so that :method:`execution_start`
+        and :method:`execution_end` are called automatically.
+        """
+        self._executor.prologue()
+
+    def _execution_epilogue(self) -> None:
+        """Finish and clean the execution environment.
+
+        This method should be called after executing lifecycle actions.
+        Alternatively, calls to :method:`execute` can be placed inside a
+        :class:`ExecutionContext` context so that :method:`execution_start`
+        and :method:`execution_end` are called automatically.
+        """
+        self._executor.epilogue()
