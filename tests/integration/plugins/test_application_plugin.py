@@ -94,7 +94,9 @@ def test_application_plugin_happy(capfd, mocker):
         "craft_parts.packages.Repository.install_build_packages"
     )
 
+    lf.execution_start()
     lf.execute(actions[1])
+    lf.execution_stop()
 
     out, _ = capfd.readouterr()
     assert out == "hello application plugin\n"

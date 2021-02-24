@@ -19,6 +19,7 @@
 import logging
 from typing import Dict, List
 
+from craft_parts import packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -41,6 +42,23 @@ class Executor:
         self._validator = validator
         self._project_info = project_info
         self._handler: Dict[str, PartHandler] = {}
+
+    def prologue(self):
+        """Prepare the execution environment."""
+
+        for part in self._part_list:
+            self._create_part_handler(part)
+
+        all_build_packages = set()
+
+        for _, handler in self._handler.items():
+            all_build_packages.update(handler.build_packages)
+
+        packages.Repository.install_build_packages(list(all_build_packages))
+        # TODO: install build snaps
+
+    def epilogue(self):
+        """Finish and clean the execution environment."""
 
     def run_action(self, action: Action, *, part: Part):
         """Execute the given action for a part using the provided step information."""

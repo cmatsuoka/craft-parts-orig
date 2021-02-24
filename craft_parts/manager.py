@@ -176,3 +176,47 @@ class LifecycleManager:
         for act in actions:
             part = parts.part_by_name(act.part_name, self._part_list)
             self._executor.run_action(act, part=part)
+
+    def execution_start(self) -> None:
+        """Prepare the execution environment.
+
+        This method should be called before executing lifecycle actions.
+        Alternatively, calls to :method:`execute` can be placed inside a
+        :class:`ExecutionContext` context so that :method:`execution_start`
+        and :method:`execution_end` are called automatically.
+        """
+        self._executor.prologue()
+
+    def execution_stop(self) -> None:
+        """Finish and clean the execution environment.
+
+        This method should be called after executing lifecycle actions.
+        Alternatively, calls to :method:`execute` can be placed inside a
+        :class:`ExecutionContext` context so that :method:`execution_start`
+        and :method:`execution_end` are called automatically.
+        """
+        self._executor.epilogue()
+
+
+class ExecutionContext:
+    """A context manager to handle lifecycle action executions."""
+
+    def __init__(self, lf: LifecycleManager):
+        self._lf = lf
+
+    def __enter__(self) -> "ExecutionContext":
+        self._lf.execution_start()
+        return self
+
+    def __exit__(self, *exc):
+        self._lf.execution_stop()
+
+    def execute(self, actions: Union[Action, List[Action]]) -> None:
+        """Execute the specified action or list of actions.
+
+        :param actions: An :class:`Action` object or list of :class:`Action`
+           objects specifying steps to execute.
+
+        :raises InvalidActionException: If the action parameters are invalid.
+        """
+        self._lf.execute(actions)
