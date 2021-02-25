@@ -41,7 +41,7 @@ def _info_callback(info: StepInfo) -> bool:
 
 @pytest.mark.parametrize("step", list(Step))
 def test_callback_step_info(tmpdir, capfd, step):
-    callbacks.register_pre(_info_callback, step_list=[step])
+    callbacks.register_pre_step(_info_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
@@ -88,7 +88,7 @@ def _my_callback(info: StepInfo) -> bool:
 @pytest.mark.parametrize("step", list(Step))
 @pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
 def test_callback_pre(tmpdir, capfd, step, action_type):
-    callbacks.register_pre(_my_callback, step_list=[step])
+    callbacks.register_pre_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
@@ -109,7 +109,7 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
 @pytest.mark.parametrize("step", list(Step))
 @pytest.mark.parametrize("action_type", list(set(ActionType) - {ActionType.UPDATE}))
 def test_callback_post(tmpdir, capfd, step, action_type):
-    callbacks.register_post(_my_callback, step_list=[step])
+    callbacks.register_post_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_parts_yaml)
     lf = craft_parts.LifecycleManager(
@@ -143,7 +143,7 @@ _update_yaml = textwrap.dedent(
 
 @pytest.mark.parametrize("step", [Step.PULL, Step.BUILD])
 def test_update_callback_pre(tmpdir, capfd, step):
-    callbacks.register_pre(_my_callback, step_list=[step])
+    callbacks.register_pre_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
@@ -160,7 +160,7 @@ def test_update_callback_pre(tmpdir, capfd, step):
 
 @pytest.mark.parametrize("step", [Step.PULL, Step.BUILD])
 def test_update_callback_post(tmpdir, capfd, step):
-    callbacks.register_post(_my_callback, step_list=[step])
+    callbacks.register_post_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
@@ -177,7 +177,7 @@ def test_update_callback_post(tmpdir, capfd, step):
 
 @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
 def test_invalid_update_callback_pre(tmpdir, step):
-    callbacks.register_pre(_my_callback, step_list=[step])
+    callbacks.register_pre_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(
@@ -195,7 +195,7 @@ def test_invalid_update_callback_pre(tmpdir, step):
 
 @pytest.mark.parametrize("step", [Step.STAGE, Step.PRIME])
 def test_invalid_update_callback_post(tmpdir, step):
-    callbacks.register_post(_my_callback, step_list=[step])
+    callbacks.register_post_step(_my_callback, step_list=[step])
 
     parts = yaml.safe_load(_update_yaml)
     lf = craft_parts.LifecycleManager(

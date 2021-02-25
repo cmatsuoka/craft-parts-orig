@@ -19,7 +19,7 @@
 import logging
 from typing import Dict, List
 
-from craft_parts import packages
+from craft_parts import callbacks, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -57,8 +57,11 @@ class Executor:
         packages.Repository.install_build_packages(list(all_build_packages))
         # TODO: install build snaps
 
+        callbacks.run_prologue(self._project_info)
+
     def epilogue(self):
         """Finish and clean the execution environment."""
+        callbacks.run_epilogue(self._project_info)
 
     def run_action(self, action: Action, *, part: Part):
         """Execute the given action for a part using the provided step information."""

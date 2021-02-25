@@ -54,6 +54,13 @@ class ProjectInfo:
         else:
             self._local_plugins_dir = Path(local_plugins_dir)
 
+    def __getattr__(self, name):
+        return self._custom_args[name]
+
+    @property
+    def custom_args(self) -> List[str]:
+        return list(self._custom_args.keys())
+
     @property
     def application_name(self) -> str:
         """The name of the application using craft-parts."""
@@ -145,12 +152,6 @@ class StepInfo:
     ):
         self._part_info = part_info
         self.step = step
-        self.custom_args: List[str] = []
-
-        # set custom arguments defined in the project info
-        for key, value in self._custom_args.items():
-            self.custom_args.append(key)
-            setattr(self, key, value)
 
     def __getattr__(self, name):
         return getattr(self._part_info, name)

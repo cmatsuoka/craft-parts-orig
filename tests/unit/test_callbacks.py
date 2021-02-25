@@ -34,58 +34,106 @@ def _callback_2(info: StepInfo) -> bool:
     return False
 
 
+def _callback_3(info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{greet} callback 3")
+
+
+def _callback_4(info: ProjectInfo) -> None:
+    greet = getattr(info, "greet")
+    print(f"{greet} callback 4")
+
+
 class TestCallbackRegistration:
     """Test different scenarios of callback function registration."""
 
     def setup_method(self):
         callbacks.clear()
 
-    def test_register_pre(self):
-        callbacks.register_pre(_callback_1)
+    def test_register_pre_step(self):
+        callbacks.register_pre_step(_callback_1)
 
         # A callback function shouldn't be registered again
         with pytest.raises(errors.CallbackRegistration) as raised:
-            callbacks.register_pre(_callback_1)
+            callbacks.register_pre_step(_callback_1)
         assert (
             str(raised.value) == "Callback registration error: the callback "
-            "function is already registered."
+            "function '_callback_1' is already registered."
         )
 
         # But we can register a different one
-        callbacks.register_pre(_callback_2)
+        callbacks.register_pre_step(_callback_2)
 
-    def test_register_post(self):
-        callbacks.register_post(_callback_1)
+    def test_register_post_step(self):
+        callbacks.register_post_step(_callback_1)
 
         # A callback function shouldn't be registered again
         with pytest.raises(errors.CallbackRegistration) as raised:
-            callbacks.register_post(_callback_1)
+            callbacks.register_post_step(_callback_1)
         assert (
             str(raised.value) == "Callback registration error: the callback "
-            "function is already registered."
+            "function '_callback_1' is already registered."
         )
 
         # But we can register a different one
-        callbacks.register_post(_callback_2)
+        callbacks.register_post_step(_callback_2)
 
-    def test_register_both(self):
-        callbacks.register_pre(_callback_1)
-        callbacks.register_post(_callback_1)
+    def test_register_prologue(self):
+        callbacks.register_prologue(_callback_3)
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistration) as raised:
+            callbacks.register_prologue(_callback_3)
+        assert (
+            str(raised.value) == "Callback registration error: the callback "
+            "function '_callback_3' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_prologue(_callback_4)
+
+    def test_register_epilogue(self):
+        callbacks.register_epilogue(_callback_3)
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistration) as raised:
+            callbacks.register_epilogue(_callback_3)
+        assert (
+            str(raised.value) == "Callback registration error: the callback "
+            "function '_callback_3' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_epilogue(_callback_4)
+
+    def test_register_both_pre_and_post(self):
+        callbacks.register_pre_step(_callback_1)
+        callbacks.register_post_step(_callback_1)
+
+    def test_register_both_prologue_and_epilogue(self):
+        callbacks.register_prologue(_callback_3)
+        callbacks.register_epilogue(_callback_3)
 
     def test_clear(self):
-        callbacks.register_pre(_callback_1)
+        callbacks.register_pre_step(_callback_1)
+        callbacks.register_post_step(_callback_1)
+        callbacks.register_prologue(_callback_3)
+        callbacks.register_epilogue(_callback_3)
         callbacks.clear()
-        callbacks.register_pre(_callback_1)
+        callbacks.register_pre_step(_callback_1)
+        callbacks.register_post_step(_callback_1)
+        callbacks.register_prologue(_callback_3)
+        callbacks.register_epilogue(_callback_3)
 
     def test_register_steps(self):
-        callbacks.register_pre(_callback_1, step_list=[Step.PULL, Step.BUILD])
+        callbacks.register_pre_step(_callback_1, step_list=[Step.PULL, Step.BUILD])
 
         # A callback function shouldn't be registered again, even for a different step
         with pytest.raises(errors.CallbackRegistration) as raised:
-            callbacks.register_pre(_callback_1, step_list=[Step.PRIME])
+            callbacks.register_pre_step(_callback_1, step_list=[Step.PRIME])
         assert (
             str(raised.value) == "Callback registration error: the callback "
-            "function is already registered."
+            "function '_callback_1' is already registered."
         )
 
 
@@ -95,29 +143,45 @@ class TestCallbackExecution:
     # pylint: disable=attribute-defined-outside-init
     def setup_method(self):
         part = Part("foo", {})
-        project_info = ProjectInfo(
+        self._project_info = ProjectInfo(
             application_name="test",
             target_arch="x86_64",
             parallel_build_count=4,
             local_plugins_dir=None,
             greet="hello",
         )
-        part_info = PartInfo(project_info=project_info, part=part)
-        self._info = StepInfo(part_info=part_info, step=Step.BUILD)
+        self._part_info = PartInfo(project_info=self._project_info, part=part)
+        self._step_info = StepInfo(part_info=self._part_info, step=Step.BUILD)
         callbacks.clear()
 
-    def test_run_pre(self, capfd):
-        callbacks.register_pre(_callback_1)
-        callbacks.register_pre(_callback_2)
-        callbacks.run_pre(step_info=self._info)
+    def test_run_pre_step(self, capfd):
+        callbacks.register_pre_step(_callback_1)
+        callbacks.register_pre_step(_callback_2)
+        callbacks.run_pre_step(self._step_info)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
 
-    def test_run_post(self, capfd):
-        callbacks.register_post(_callback_1)
-        callbacks.register_post(_callback_2)
-        callbacks.run_post(step_info=self._info)
+    def test_run_post_step(self, capfd):
+        callbacks.register_post_step(_callback_1)
+        callbacks.register_post_step(_callback_2)
+        callbacks.run_post_step(self._step_info)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
+
+    def test_run_prologue(self, capfd):
+        callbacks.register_prologue(_callback_3)
+        callbacks.register_prologue(_callback_4)
+        callbacks.run_prologue(self._project_info)
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "hello callback 3\nhello callback 4\n"
+
+    def test_run_epilogue(self, capfd):
+        callbacks.register_epilogue(_callback_3)
+        callbacks.register_epilogue(_callback_4)
+        callbacks.run_epilogue(self._project_info)
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "hello callback 3\nhello callback 4\n"

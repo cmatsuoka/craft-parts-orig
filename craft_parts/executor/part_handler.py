@@ -179,11 +179,11 @@ class PartHandler:
             Step.PRIME: self._run_prime,
         }
         if action.step in run_handlers:
-            callbacks.run_pre(step_info=step_info)
+            callbacks.run_pre_step(step_info)
             state = run_handlers[action.step](step_info)
             state_file = states.state_file_path(self._part, action.step)
             state.write(state_file)
-            callbacks.run_post(step_info=step_info)
+            callbacks.run_post_step(step_info)
 
     def _run_pull(self, step_info: StepInfo) -> PartState:
         _remove(self._part.part_src_dir)
@@ -317,11 +317,11 @@ class PartHandler:
             Step.BUILD: self._update_build,
         }
         if action.step in update_handlers:
-            callbacks.run_pre(step_info=step_info)
+            callbacks.run_pre_step(step_info)
             update_handlers[action.step](step_info)
             state_file = states.state_file_path(self._part, action.step)
             state_file.touch()
-            callbacks.run_post(step_info=step_info)
+            callbacks.run_post_step(step_info)
         else:
             step_name = action.step.name.lower()
             raise errors.InvalidAction(

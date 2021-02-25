@@ -47,8 +47,8 @@ def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
         target_arch=tc_arch,
         parallel_build_count=16,
         local_plugins_dir="/some/path",
-        foo="foo",
-        bar=["bar"],
+        custom1="foobar",
+        custom2=[1, 2],
     )
 
     assert x.application_name == "test"
@@ -63,6 +63,14 @@ def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
         "arch_triplet": tc_triplet,
         "deb_arch": tc_deb_arch,
     }
+
+
+def test_project_info_custom_args():
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
+
+    assert info.custom_args == ["custom1", "custom2"]
+    assert info.custom1 == "foobar"
+    assert info.custom2 == [1, 2]
 
 
 def test_project_info_default():
@@ -97,7 +105,7 @@ def test_invalid_arch():
 
 
 def test_part_info(new_dir):
-    info = ProjectInfo()
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2])
     part = Part("foo", {})
     x = PartInfo(project_info=info, part=part)
 
@@ -112,6 +120,10 @@ def test_part_info(new_dir):
     assert x.part_install_dir == new_dir / "parts/foo/install"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
+
+    assert x.custom_args == ["custom1", "custom2"]
+    assert x.custom1 == "foobar"
+    assert x.custom2 == [1, 2]
 
 
 def test_step_info(new_dir):
