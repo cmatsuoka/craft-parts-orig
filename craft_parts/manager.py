@@ -84,6 +84,10 @@ class LifecycleManager:
     :param local_plugins_dir: The directory where local plugins are, if any.
     :param plugin_version: The plugin API version. Currently only ``v2`` is
         supported.
+    :param stage_pkg_unpack: Enable unpacking stage packages defined for each
+        part into the part's install directory.
+    :param build_pkg_install: Enable installing build packages defined for each
+        part when running the execution prologue.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -99,6 +103,9 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
+        disable_stage_packages: bool = False,
+        disable_build_packages: bool = False,
+        extra_build_packages: List[str] = None,
         **custom_args,  # custom passthrough args
     ):
         self._validator = Validator(_SCHEMA_DIR / "parts.json")
@@ -129,6 +136,9 @@ class LifecycleManager:
             part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
+            disable_stage_packages=disable_stage_packages,
+            disable_build_packages=disable_build_packages,
+            extra_build_packages=extra_build_packages,
         )
 
         # TODO: validate/transform application name, should be usable in file names

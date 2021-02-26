@@ -51,10 +51,12 @@ class PartHandler:
         part_info: PartInfo,
         validator: Validator,
         part_list: List[Part],
+        disable_stage_packages: bool = False,
     ):
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
+        self._disable_stage_packages = disable_stage_packages
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -213,7 +215,8 @@ class PartHandler:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
-        self._unpack_stage_packages()
+        if not self._disable_stage_packages:
+            self._unpack_stage_packages()
 
         # Copy source from the part source dir to the part build dir
         shutil.copytree(
@@ -353,7 +356,8 @@ class PartHandler:
     def _update_build(self, step_info: StepInfo) -> None:
         self._make_dirs()
 
-        self._unpack_stage_packages()
+        if not self._disable_stage_packages:
+            self._unpack_stage_packages()
 
         if not self._plugin.out_of_source_build:
             # Use the local source to update. It's important to use

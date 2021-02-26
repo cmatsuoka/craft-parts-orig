@@ -33,13 +33,12 @@ class Validator:
         self._load_schema(filename)
 
     @property
-    def schema(self):
+    def schema(self) -> Dict[str, Any]:
         """Return all schema properties."""
-
         return self._schema["properties"].copy()
 
     @property
-    def part_schema(self):
+    def part_schema(self) -> Dict[str, Any]:
         """Return part-specific schema properties."""
 
         sub = self.schema["parts"]["patternProperties"]

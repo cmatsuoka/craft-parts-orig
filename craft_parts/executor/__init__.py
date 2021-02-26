@@ -36,26 +36,39 @@ class Executor:
     """Execute lifecycle actions."""
 
     def __init__(
-        self, *, part_list: List[Part], validator: Validator, project_info: ProjectInfo
+        self,
+        *,
+        part_list: List[Part],
+        validator: Validator,
+        project_info: ProjectInfo,
+        disable_stage_packages: bool = False,
+        disable_build_packages: bool = False,
+        extra_build_packages: List[str] = None
     ):
         self._part_list = part_list
         self._validator = validator
         self._project_info = project_info
+        self._disable_stage_packages = disable_stage_packages
+        self._disable_build_packages = disable_build_packages
+        self._extra_build_packages = extra_build_packages
         self._handler: Dict[str, PartHandler] = {}
 
     def prologue(self):
         """Prepare the execution environment."""
 
-        for part in self._part_list:
-            self._create_part_handler(part)
+        if not self._disable_build_packages:
+            for part in self._part_list:
+                self._create_part_handler(part)
 
-        all_build_packages = set()
+            all_build_packages = set()
+            for _, handler in self._handler.items():
+                all_build_packages.update(handler.build_packages)
 
-        for _, handler in self._handler.items():
-            all_build_packages.update(handler.build_packages)
+            if self._extra_build_packages:
+                all_build_packages.update(self._extra_build_packages)
 
-        packages.Repository.install_build_packages(list(all_build_packages))
-        # TODO: install build snaps
+            packages.Repository.install_build_packages(sorted(all_build_packages))
+            # TODO: install build snaps
 
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
@@ -102,4 +115,5 @@ class Executor:
                 part_info=PartInfo(self._project_info, part),
                 validator=self._validator,
                 part_list=self._part_list,
+                disable_stage_packages=self._disable_stage_packages,
             )
