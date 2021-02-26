@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import List
+
 import pytest
 
 from craft_parts import callbacks, errors
@@ -34,14 +36,16 @@ def _callback_2(info: StepInfo) -> bool:
     return False
 
 
-def _callback_3(info: ProjectInfo) -> None:
+def _callback_3(info: ProjectInfo, part_list: List[Part]) -> None:
     greet = getattr(info, "greet")
-    print(f"{greet} callback 3")
+    names = " ".join([x.name for x in part_list])
+    print(f"{greet} callback 3 ({names})")
 
 
-def _callback_4(info: ProjectInfo) -> None:
+def _callback_4(info: ProjectInfo, part_list: List[Part]) -> None:
     greet = getattr(info, "greet")
-    print(f"{greet} callback 4")
+    names = " ".join([x.name for x in part_list])
+    print(f"{greet} callback 4 ({names})")
 
 
 class TestCallbackRegistration:
@@ -171,17 +175,21 @@ class TestCallbackExecution:
         assert out == "hello callback 1\nhello callback 2\n"
 
     def test_run_prologue(self, capfd):
+        part1 = Part("p1", {})
+        part2 = Part("p2", {})
         callbacks.register_prologue(_callback_3)
         callbacks.register_prologue(_callback_4)
-        callbacks.run_prologue(self._project_info)
+        callbacks.run_prologue(self._project_info, part_list=[part1, part2])
         out, err = capfd.readouterr()
         assert not err
-        assert out == "hello callback 3\nhello callback 4\n"
+        assert out == "hello callback 3 (p1 p2)\nhello callback 4 (p1 p2)\n"
 
     def test_run_epilogue(self, capfd):
+        part1 = Part("p1", {})
+        part2 = Part("p2", {})
         callbacks.register_epilogue(_callback_3)
         callbacks.register_epilogue(_callback_4)
-        callbacks.run_epilogue(self._project_info)
+        callbacks.run_epilogue(self._project_info, part_list=[part1, part2])
         out, err = capfd.readouterr()
         assert not err
-        assert out == "hello callback 3\nhello callback 4\n"
+        assert out == "hello callback 3 (p1 p2)\nhello callback 4 (p1 p2)\n"

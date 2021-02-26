@@ -57,11 +57,11 @@ class Executor:
         packages.Repository.install_build_packages(list(all_build_packages))
         # TODO: install build snaps
 
-        callbacks.run_prologue(self._project_info)
+        callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
     def epilogue(self):
         """Finish and clean the execution environment."""
-        callbacks.run_epilogue(self._project_info)
+        callbacks.run_epilogue(self._project_info, part_list=self._part_list)
 
     def run_action(self, action: Action, *, part: Part):
         """Execute the given action for a part using the provided step information."""
