@@ -138,19 +138,20 @@ class PartHandler:
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
         stage_packages = self._part.stage_packages
-        fetched_packages = None
+        if not stage_packages:
+            return None
 
-        if stage_packages:
-            try:
-                fetched_packages = self._package_repo.fetch_stage_packages(
-                    application_name=step_info.application_name,
-                    package_names=stage_packages,
-                    target_arch=step_info.deb_arch,
-                    base=os_utils.get_build_base(),
-                    stage_packages_path=self._part.part_packages_dir,
-                )
-            except packages_errors.PackageNotFound as err:
-                raise errors.StagePackageError(self._part.name, err.message)
+        try:
+            fetched_packages = self._package_repo.fetch_stage_packages(
+                application_name=step_info.application_name,
+                package_names=stage_packages,
+                target_arch=step_info.deb_arch,
+                base=os_utils.get_build_base(),
+                stage_packages_path=self._part.part_packages_dir,
+                list_only=self._disable_stage_packages,
+            )
+        except packages_errors.PackageNotFound as err:
+            raise errors.StagePackageError(self._part.name, err.message)
 
         return fetched_packages
 

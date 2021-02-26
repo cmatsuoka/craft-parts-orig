@@ -383,6 +383,7 @@ class Ubuntu(BaseRepository):
         base: str,
         stage_packages_path: pathlib.Path,
         target_arch: str,
+        list_only: bool = False,
     ) -> List[str]:
         logger.debug("Requested stage-packages: %s", sorted(package_names))
 
@@ -399,20 +400,25 @@ class Ubuntu(BaseRepository):
             stage_cache=stage_cache_dir, stage_cache_arch=target_arch
         ) as apt_cache:
             filter_packages = set(get_packages_in_base(base=base))
-            # We update the cache during the planning phase
-            # apt_cache.update()
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(
                 required_names=set(package_names), filtered_names=filter_packages
             )
-            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                deb_cache_dir
-            ):
-                logger.debug("Extracting stage package: %s", pkg_name)
-                installed.add(f"{pkg_name}={pkg_version}")
-                file_utils.link_or_copy(
-                    str(dl_path), str(stage_packages_path / dl_path.name)
-                )
+
+            if list_only:
+                marked_packages = apt_cache.get_packages_marked_for_installation()
+                installed = {
+                    f"{name}={version}" for name, version in sorted(marked_packages)
+                }
+            else:
+                for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
+                    deb_cache_dir
+                ):
+                    logger.debug("Extracting stage package: %s", pkg_name)
+                    installed.add(f"{pkg_name}={pkg_version}")
+                    file_utils.link_or_copy(
+                        str(dl_path), str(stage_packages_path / dl_path.name)
+                    )
 
         return sorted(installed)
 

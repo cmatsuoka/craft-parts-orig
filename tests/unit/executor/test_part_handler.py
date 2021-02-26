@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+from unittest.mock import ANY
+
 import pytest
 
 from craft_parts.executor.part_handler import PartHandler
@@ -43,15 +46,17 @@ def fake_validator(mocker) -> Validator:
     return Validator("")
 
 
-@pytest.mark.usefixtures("new_dir")
 class TestStagePackages:
-    def test_unpack_stage_packages(self, mocker, fake_validator):
+    def test_unpack_stage_packages(self, mocker, new_dir, fake_validator):
+        getpkg = mocker.patch(
+            "craft_parts.packages.Repository.fetch_stage_packages",
+            return_value=["pkg1", "pkg2"],
+        )
         unpack = mocker.patch("craft_parts.packages.Repository.unpack_stage_packages")
         mocker.patch("craft_parts.executor.part_handler.PartHandler._run_step")
 
         part1 = Part("foo", {"plugin": "nil", "stage-packages": ["pkg1"]})
         part_info = PartInfo(ProjectInfo(), part1)
-        step_info = StepInfo(part_info, Step.BUILD)
 
         handler = PartHandler(
             part1,
@@ -60,17 +65,32 @@ class TestStagePackages:
             part_list=[part1],
             validator=fake_validator,
         )
-        handler._run_build(step_info)
 
+        state = handler._run_pull(StepInfo(part_info, Step.PULL))
+        getpkg.assert_called_once_with(
+            application_name="craft_parts",
+            base=ANY,
+            list_only=False,
+            package_names=["pkg1"],
+            stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),
+            target_arch=ANY,
+        )
+
+        assert state.assets["stage-packages"] == ["pkg1", "pkg2"]
+
+        handler._run_build(StepInfo(part_info, Step.BUILD))
         unpack.assert_called_once()
 
-    def test_dont_unpack_stage_packages(self, mocker, fake_validator):
+    def test_dont_unpack_stage_packages(self, new_dir, mocker, fake_validator):
+        getpkg = mocker.patch(
+            "craft_parts.packages.Repository.fetch_stage_packages",
+            return_value=["pkg1", "pkg2"],
+        )
         unpack = mocker.patch("craft_parts.packages.Repository.unpack_stage_packages")
         mocker.patch("craft_parts.executor.part_handler.PartHandler._run_step")
 
         part1 = Part("foo", {"plugin": "nil", "stage-packages": ["pkg1"]})
         part_info = PartInfo(ProjectInfo(), part1)
-        step_info = StepInfo(part_info, Step.BUILD)
 
         handler = PartHandler(
             part1,
@@ -80,6 +100,18 @@ class TestStagePackages:
             validator=fake_validator,
             disable_stage_packages=True,
         )
-        handler._run_build(step_info)
 
+        state = handler._run_pull(StepInfo(part_info, Step.PULL))
+        getpkg.assert_called_once_with(
+            application_name="craft_parts",
+            base=ANY,
+            list_only=True,
+            package_names=["pkg1"],
+            stage_packages_path=Path(new_dir / "parts/foo/stage_packages"),
+            target_arch=ANY,
+        )
+
+        assert state.assets["stage-packages"] == ["pkg1", "pkg2"]
+
+        handler._run_build(StepInfo(part_info, Step.BUILD))
         unpack.assert_not_called()

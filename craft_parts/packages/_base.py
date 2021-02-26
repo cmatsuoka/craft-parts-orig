@@ -174,6 +174,7 @@ class BaseRepository:
         base: str,
         stage_packages_path: pathlib.Path,
         target_arch: str,
+        list_only: bool = False,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
         raise errors.NoNativeBackendError()
