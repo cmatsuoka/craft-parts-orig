@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from craft_parts import errors, utils
+from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -40,13 +41,15 @@ class ProjectInfo:
         target_arch: str = "",
         plugin_version: str = "v2",
         parallel_build_count: int = 1,
-        local_plugins_dir: Optional[Union[Path, str]] = None,
+        work_dir: Union[str, Path] = ".",
+        local_plugins_dir: Union[Path, str] = None,
         **custom_args,  # custom passthrough args
     ):
         self._application_name = application_name
         self._set_machine(target_arch)
         self._plugin_version = plugin_version
         self._parallel_build_count = parallel_build_count
+        self._dirs = ProjectDirs(work_dir=work_dir)
         self._custom_args = custom_args
 
         if not local_plugins_dir:
@@ -55,10 +58,14 @@ class ProjectInfo:
             self._local_plugins_dir = Path(local_plugins_dir)
 
     def __getattr__(self, name):
+        if hasattr(self._dirs, name):
+            return getattr(self._dirs, name)
+
         return self._custom_args[name]
 
     @property
     def custom_args(self) -> List[str]:
+        """The list of custom argument names."""
         return list(self._custom_args.keys())
 
     @property
@@ -97,6 +104,10 @@ class ProjectInfo:
         return self.__machine_info["deb"]
 
     @property
+    def dirs(self) -> ProjectDirs:
+        return self._dirs
+
+    @property
     def project_options(self) -> Dict[str, Any]:
         """Obtain a project-wide options dictionary."""
         return {
@@ -128,15 +139,48 @@ class PartInfo:
         part: Part,
     ):
         self._project_info = project_info
-        self.part_name = part.name
-        self.part_src_dir = part.part_src_dir
-        self.part_src_work_dir = part.part_src_work_dir
-        self.part_build_dir = part.part_build_dir
-        self.part_build_work_dir = part.part_build_work_dir
-        self.part_install_dir = part.part_install_dir
-        self.part_state_dir = part.part_state_dir
-        self.stage_dir = part.stage_dir
-        self.prime_dir = part.prime_dir
+        self._part_name = part.name
+        self._part_src_dir = part.part_src_dir
+        self._part_src_work_dir = part.part_src_work_dir
+        self._part_build_dir = part.part_build_dir
+        self._part_build_work_dir = part.part_build_work_dir
+        self._part_install_dir = part.part_install_dir
+        self._part_state_dir = part.part_state_dir
+
+    @property
+    def part_name(self) -> str:
+        """The name of the part we're providing information about."""
+        return self._part_name
+
+    @property
+    def part_src_dir(self) -> Path:
+        """The subdirectory containing the part's source code."""
+        return self._part_src_dir
+
+    @property
+    def part_src_work_dir(self) -> Path:
+        """The subdirectory in source containing the source subtree (if any)."""
+        return self._part_src_work_dir
+
+    @property
+    def part_build_dir(self) -> Path:
+        """The subdirectory containing the part's build tree."""
+        return self._part_build_dir
+
+    @property
+    def part_build_work_dir(self) -> Path:
+        """The subdirectory in build containing the source subtree (if any)."""
+        return self._part_build_work_dir
+
+    @property
+    def part_install_dir(self) -> Path:
+        """The subdirectory to install the part's build artifacts."""
+        return self._part_install_dir
+
+    @property
+    def part_state_dir(self) -> Path:
+        """The subdirectory containing this part's lifecycle state."""
+        return self._part_state_dir
 
     def __getattr__(self, name):
         return getattr(self._project_info, name)

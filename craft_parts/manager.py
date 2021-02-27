@@ -117,12 +117,14 @@ class LifecycleManager:
             plugin_version=plugin_version,
             parallel_build_count=parallel_build_count,
             local_plugins_dir=local_plugins_dir,
+            work_dir=work_dir,
             **custom_args,
         )
 
         parts_data = all_parts.get("parts", {})
         self._part_list = [
-            Part(name, p, work_dir=work_dir) for name, p in parts_data.items()
+            Part(name, p, project_dirs=project_info.dirs)
+            for name, p in parts_data.items()
         ]
         self._application_name = application_name
         self._target_arch = project_info.deb_arch

@@ -17,13 +17,14 @@
 import pytest
 
 from craft_parts import errors
+from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.collisions import check_for_stage_collisions
 from craft_parts.parts import Part
 
 
 @pytest.fixture
 def part1(tmpdir) -> Part:
-    part = Part("part1", {}, work_dir=tmpdir)
+    part = Part("part1", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "1").write_text("")
@@ -33,7 +34,7 @@ def part1(tmpdir) -> Part:
 
 @pytest.fixture
 def part2(tmpdir) -> Part:
-    part = Part("part2", {}, work_dir=tmpdir)
+    part = Part("part2", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "1").write_text("1")
@@ -47,7 +48,7 @@ def part2(tmpdir) -> Part:
 
 @pytest.fixture
 def part3(tmpdir) -> Part:
-    part = Part("part3", {}, work_dir=tmpdir)
+    part = Part("part3", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "b").mkdir()
@@ -59,7 +60,7 @@ def part3(tmpdir) -> Part:
 
 @pytest.fixture
 def part4(tmpdir) -> Part:
-    part = Part("part4", {}, work_dir=tmpdir)
+    part = Part("part4", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     (p / "a").mkdir(parents=True)
     (p / "a" / "2").write_text("")
@@ -73,7 +74,7 @@ def part4(tmpdir) -> Part:
 def part5(tmpdir) -> Part:
     # Create a new part with a symlink that collides with part1's
     # non-symlink.
-    part = Part("part5", {}, work_dir=tmpdir)
+    part = Part("part5", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     p.mkdir(parents=True)
     (p / "a").symlink_to("foo")
@@ -85,7 +86,7 @@ def part5(tmpdir) -> Part:
 def part6(tmpdir) -> Part:
     # Create a new part with a symlink that points to a different place
     # than part5's symlink.
-    part = Part("part6", {}, work_dir=tmpdir)
+    part = Part("part6", {}, project_dirs=ProjectDirs(work_dir=tmpdir))
     p = part.part_install_dir
     p.mkdir(parents=True)
     (p / "a").symlink_to("bar")
@@ -133,14 +134,20 @@ class TestCollisions:
         assert raised.value.file_paths == "    file.pc"  # type: ignore
 
     def test_collision_with_part_not_built(self, tmpdir):
-        part_built = Part("part_built", {"stage": ["collision"]}, work_dir=tmpdir)
+        part_built = Part(
+            "part_built",
+            {"stage": ["collision"]},
+            project_dirs=ProjectDirs(work_dir=tmpdir),
+        )
 
         # a part built has the stage file in the installdir.
         part_built.part_install_dir.mkdir(parents=True)
         (part_built.part_install_dir / "collision").write_text("")
 
         part_not_built = Part(
-            "part_not_built", {"stage": ["collision"]}, work_dir=tmpdir
+            "part_not_built",
+            {"stage": ["collision"]},
+            project_dirs=ProjectDirs(work_dir=tmpdir),
         )
 
         # a part not built doesn't have the stage file in the installdir.

@@ -46,7 +46,7 @@ class TestPluginDump:
 
         part = Part("foo", {})
         part_info = PartInfo(project_info=project_info, part=part)
-        part_info.part_install_dir = Path("install/dir")
+        part_info._part_install_dir = Path("install/dir")
 
         self._plugin = DumpPlugin(options=options, part_info=part_info)
 

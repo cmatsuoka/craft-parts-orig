@@ -17,6 +17,7 @@
 import pytest
 
 from craft_parts import errors, parts
+from craft_parts.infos import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 
@@ -40,7 +41,7 @@ class TestPartBasics:
         assert p.prime_dir == new_dir / "prime"
 
     def test_part_work_dir(self, new_dir):
-        p = Part("foo", {}, work_dir="foobar")
+        p = Part("foo", {}, project_dirs=ProjectDirs(work_dir="foobar"))
         assert p.parts_dir == new_dir / "foobar/parts"
         assert p.part_src_dir == new_dir / "foobar/parts/foo/src"
         assert p.part_build_dir == new_dir / "foobar/parts/foo/build"

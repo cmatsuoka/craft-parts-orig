@@ -39,7 +39,7 @@ _MOCK_NATIVE_ARCH = "aarch64"
         ("x86_64", "amd64", "x86_64-linux-gnu", True),
     ],
 )
-def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
+def test_project_info(mocker, new_dir, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
     x = ProjectInfo(
@@ -63,6 +63,10 @@ def test_project_info(mocker, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
         "arch_triplet": tc_triplet,
         "deb_arch": tc_deb_arch,
     }
+
+    assert x.parts_dir == new_dir / "parts"
+    assert x.stage_dir == new_dir / "stage"
+    assert x.prime_dir == new_dir / "prime"
 
 
 def test_project_info_custom_args():

@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from craft_parts import errors
+from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
 
 # pylint: disable=too-many-public-methods
@@ -41,12 +42,15 @@ class Part:
         name: str,
         data: Dict[str, Any],
         *,
-        work_dir: str = ".",
+        project_dirs: ProjectDirs = None,
     ):
+        if not project_dirs:
+            project_dirs = ProjectDirs()
+
         self._name = name
         self._data = data
-        self._work_dir = Path(work_dir).absolute()
-        self._part_dir = self._work_dir / "parts" / name
+        self._dirs = project_dirs
+        self._part_dir = project_dirs.parts_dir / name
 
     def __repr__(self):
         return f"Part({self.name!r})"
@@ -64,7 +68,7 @@ class Part:
     @property
     def parts_dir(self) -> Path:
         """The directory containing work files for each part."""
-        return self._work_dir / "parts"
+        return self._dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
@@ -116,12 +120,12 @@ class Part:
     @property
     def stage_dir(self) -> Path:
         """The staging area containing the installed files from all parts."""
-        return self._work_dir / "stage"
+        return self._dirs.stage_dir
 
     @property
     def prime_dir(self) -> Path:
         """The primed tree containing the artifacts to deploy."""
-        return self._work_dir / "prime"
+        return self._dirs.prime_dir
 
     @property
     def source(self) -> Optional[str]:

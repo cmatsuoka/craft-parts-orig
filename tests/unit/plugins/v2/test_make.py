@@ -45,7 +45,7 @@ class TestPluginMake:
         project_info._parallel_build_count = 42
 
         part_info = PartInfo(project_info=project_info, part=part)
-        part_info.part_install_dir = Path("install/dir")
+        part_info._part_install_dir = Path("install/dir")
 
         self._plugin = MakePlugin(options=options, part_info=part_info)
 
@@ -97,7 +97,7 @@ class TestPluginMake:
         project_info._parallel_build_count = 8
 
         part_info = PartInfo(project_info=project_info, part=part)
-        part_info.part_install_dir = Path("/tmp")
+        part_info._part_install_dir = Path("/tmp")
 
         plugin = MakePlugin(options=options, part_info=part_info)
 
