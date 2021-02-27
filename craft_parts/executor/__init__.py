@@ -16,7 +16,9 @@
 
 """Definitions and helpers for the action executor."""
 
+import contextlib
 import logging
+import shutil
 from typing import Dict, List
 
 from craft_parts import callbacks, packages
@@ -105,6 +107,14 @@ class Executor:
 
             for step in selected_steps:
                 handler.clean_step(step=step)
+
+    def clean_all_parts(self, *, step: Step):
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(self._project_info.prime_dir)
+            if step <= Step.STAGE:
+                shutil.rmtree(self._project_info.stage_dir)
+            if step <= Step.PULL:
+                shutil.rmtree(self._project_info.parts_dir)
 
     def _create_part_handler(self, part: Part):
         if part.name not in self._handler:

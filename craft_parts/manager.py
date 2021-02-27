@@ -16,8 +16,6 @@
 
 """The parts lifecycle manager definition and helpers."""
 
-import contextlib
-import shutil
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -164,13 +162,7 @@ class LifecycleManager:
 
         # remove any existing leftovers
         if clean_all_parts:
-            with contextlib.suppress(FileNotFoundError):
-                for part in selected_parts:
-                    shutil.rmtree(part.prime_dir)
-                    if step <= Step.STAGE:
-                        shutil.rmtree(part.stage_dir)
-                    if step <= Step.PULL:
-                        shutil.rmtree(part.parts_dir)
+            self._executor.clean_all_parts(step=step)
 
     def update(self, update_system_package_list=False) -> None:
         """Refresh the available packages list.

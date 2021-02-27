@@ -69,6 +69,14 @@ def test_project_info(mocker, new_dir, tc_arch, tc_deb_arch, tc_triplet, tc_cros
     assert x.prime_dir == new_dir / "prime"
 
 
+def test_project_info_work_dir(new_dir):
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2], work_dir="work_dir")
+
+    assert info.parts_dir == new_dir / "work_dir/parts"
+    assert info.stage_dir == new_dir / "work_dir/stage"
+    assert info.prime_dir == new_dir / "work_dir/prime"
+
+
 def test_project_info_custom_args():
     info = ProjectInfo(custom1="foobar", custom2=[1, 2])
 
