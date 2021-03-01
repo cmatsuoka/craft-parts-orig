@@ -99,7 +99,7 @@ class ProjectInfo:
         return self._local_plugins_dir
 
     @property
-    def deb_arch(self) -> str:
+    def target_arch(self) -> str:
         """The architecture used for deb packages."""
         return self.__machine_info["deb"]
 
@@ -113,7 +113,7 @@ class ProjectInfo:
         return {
             "application_name": self.application_name,
             "arch_triplet": self.arch_triplet,
-            "deb_arch": self.deb_arch,
+            "target_arch": self.target_arch,
         }
 
     def _set_machine(self, target_arch):

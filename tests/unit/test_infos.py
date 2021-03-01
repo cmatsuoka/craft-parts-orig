@@ -27,7 +27,7 @@ _MOCK_NATIVE_ARCH = "aarch64"
 
 
 @pytest.mark.parametrize(
-    "tc_arch,tc_deb_arch,tc_triplet,tc_cross",
+    "tc_arch,tc_target_arch,tc_triplet,tc_cross",
     [
         ("aarch64", "arm64", "aarch64-linux-gnu", False),
         ("armv7l", "armhf", "arm-linux-gnueabihf", True),
@@ -39,7 +39,7 @@ _MOCK_NATIVE_ARCH = "aarch64"
         ("x86_64", "amd64", "x86_64-linux-gnu", True),
     ],
 )
-def test_project_info(mocker, new_dir, tc_arch, tc_deb_arch, tc_triplet, tc_cross):
+def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_cross):
     mocker.patch("platform.machine", return_value=_MOCK_NATIVE_ARCH)
 
     x = ProjectInfo(
@@ -57,11 +57,11 @@ def test_project_info(mocker, new_dir, tc_arch, tc_deb_arch, tc_triplet, tc_cros
     assert x.plugin_version == "v2"
     assert x.parallel_build_count == 16
     assert x.local_plugins_dir == Path("/some/path")
-    assert x.deb_arch == tc_deb_arch
+    assert x.target_arch == tc_target_arch
     assert x.project_options == {
         "application_name": "test",
         "arch_triplet": tc_triplet,
-        "deb_arch": tc_deb_arch,
+        "target_arch": tc_target_arch,
     }
 
     assert x.parts_dir == new_dir / "parts"

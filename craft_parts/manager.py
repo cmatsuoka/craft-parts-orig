@@ -76,7 +76,7 @@ class LifecycleManager:
     :param build_packages: a list of additional build packages to install.
     :param work_dir: the toplevel directory for the Craft Parts work tree. The
         current directory will be used if none is specified.
-    :param target_arch: The target architecture to build for, if cross-compiling.
+    :param arch: The target architecture to build for, if cross-compiling.
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param local_plugins_dir: The directory where local plugins are, if any.
@@ -97,7 +97,7 @@ class LifecycleManager:
         application_name: str,
         build_packages: List[str] = None,
         work_dir: str = ".",
-        target_arch: str = "",
+        arch: str = "",
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
@@ -111,7 +111,7 @@ class LifecycleManager:
 
         project_info = ProjectInfo(
             application_name=application_name,
-            target_arch=target_arch,
+            arch=arch,
             plugin_version=plugin_version,
             parallel_build_count=parallel_build_count,
             local_plugins_dir=local_plugins_dir,
@@ -125,7 +125,7 @@ class LifecycleManager:
             for name, p in parts_data.items()
         ]
         self._application_name = application_name
-        self._target_arch = project_info.deb_arch
+        self._target_arch = project_info.target_arch
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,

@@ -74,4 +74,4 @@ class BuildState(PartState):
         The build step only cares about the target architecture.
         """
 
-        return {"deb_arch": project_options.get("deb_arch")}
+        return {"target_arch": project_options.get("target_arch")}
