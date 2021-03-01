@@ -29,6 +29,8 @@ import stat
 from pathlib import Path
 from typing import List, Optional, Pattern, Set, Tuple, Union
 
+from craft_parts import xattrs
+
 from . import errors
 
 logger = logging.getLogger(__name__)
@@ -222,10 +224,8 @@ class BaseRepository:
             for file_name in files:
                 file_path = os.path.join(root, file_name)
 
-                # FIXME: verify if this is necessary
-
                 # Mark source.
-                # xattrs.write_origin_stage_package(file_path, stage_package)
+                xattrs.write_origin_stage_package(file_path, stage_package)
 
                 file_path = os.path.relpath(root, sources_dir)
                 file_list.add(file_path)

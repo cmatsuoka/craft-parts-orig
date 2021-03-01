@@ -360,3 +360,24 @@ class SchemaValidationError(CraftPartsError):
             messages.append(error.message)
 
         return cls(" ".join(messages))
+
+
+class XAttributeError(CraftPartsReportableError):
+    """Failed to read or write an extended attribute."""
+
+    fmt = "Unable to {action} attribute {key!r} on {path!r}."
+
+    def __init__(self, action: str, key: str, path: str):
+        super().__init__(action=action, key=key, path=path)
+
+
+class XAttributeTooLongError(CraftPartsReportableError):
+    """Failed to write an extended attribute because key and/or value is too long."""
+
+    fmt = (
+        "Failed to write attribute to {path!r}: key and/or value is too long\n"
+        "key={key!r} value={value!r}"
+    )
+
+    def __init__(self, key: str, value: str, path: str):
+        super().__init__(key=key, value=value, path=path)
