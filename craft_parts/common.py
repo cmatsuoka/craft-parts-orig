@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Common functions used by both the sequencer and the executor."""
+"""Common helpers that can be used the sequencer or the executor."""
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from craft_parts import packages, plugins, sources
 from craft_parts.parts import Part
@@ -55,10 +55,34 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
 
 
 def get_machine_manifest() -> Dict[str, Any]:
-    """Obtains information about the system OS and runtime environment."""
+    """Obtain information about the system OS and runtime environment."""
 
     return {
         "uname": os_utils.get_system_info(),
         "installed-packages": sorted(packages.Repository.get_installed_packages()),
         "installed-snaps": sorted(packages.snaps.get_installed_snaps()),
     }
+
+
+def stage_packages_from_parts(part_list: List[Part]) -> List[str]:
+    """Obtain the list of stage packages from all parts."""
+
+    stage_packages: Set[str] = set()
+    for part in part_list:
+        part_stage_packages = part.stage_packages
+        if part_stage_packages:
+            stage_packages.update(part_stage_packages)
+
+    return list(stage_packages)
+
+
+def build_packages_from_parts(part_list: List[Part]) -> List[str]:
+    """Obtain the list of build packages from all parts."""
+
+    build_packages: Set[str] = set()
+    for part in part_list:
+        part_build_packages = part.build_packages
+        if part_build_packages:
+            build_packages.update(part_build_packages)
+
+    return list(build_packages)

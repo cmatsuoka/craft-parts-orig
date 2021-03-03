@@ -392,7 +392,8 @@ class Ubuntu(BaseRepository):
 
         installed: Set[str] = set()
 
-        stage_packages_path.mkdir(exist_ok=True)
+        if not list_only:
+            stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(application_name)
 

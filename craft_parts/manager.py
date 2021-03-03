@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from craft_parts import executor, packages, parts, sequencer
+from craft_parts import common, executor, packages, parts, sequencer
 from craft_parts.actions import Action
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part, part_list_by_name
@@ -196,6 +196,26 @@ class LifecycleManager:
         act = self._sequencer.plan(target_step, part_names)
         return act
 
+    def reload_state(self) -> None:
+        """Reload the ephemeral state from disk."""
+        self._sequencer.reload_state()
+
+    def all_stage_packages(self, part_names: List[str] = None) -> List[str]:
+        """Obtain the deduplicated list of stage packages from all given parts."""
+
+        selected_parts = part_list_by_name(part_names, self._part_list)
+        return common.stage_packages_from_parts(selected_parts)
+
+    def all_state_assets(
+        self, asset_name: str, *, step: Step, part_names: List[str] = None
+    ) -> List[str]:
+        """Obtain the deduplicated list of the given state asset for all given parts."""
+
+        selected_parts = part_list_by_name(part_names, self._part_list)
+        return self._sequencer.state_assets_for_step(
+            asset_name=asset_name, step=step, part_list=selected_parts
+        )
+
     def execution_context(self) -> ExecutionContext:
         return ExecutionContext(
             self._execution_prologue, self._execution_epilogue, self._execute
@@ -236,3 +256,7 @@ class LifecycleManager:
         and :method:`execution_end` are called automatically.
         """
         self._executor.epilogue()
+
+    def resolve_package_dependencies(self, package_names: List[str]) -> List[str]:
+        """Expand the list of provided packages to include dependencies and versions."""
+        return self._sequencer.resolve_package_dependencies(package_names)

@@ -17,6 +17,7 @@
 """Determine the sequence of lifecycle actions to be executed."""
 
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 from craft_parts import common, errors, packages, parts, plugins, steps
@@ -26,6 +27,7 @@ from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,43 @@ class Sequencer:
         self._actions = []
         self._add_all_actions(target_step, part_names)
         return self._actions
+
+    def reload_state(self) -> None:
+        """Reload the ephemeral state from disk."""
+        self._sm = StateManager(self._project_info, self._part_list, self._validator)
+
+    def resolve_package_dependencies(self, package_names: List[str]) -> List[str]:
+        """Expand the list of provided packages to include dependencies and versions."""
+
+        package_repo = packages.Repository()
+        package_list = package_repo.fetch_stage_packages(
+            application_name=self._project_info.application_name,
+            package_names=package_names,
+            target_arch=self._project_info.target_arch,
+            base=os_utils.get_build_base(),
+            stage_packages_path=Path(""),  # not used
+            list_only=True,
+        )
+
+        return package_list
+
+    def state_assets_for_step(
+        self, *, asset_name: str, step: Step, part_list: List[Part]
+    ) -> List[str]:
+        """Return all state assets for the given step and part names."""
+
+        asset_list: List[str] = []
+
+        for part in part_list:
+            assets = self._sm.state_assets(part, step)
+            value = assets.get(asset_name)
+            if value:
+                if isinstance(value, list):
+                    asset_list.extend(value)
+                else:
+                    asset_list.append(value)
+
+        return asset_list
 
     def _add_all_actions(
         self,

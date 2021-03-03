@@ -20,7 +20,7 @@ import contextlib
 import itertools
 import logging
 from datetime import datetime
-from typing import Dict, Final, List, Optional
+from typing import Any, Dict, Final, List, Optional
 
 from craft_parts import errors, parts, sources, steps
 from craft_parts.infos import ProjectInfo
@@ -183,15 +183,15 @@ class StateManager:
     """Keep track of parts execution state."""
 
     def __init__(
-        self, project_info: ProjectInfo, all_parts: List[Part], validator: Validator
+        self, project_info: ProjectInfo, part_list: List[Part], validator: Validator
     ):
         self._state = _EphemeralStates()
         self._project_info = project_info
-        self._all_parts = all_parts
+        self._part_list = part_list
         self._validator = validator
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
-        for part in all_parts:
+        for part in part_list:
             # Initialize from persistent state
             for step in list(Step):
                 state, timestamp = load_state(part, step)
@@ -210,6 +210,14 @@ class StateManager:
     def update_state_timestamp(self, part: Part, step: Step) -> None:
         """Update the given part and step state's timestamp."""
         self._state.update_timestamp(part_name=part.name, step=step)
+
+    def state_assets(self, part: Part, step: Step) -> Dict[str, Any]:
+        """Obtain the assets for a given part and step."""
+        stw = self._state.get(part_name=part.name, step=step)
+        if not stw:
+            return {}
+
+        return getattr(stw.state, "assets", {})
 
     def should_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part should run.
@@ -277,7 +285,7 @@ class StateManager:
         # we need to expand it here to also take its dependencies (if any) into
         # account
         dependencies = parts.part_dependencies(
-            part.name, part_list=self._all_parts, recursive=True
+            part.name, part_list=self._part_list, recursive=True
         )
 
         changed_dependencies: List[Dependency] = []
