@@ -152,17 +152,10 @@ class LifecycleManager:
             all parts will be cleaned.
         """
 
-        clean_all_parts = not part_names
-        selected_parts = part_list_by_name(part_names, self._part_list)
-
         if not step:
             step = Step.PULL
 
-        self._executor.clean(initial_step=step, part_list=selected_parts)
-
-        # remove any existing leftovers
-        if clean_all_parts:
-            self._executor.clean_all_parts(step=step)
+        self._executor.clean(step=step, part_names=part_names)
 
     def update(self, update_system_package_list=False) -> None:
         """Refresh the available packages list.

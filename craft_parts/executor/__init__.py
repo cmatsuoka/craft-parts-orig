@@ -24,7 +24,7 @@ from typing import Dict, List
 from craft_parts import callbacks, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.parts import Part
+from craft_parts.parts import Part, part_list_by_name
 from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
@@ -95,20 +95,26 @@ class Executor:
         handler = self._handler[part.name]
         handler.run_action(action)
 
-    def clean(self, *, initial_step: Step, part_list: List[Part]):
+    def clean(self, *, step: Step, part_names: List[str] = None):
         """Clean the given parts, or all parts if none is specified."""
 
-        selected_steps = [initial_step] + initial_step.next_steps()
+        if not part_names:
+            self._clean_all_parts(step=step)
+            return
+
+        selected_parts = part_list_by_name(part_names, self._part_list)
+
+        selected_steps = [step] + step.next_steps()
         selected_steps.reverse()
 
-        for part in part_list:
+        for part in selected_parts:
             self._create_part_handler(part)
             handler = self._handler[part.name]
 
             for step in selected_steps:
                 handler.clean_step(step=step)
 
-    def clean_all_parts(self, *, step: Step):
+    def _clean_all_parts(self, *, step: Step):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._project_info.prime_dir)
             if step <= Step.STAGE:
