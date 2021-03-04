@@ -193,13 +193,13 @@ class LifecycleManager:
         """Reload the ephemeral state from disk."""
         self._sequencer.reload_state()
 
-    def all_stage_packages(self, part_names: List[str] = None) -> List[str]:
+    def get_stage_packages(self, part_names: List[str] = None) -> List[str]:
         """Obtain the deduplicated list of stage packages from all given parts."""
 
         selected_parts = part_list_by_name(part_names, self._part_list)
         return common.stage_packages_from_parts(selected_parts)
 
-    def all_state_assets(
+    def get_state_assets(
         self, asset_name: str, *, step: Step, part_names: List[str] = None
     ) -> List[str]:
         """Obtain the deduplicated list of the given state asset for all given parts."""
