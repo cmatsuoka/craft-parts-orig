@@ -54,6 +54,25 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
     return all_packages
 
 
+def get_build_snaps(*, part: Part, repository, plugin: Plugin) -> List[str]:
+    """Obtain the list of build snaps from part and plugin."""
+
+    all_snaps: List[str] = []
+
+    build_snaps = part.build_snaps
+    if build_snaps:
+        logger.debug("part build snaps: %s", build_snaps)
+        all_snaps.extend(build_snaps)
+
+    if isinstance(plugin, plugins.PluginV2):
+        plugin_build_snaps = plugin.get_build_snaps()
+        if plugin_build_snaps:
+            logger.debug("plugin build snaps: %s", plugin_build_snaps)
+            all_snaps.extend(plugin_build_snaps)
+
+    return all_snaps
+
+
 def get_machine_manifest() -> Dict[str, Any]:
     """Obtain information about the system OS and runtime environment."""
 
@@ -74,15 +93,3 @@ def stage_packages_from_parts(part_list: List[Part]) -> List[str]:
             stage_packages.update(part_stage_packages)
 
     return list(stage_packages)
-
-
-def build_packages_from_parts(part_list: List[Part]) -> List[str]:
-    """Obtain the list of build packages from all parts."""
-
-    build_packages: Set[str] = set()
-    for part in part_list:
-        part_build_packages = part.build_packages
-        if part_build_packages:
-            build_packages.update(part_build_packages)
-
-    return list(build_packages)

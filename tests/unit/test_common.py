@@ -32,19 +32,3 @@ def test_stage_packages_from_parts():
         "baz",
         "foo",
     ]
-
-
-def test_build_packages_from_parts():
-    p1 = Part("p1", {"build-packages": ["foo", "bar"]})
-    p2 = Part("p2", {"build-packages": ["baz"]})
-    p3 = Part("p3", {})
-
-    assert common.build_packages_from_parts([]) == []
-    assert sorted(common.build_packages_from_parts([p1])) == ["bar", "foo"]
-    assert common.build_packages_from_parts([p2]) == ["baz"]
-    assert common.build_packages_from_parts([p3]) == []
-    assert sorted(common.build_packages_from_parts([p1, p2, p3])) == [
-        "bar",
-        "baz",
-        "foo",
-    ]

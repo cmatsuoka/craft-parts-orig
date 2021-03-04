@@ -194,6 +194,17 @@ def get_snap_tool_path(command_name: str) -> str:
     return command_path
 
 
+def is_inside_container() -> bool:
+    """Verify whether this process is running inside a container."""
+
+    for path in ["/.dockerenv", "/run/.containerenv"]:
+        if os.path.exists(path):
+            logger.debug("application running in a docker or podman (OCI) container")
+            return True
+
+    return False
+
+
 def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),

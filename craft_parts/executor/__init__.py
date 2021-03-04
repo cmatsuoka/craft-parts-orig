@@ -27,6 +27,7 @@ from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, part_list_by_name
 from craft_parts.schemas import Validator
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
 from .collisions import check_for_stage_collisions
 from .part_handler import PartHandler
@@ -45,7 +46,8 @@ class Executor:
         project_info: ProjectInfo,
         disable_stage_packages: bool = False,
         disable_build_packages: bool = False,
-        extra_build_packages: List[str] = None
+        extra_build_packages: List[str] = None,
+        extra_build_snaps: List[str] = None,
     ):
         self._part_list = part_list
         self._validator = validator
@@ -53,25 +55,14 @@ class Executor:
         self._disable_stage_packages = disable_stage_packages
         self._disable_build_packages = disable_build_packages
         self._extra_build_packages = extra_build_packages
+        self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
 
     def prologue(self):
         """Prepare the execution environment."""
 
-        if not self._disable_build_packages:
-            for part in self._part_list:
-                self._create_part_handler(part)
-
-            all_build_packages = set()
-            for _, handler in self._handler.items():
-                all_build_packages.update(handler.build_packages)
-
-            if self._extra_build_packages:
-                all_build_packages.update(self._extra_build_packages)
-
-            packages.Repository.install_build_packages(sorted(all_build_packages))
-            # TODO: install build snaps
-
+        self._install_build_packages()
+        self._install_build_snaps()
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
     def epilogue(self):
@@ -95,16 +86,16 @@ class Executor:
         handler = self._handler[part.name]
         handler.run_action(action)
 
-    def clean(self, *, step: Step, part_names: List[str] = None):
+    def clean(self, *, initial_step: Step, part_names: List[str] = None):
         """Clean the given parts, or all parts if none is specified."""
 
         if not part_names:
-            self._clean_all_parts(step=step)
+            self._clean_all_parts(step=initial_step)
             return
 
         selected_parts = part_list_by_name(part_names, self._part_list)
 
-        selected_steps = [step] + step.next_steps()
+        selected_steps = [initial_step] + initial_step.next_steps()
         selected_steps.reverse()
 
         for part in selected_parts:
@@ -133,3 +124,41 @@ class Executor:
                 part_list=self._part_list,
                 disable_stage_packages=self._disable_stage_packages,
             )
+
+    def _install_build_packages(self):
+        if not self._disable_build_packages:
+            for part in self._part_list:
+                self._create_part_handler(part)
+
+            build_packages = set()
+            for _, handler in self._handler.items():
+                build_packages.update(handler.build_packages)
+
+            if self._extra_build_packages:
+                build_packages.update(self._extra_build_packages)
+
+            packages.Repository.install_build_packages(sorted(build_packages))
+
+    def _install_build_snaps(self):
+        build_snaps = set()
+        for _, handler in self._handler.items():
+            build_snaps.update(handler.build_snaps)
+
+        if self._extra_build_snaps:
+            build_snaps.update(self._extra_build_snaps)
+
+        if not build_snaps:
+            return
+
+        if os_utils.is_inside_container():
+            logger.warning(
+                (
+                    "The following snaps are required but not installed as the "
+                    "application is running inside docker or podman container: {}.\n"
+                    "Please ensure the environment is properly setup before "
+                    "continuing.\nIgnore this message if the appropriate measures "
+                    "have already been taken".format(", ".join(build_snaps))
+                )
+            )
+        else:
+            packages.snaps.install_snaps(build_snaps)

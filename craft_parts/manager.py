@@ -155,7 +155,7 @@ class LifecycleManager:
         if not step:
             step = Step.PULL
 
-        self._executor.clean(step=step, part_names=part_names)
+        self._executor.clean(initial_step=step, part_names=part_names)
 
     def update(self, update_system_package_list=False) -> None:
         """Refresh the available packages list.

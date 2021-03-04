@@ -78,6 +78,10 @@ class PartHandler:
             part=self._part, repository=self._package_repo, plugin=self._plugin
         )
 
+        self._build_snaps = common.get_build_snaps(
+            part=self._part, repository=self._package_repo, plugin=self._plugin
+        )
+
     @property
     def build_packages(self) -> List[str]:
         """Return the list of build packages defined for this part.
@@ -87,6 +91,15 @@ class PartHandler:
         and packages required by the plugin.
         """
         return self._build_packages
+
+    @property
+    def build_snaps(self) -> List[str]:
+        """Return the list of build snaps defined for this part.
+
+        The list of build snaps include snaps defined directly in the parts
+        specification and snaps required by the plugin.
+        """
+        return self._build_snaps
 
     def clean_step(self, *, step: Step) -> None:
         """Remove the work files and the state of the given step."""

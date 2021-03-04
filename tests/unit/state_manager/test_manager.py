@@ -62,7 +62,8 @@ def fake_state(new_dir):
     Path(new_dir / "parts/bar/state/pull").write_text(_pull_state_bar)
 
 
-def test_state_assets(fake_validator, fake_state):
+@pytest.mark.usefixtures("fake_state")
+def test_state_assets(fake_validator):
     p1 = Part("foo", {})
     p2 = Part("bar", {})
 

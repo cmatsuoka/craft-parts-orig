@@ -182,6 +182,14 @@ class Part:
             return packages.copy()
         return None
 
+    @property
+    def build_snaps(self) -> Optional[List[str]]:
+        """The list of build snaps for this part."""
+        snaps = self._data.get("build-snaps")
+        if snaps:
+            return snaps.copy()
+        return None
+
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.
 

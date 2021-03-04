@@ -94,6 +94,8 @@ def test_application_plugin_happy(capfd, mocker):
         "craft_parts.packages.Repository.install_build_packages"
     )
 
+    mock_install_build_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
     with lf.execution_context() as exe:
         exe.execute(actions[1])
 
@@ -101,7 +103,7 @@ def test_application_plugin_happy(capfd, mocker):
     assert out == "hello application plugin\n"
 
     mock_install_build_packages.assert_called_once_with(["build_package"])
-    # TODO: check build snaps
+    mock_install_build_snaps.assert_called_once_with({"build_snap"})
 
 
 def test_application_plugin_miss_stuff():
