@@ -53,16 +53,16 @@ def fake_validator(mocker) -> Validator:
     return Validator("")
 
 
-@pytest.fixture(autouse=True)
-def setup_current_state(new_dir):
+@pytest.fixture
+def fake_state(new_dir):
     # build current state
-    Path("parts/foo/state").mkdir(parents=True)
-    Path("parts/bar/state").mkdir(parents=True)
-    Path("parts/foo/state/pull").write_text(_pull_state_foo)
-    Path("parts/bar/state/pull").write_text(_pull_state_bar)
+    Path(new_dir / "parts/foo/state").mkdir(parents=True)
+    Path(new_dir / "parts/bar/state").mkdir(parents=True)
+    Path(new_dir / "parts/foo/state/pull").write_text(_pull_state_foo)
+    Path(new_dir / "parts/bar/state/pull").write_text(_pull_state_bar)
 
 
-def test_state_assets(new_dir, fake_validator):
+def test_state_assets(fake_validator, fake_state):
     p1 = Part("foo", {})
     p2 = Part("bar", {})
 
