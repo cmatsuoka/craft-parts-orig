@@ -88,16 +88,16 @@ if sys.platform == "linux":
     from .git import Git  # noqa: F401
     from .local import Local  # noqa: F401
 
-    # from .mercurial import Mercurial  # noqa: F401
-    # from .script import Script  # noqa: F401
-    # from .subversion import Subversion  # noqa: F401
-    from .tar import Tar  # noqa: F401
-
     # from .zip import Zip  # noqa: F401
     # from .7z import SevenZip  # noqa: F401
     # from .deb import Deb  # noqa: F401
     # from .rpm import Rpm  # noqa: F401
-    # from .snap import Snap  # noqa: F401
+    from .snap import Snap  # noqa: F401
+
+    # from .mercurial import Mercurial  # noqa: F401
+    # from .script import Script  # noqa: F401
+    # from .subversion import Subversion  # noqa: F401
+    from .tar import Tar  # noqa: F401
 
     SourceHandlerType = Type[SourceHandler]
 
@@ -114,7 +114,7 @@ if sys.platform == "linux":
         "local": Local,
         # "deb": Deb,
         # "rpm": Rpm,
-        # "snap": Snap,
+        "snap": Snap,
         "": Local,
     }
 
@@ -127,7 +127,7 @@ else:
     SourceHandlerType = Type[Union[Local]]
 
     _source_handler: Dict[str, SourceHandlerType] = {
-        # "git": Git,
+        "git": Git,
         "local": Local,
         "tar": Tar,
         "": Local,

@@ -21,7 +21,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import requests
 
@@ -40,8 +40,8 @@ class SourceHandler(abc.ABC):
 
     def __init__(
         self,
-        source: str,
-        source_dir: Path,
+        source: Union[str, Path],
+        source_dir: Union[str, Path],
         *,
         application_name: str = None,
         source_tag: str = None,
@@ -55,7 +55,7 @@ class SourceHandler(abc.ABC):
             application_name = utils.package_name()
 
         self._application_name = application_name
-        self.source = source
+        self.source = str(source)
         self.source_dir = str(source_dir)
         self.source_tag = source_tag
         self.source_commit = source_commit
@@ -128,8 +128,8 @@ class FileSourceHandler(SourceHandler, abc.ABC):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source: str,
-        source_dir: Path,
+        source: Union[str, Path],
+        source_dir: Union[str, Path],
         *,
         application_name: Optional[str],
         source_tag: str = None,
