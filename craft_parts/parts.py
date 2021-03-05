@@ -175,6 +175,14 @@ class Part:
         return None
 
     @property
+    def stage_snaps(self) -> Optional[List[str]]:
+        """The list of stage snaps for this part."""
+        snaps = self._data.get("stage-snaps")
+        if snaps:
+            return snaps.copy()
+        return None
+
+    @property
     def build_packages(self) -> Optional[List[str]]:
         """The list of build packages for this part."""
         packages = self._data.get("build-packages")

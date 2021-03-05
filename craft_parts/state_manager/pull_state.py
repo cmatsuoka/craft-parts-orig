@@ -32,10 +32,12 @@ class PullState(PartState):
         part_properties: Dict[str, Any] = None,
         project_options: Dict[str, Any] = None,
         stage_packages: List[str] = None,
+        stage_snaps: List[str] = None,
         source_details=None,
     ):
         assets = {
             "stage-packages": stage_packages,
+            "stage-snaps": stage_snaps,
             "source-details": source_details,
         }
 

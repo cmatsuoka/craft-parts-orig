@@ -72,7 +72,7 @@ class Snap(FileSourceHandler):
         self,
         dst: str,
         clean_target: bool = True,
-        keep_snap: bool = False,
+        keep: bool = False,
         src: str = None,
     ) -> None:
         """
@@ -80,11 +80,10 @@ class Snap(FileSourceHandler):
 
         :param str dst: the destination directory to provision to.
         :param bool clean_target: clean dst before provisioning if True.
-        :param bool keep_snap: keep the snap after provisioning is done if
-                               True.
+        :param bool keep: keep the snap after provisioning is done if True.
         :param str src: force a new source to use for extraction.
-        raises errors.InvalidSnapError: when trying to provision an invalid
-                                        snap.
+
+        raises errors.InvalidSnapError: when trying to provision an invalid snap.
         """
         if src:
             snap_file = src
@@ -114,7 +113,7 @@ class Snap(FileSourceHandler):
                 shutil.move(rename, "{}.{}".format(rename, snap_name))
             file_utils.link_or_copy_tree(source_tree=temp_dir, destination_tree=dst)
 
-        if not keep_snap:
+        if not keep:
             os.remove(snap_file)
 
 

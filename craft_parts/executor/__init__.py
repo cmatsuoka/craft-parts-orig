@@ -154,10 +154,11 @@ class Executor:
             logger.warning(
                 (
                     "The following snaps are required but not installed as the "
-                    "application is running inside docker or podman container: {}.\n"
+                    "application is running inside docker or podman container: %s.\n"
                     "Please ensure the environment is properly setup before "
                     "continuing.\nIgnore this message if the appropriate measures "
-                    "have already been taken".format(", ".join(build_snaps))
+                    "have already been taken",
+                    ", ".join(build_snaps),
                 )
             )
         else:

@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import shutil
 import subprocess
+from typing import List, Tuple
 
 import craft_parts.packages.snaps
 
@@ -29,6 +32,7 @@ class FakeSnapCommand:
         self.calls = []
         self.install_success = True
         self.refresh_success = True
+        self.fake_download = None
         self._email = "-"
 
         original_check_call = craft_parts.packages.snaps.check_call
@@ -59,22 +63,23 @@ class FakeSnapCommand:
     def login(self, email):
         self._email = email
 
-    def _get_snap_cmd(self, snap_cmd):
+    def _get_snap_cmd(self, cmd) -> Tuple[str, List[str]]:
         try:
-            snap_cmd_index = snap_cmd.index("snap")
+            snap_cmd_index = cmd.index("snap")
         except ValueError:
-            return ""
+            return "", []
 
         try:
-            return snap_cmd[snap_cmd_index + 1]
+            return cmd[snap_cmd_index + 1], cmd[snap_cmd_index + 2 :]
         except IndexError:
-            return ""
+            return "", []
 
     def _is_snap_command(self, cmd):
-        return self._get_snap_cmd(cmd) in ["install", "refresh", "whoami", "download"]
+        snap_cmd, _ = self._get_snap_cmd(cmd)
+        return snap_cmd in ["install", "refresh", "whoami", "download"]
 
     def _fake_snap_command(self, cmd, *args, **kwargs):
-        cmd = self._get_snap_cmd(cmd)
+        cmd, params = self._get_snap_cmd(cmd)
 
         if cmd == "install" and not self.install_success:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
@@ -86,6 +91,9 @@ class FakeSnapCommand:
             return "email: {}".format(self._email).encode()
 
         if cmd == "download":
+            if self.fake_download:
+                dest = os.path.join(kwargs["cwd"], params[0] + ".snap")
+                shutil.copyfile(self.fake_download, dest)
             return "Downloaded  ".encode()
 
         return None

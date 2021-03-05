@@ -20,6 +20,7 @@ import logging
 import os
 import os.path
 import shutil
+from glob import iglob
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -168,12 +169,40 @@ class PartHandler:
 
         return fetched_packages
 
+    def _fetch_stage_snaps(self):
+        stage_snaps = self._part.stage_snaps
+        if not stage_snaps:
+            return None
+
+        packages.snaps.download_snaps(
+            snaps_list=stage_snaps, directory=str(self._part.part_snaps_dir)
+        )
+
+        return stage_snaps
+
     def _unpack_stage_packages(self):
         self._package_repo.unpack_stage_packages(
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )
-        # TODO: unpack stage snaps
+
+    def _unpack_stage_snaps(self):
+        stage_snaps = self._part.stage_snaps
+        if not stage_snaps:
+            return
+
+        snaps_dir = self._part.part_snaps_dir
+        install_dir = self._part.part_install_dir
+
+        logger.debug("Unpacking stage-snaps to %s", install_dir)
+
+        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_sources = (
+            sources.Snap(source=s, source_dir=snaps_dir) for s in snap_files
+        )
+
+        for snap_source in snap_sources:
+            snap_source.provision(str(install_dir), clean_target=False, keep=True)
 
     def run_action(self, action: Action) -> None:
         """Run the given action for this part using a plugin."""
@@ -206,6 +235,7 @@ class PartHandler:
         self._make_dirs()
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
+        fetched_snaps = self._fetch_stage_snaps()
 
         # We don't need to expand environment variables in plugin options here because
         # the build script execution will expand them (assuming we're using plugins V2).
@@ -216,11 +246,11 @@ class PartHandler:
             workdir=self._part.part_src_dir,
         )
 
-        # TODO: check what else should be part of the pull state
         state = states.PullState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             stage_packages=fetched_packages,
+            stage_snaps=fetched_snaps,
             source_details=getattr(self._source_handler, "source_details", None),
         )
         return state
@@ -231,6 +261,8 @@ class PartHandler:
 
         if not self._disable_stage_packages:
             self._unpack_stage_packages()
+
+        self._unpack_stage_snaps()
 
         # Copy source from the part source dir to the part build dir
         shutil.copytree(

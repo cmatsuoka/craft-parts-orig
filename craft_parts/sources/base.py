@@ -229,5 +229,7 @@ class FileSourceHandler(SourceHandler, abc.ABC):
         return self._file
 
     @abc.abstractmethod
-    def provision(self, dst, clean_target=True, keep=False, src=None):
+    def provision(
+        self, dst: str, clean_target: bool = True, keep: bool = False, src: str = None
+    ):
         """Process the source file to extract its payload."""
