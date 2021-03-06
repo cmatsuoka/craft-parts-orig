@@ -18,7 +18,6 @@
 
 import filecmp
 import os
-from pathlib import Path
 from typing import Any, Dict, List
 
 from craft_parts import errors, filesets
@@ -50,10 +49,10 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
             conflict_files = []
             for f in common:
-                this = part.part_install_dir / f
-                other = Path(all_parts_files[other_part_name]["installdir"], f)
+                this = os.path.join(part.part_install_dir, f)
+                other = os.path.join(all_parts_files[other_part_name]["installdir"], f)
 
-                if _paths_collide(this, other):
+                if paths_collide(this, other):
                     conflict_files.append(f)
 
             if conflict_files:
@@ -70,40 +69,43 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         }
 
 
-def _paths_collide(path1: Path, path2: Path) -> bool:
-    # Both paths must exist to have a collision
+def paths_collide(path1: str, path2: str) -> bool:
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
+    path1_is_dir = os.path.isdir(path1)
+    path2_is_dir = os.path.isdir(path2)
+    path1_is_link = os.path.islink(path1)
+    path2_is_link = os.path.islink(path2)
+
     # Paths collide if they're both symlinks, but pointing to different places
-    # note: Path.readlink() introduced in Python 3.9
-    if path1.is_symlink() and path2.is_symlink():
-        return os.readlink(str(path1)) != os.readlink(str(path2))
+    if path1_is_link and path2_is_link:
+        return os.readlink(path1) != os.readlink(path2)
 
     # Paths collide if one is a symlink, but not the other
-    if path1.is_symlink() or path2.is_symlink():
+    if path1_is_link or path2_is_link:
         return True
 
     # Paths collide if one is a directory, but not the other
-    if path1.is_dir() != path2.is_dir():
+    if path1_is_dir != path2_is_dir:
         return True
 
     # Paths collide if neither path is a directory, and the files have
     # different contents
-    if not (path1.is_dir() and path2.is_dir()) and _file_collides(path1, path2):
+    if not (path1_is_dir and path2_is_dir) and _file_collides(path1, path2):
         return True
 
     # Otherwise, paths do not conflict
     return False
 
 
-def _file_collides(file_this: Path, file_other: Path) -> bool:
-    if not file_this.name.endswith(".pc"):
+def _file_collides(file_this: str, file_other: str) -> bool:
+    if not file_this.endswith(".pc"):
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling
-    pc_file_1 = file_this.open()
-    pc_file_2 = file_other.open()
+    pc_file_1 = open(file_this)
+    pc_file_2 = open(file_other)
 
     try:
         for lines in zip(pc_file_1, pc_file_2):

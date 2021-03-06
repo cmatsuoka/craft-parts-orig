@@ -293,6 +293,24 @@ class PartConflictError(CraftPartsError):
         )
 
 
+class StageFilesConflictError(CraftPartsError):
+    """Files from a part conflict with files already being staged."""
+
+    fmt = (
+        "Failed to stage: "
+        "The following files in part {part_name!r} are already being staged "
+        "with different content:\n"
+        "{file_paths}"
+    )
+
+    def __init__(self, *, part_name: str, conflict_files: List[str]):
+        spaced_conflict_files = ("    {}".format(i) for i in conflict_files)
+        super().__init__(
+            part_name=part_name,
+            file_paths="\n".join(sorted(spaced_conflict_files)),
+        )
+
+
 class SchemaNotFound(CraftPartsReportableError):
     """Failed to find a schema definition."""
 

@@ -25,9 +25,10 @@ import textwrap
 import time
 from collections import namedtuple
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional, Set
 
 from craft_parts import errors, filesets, packages, plugins
+from craft_parts.executor import collisions
 from craft_parts.filesets import Fileset
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
@@ -113,10 +114,11 @@ class StepHandler:
             )
 
         _migrate_files(
+            part_name=self._part.name,
             files=files,
             dirs=dirs,
-            srcdir=self._part.part_install_dir,
-            destdir=self._part.stage_dir,
+            srcdir=str(self._part.part_install_dir),
+            destdir=str(self._part.stage_dir),
             fixup_func=pkgconfig_fixup,
         )
         return FilesAndDirs(files, dirs)
@@ -133,10 +135,11 @@ class StepHandler:
         srcdir = str(self._part.part_install_dir)
         files, dirs = filesets.migratable_filesets(prime_fileset, srcdir)
         _migrate_files(
+            part_name=self._part.name,
             files=files,
             dirs=dirs,
-            srcdir=self._part.stage_dir,
-            destdir=self._part.prime_dir,
+            srcdir=str(self._part.stage_dir),
+            destdir=str(self._part.prime_dir),
         )
         # TODO: handle elf dependencies
 
@@ -280,12 +283,13 @@ def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
 
 def _migrate_files(
     *,
-    files,
-    dirs,
-    srcdir,
-    destdir,
-    missing_ok=False,
-    follow_symlinks=False,
+    files: Set[str],
+    dirs: Set[str],
+    srcdir: str,
+    destdir: str,
+    missing_ok: bool = False,
+    follow_symlinks: bool = False,
+    part_name: str = "",
     fixup_func=lambda *args: None,
 ):
     for dirname in sorted(dirs):
@@ -294,7 +298,11 @@ def _migrate_files(
 
         file_utils.create_similar_directory(src, dst)
 
-    for filename in sorted(files):
+    file_list = sorted(files)
+
+    _check_conflicts(part_name, srcdir, destdir, file_list)
+
+    for filename in file_list:
         src = os.path.join(srcdir, filename)
         dst = os.path.join(destdir, filename)
 
@@ -312,3 +320,21 @@ def _migrate_files(
         file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
 
         fixup_func(dst)
+
+
+def _check_conflicts(
+    part_name: str, srcdir: str, destdir: str, files: List[str]
+) -> None:
+    conflict_files: List[str] = []
+
+    for filename in files:
+        src = os.path.join(srcdir, filename)
+        dst = os.path.join(destdir, filename)
+
+        if collisions.paths_collide(src, dst):
+            conflict_files.append(filename)
+
+    if conflict_files:
+        raise errors.StageFilesConflictError(
+            part_name=part_name, conflict_files=conflict_files
+        )

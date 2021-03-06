@@ -19,7 +19,7 @@ import stat
 
 import pytest
 
-from craft_parts import filesets
+from craft_parts import errors, filesets
 from craft_parts.executor import step_handler
 from craft_parts.filesets import Fileset
 
@@ -39,15 +39,23 @@ class TestFileMigration:
             f.write("installed")
 
         files, dirs = filesets.migratable_filesets(Fileset(["*"]), "install")
-        step_handler._migrate_files(
-            files=files, dirs=dirs, srcdir="install", destdir="stage"
-        )
+        # Raise an exception if the file already exists
+        with pytest.raises(errors.StageFilesConflictError) as raised:
+            step_handler._migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir="install",
+                destdir="stage",
+                part_name="test",
+            )
+        assert getattr(raised.value, "part_name") == "test"
+        assert getattr(raised.value, "file_paths") == "    foo"
 
         # Verify that the staged file is the one that was staged last
-        with open("stage/foo", "r") as f:
-            assert (
-                f.read() == "installed"
-            ), "Expected staging to allow overwriting of already-staged files"
+        # with open("stage/foo", "r") as f:
+        #     assert (
+        #         f.read() == "installed"
+        #     ), "Expected staging to allow overwriting of already-staged files"
 
     def test_migrate_files_supports_no_follow_symlinks(self):
         os.makedirs("install")
