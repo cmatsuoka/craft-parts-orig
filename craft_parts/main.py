@@ -52,7 +52,7 @@ def main():
     except craft_parts.errors.SchemaValidationError:
         print("Error: invalid parts specification.", file=sys.stderr)
         sys.exit(2)
-    except craft_parts.errors.InvalidPartName as err:
+    except craft_parts.errors.CraftPartsError as err:
         print(f"Error: {err}", file=sys.stderr)
         sys.exit(3)
     except ValueError as err:
