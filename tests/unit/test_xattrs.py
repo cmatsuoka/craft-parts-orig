@@ -28,8 +28,8 @@ class TestXattrs:
 
     def setup_method(self):
         # These tests don't work on tmpfs
-        self._test_file = (
-            ".tests-xattr-test-file"  # pylint: disable=attribute-defined-outside-init
+        self._test_file = (  # pylint: disable=attribute-defined-outside-init
+            ".tests-xattr-test-file"
         )
 
         with contextlib.suppress(FileNotFoundError):

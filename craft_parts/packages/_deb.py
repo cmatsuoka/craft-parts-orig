@@ -439,7 +439,9 @@ class Ubuntu(BaseRepository):
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
         for pkg_path in stage_packages_path.glob("*.deb"):
-            with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
+            with tempfile.TemporaryDirectory(
+                suffix="deb-extract", dir=install_path.parent
+            ) as extract_dir:
                 # Extract deb package.
                 cls._extract_deb(pkg_path, extract_dir)
                 # Mark source of files.
