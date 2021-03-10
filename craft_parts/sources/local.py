@@ -34,7 +34,15 @@ class Local(SourceHandler):
         self.source_abspath = os.path.abspath(self.source)
         self.copy_function = copy_function
 
-        self._ignore = functools.partial(_ignore, self.source_abspath, os.getcwd())
+        patterns = [
+            self._dirs.parts_dir.name,
+            self._dirs.stage_dir.name,
+            self._dirs.prime_dir.name,
+            "*.snap",  # FIXME: this should be specified by the application
+        ]
+        self._ignore = functools.partial(
+            _ignore, self.source_abspath, os.getcwd(), patterns
+        )
         self._updated_files = set()
         self._updated_directories = set()
 
@@ -49,8 +57,6 @@ class Local(SourceHandler):
         )
 
     def _check(self, target: str, ignore_files: Optional[List[str]]) -> bool:
-        logger.debug("check local source handler, target=%s", target)
-
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:
@@ -88,12 +94,6 @@ class Local(SourceHandler):
                     else:
                         self._updated_directories.add(relpath)
 
-        logger.debug(
-            "%d updated files, %d updated directories",
-            len(self._updated_files),
-            len(self._updated_directories),
-        )
-
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
     def _update(self):
@@ -114,16 +114,19 @@ class Local(SourceHandler):
             )
 
 
-_CRAFT_PARTS_IGNORED_FILES = ["parts", "stage", "prime", "*.snap"]
+def _ignore(
+    source: str,
+    current_directory: str,
+    patterns: List[str],
+    directory,
+    files,
+    also_ignore: List[str] = None,
+) -> List[str]:
+    if also_ignore:
+        patterns.extend(also_ignore)
 
-
-def _ignore(source, current_directory, directory, files, also_ignore=None) -> List[str]:
     ignored = []
     if directory in (source, current_directory):
-        patterns = _CRAFT_PARTS_IGNORED_FILES.copy()
-        if also_ignore:
-            patterns.extend(also_ignore)
-
         for pattern in patterns:
             files = glob.glob(os.path.join(directory, pattern))
             if files:
