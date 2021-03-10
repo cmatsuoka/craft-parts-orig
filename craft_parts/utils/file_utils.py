@@ -123,6 +123,7 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
         create_similar_directory(
             os.path.dirname(source_path), os.path.dirname(destination)
         )
+
     # Setting follow_symlinks=False in case this bug is ever fixed
     # upstream-- we want this function to continue supporting NOT following
     # symlinks.

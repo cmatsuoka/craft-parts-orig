@@ -419,6 +419,8 @@ class PartHandler:
             source.check(str(state_file))  # required by source.update()
             source.update()
 
+        _remove(self._part.part_install_dir)
+
         self._run_step(
             step_info=step_info,
             scriptlet_name="override-build",

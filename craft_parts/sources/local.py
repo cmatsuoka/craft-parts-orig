@@ -49,6 +49,8 @@ class Local(SourceHandler):
         )
 
     def _check(self, target: str, ignore_files: Optional[List[str]]) -> bool:
+        logger.debug("check local source handler, target=%s", target)
+
         try:
             target_mtime = os.lstat(target).st_mtime
         except FileNotFoundError:
@@ -85,6 +87,12 @@ class Local(SourceHandler):
                         self._updated_files.add(relpath)
                     else:
                         self._updated_directories.add(relpath)
+
+        logger.debug(
+            "%d updated files, %d updated directories",
+            len(self._updated_files),
+            len(self._updated_directories),
+        )
 
         return len(self._updated_files) > 0 or len(self._updated_directories) > 0
 
