@@ -80,6 +80,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, Union
 
+from craft_parts.dirs import ProjectDirs
+
 from . import errors
 from .base import SourceHandler
 
@@ -159,11 +161,15 @@ def get_source_handler(
     source: Optional[str],
     source_dir: Path,
     properties: Optional[Dict[str, Any]],
+    dirs: ProjectDirs,
 ) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source."""
 
     if not properties:
         properties = dict()
+
+    if not dirs:
+        dirs = ProjectDirs()
 
     source_handler = None
     if source:
@@ -180,6 +186,7 @@ def get_source_handler(
             source_tag=properties["source-tag"],
             source_depth=properties["source-depth"],
             source_commit=properties["source-commit"],
+            dirs=dirs,
         )
 
     return source_handler

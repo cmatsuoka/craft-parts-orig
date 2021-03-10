@@ -22,6 +22,8 @@ import subprocess
 import sys
 from typing import List, Optional
 
+from craft_parts.dirs import ProjectDirs
+
 from . import errors
 from .base import SourceHandler
 
@@ -116,6 +118,7 @@ class Git(SourceHandler):
         source_depth: Optional[int] = None,
         silent: bool = False,
         source_checksum: str = None,
+        dirs: ProjectDirs = None,
     ):
         super().__init__(
             source,
@@ -126,6 +129,7 @@ class Git(SourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            dirs=dirs,
             command="git",
         )
         if source_tag and source_branch:

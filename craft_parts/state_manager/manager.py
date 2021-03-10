@@ -409,6 +409,7 @@ class StateManager:
                     source=part.source,
                     source_dir=part.part_src_dir,
                     properties=self._validator.expand_part_properties(part.properties),
+                    dirs=self._project_info.dirs,
                 )
                 self._source_handler_cache[part.name] = source_handler
 

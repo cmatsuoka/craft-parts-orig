@@ -23,6 +23,8 @@ import tarfile
 import tempfile
 from typing import Optional
 
+from craft_parts.dirs import ProjectDirs
+
 from . import errors
 from .base import FileSourceHandler
 
@@ -42,6 +44,7 @@ class Tar(FileSourceHandler):
         source_branch: str = None,
         source_depth: Optional[int] = None,
         source_checksum: str = None,
+        dirs: ProjectDirs = None,
     ):
         super().__init__(
             source,
@@ -52,6 +55,7 @@ class Tar(FileSourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            dirs=dirs,
         )
         if source_tag:
             raise errors.InvalidSourceOption("tar", "source-tag")

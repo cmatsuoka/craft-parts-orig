@@ -21,6 +21,7 @@ import shutil
 import tempfile
 from typing import Optional
 
+from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import file_utils, yaml_utils
 
 from . import errors
@@ -46,6 +47,7 @@ class Snap(FileSourceHandler):
         source_branch: str = None,
         source_depth: Optional[int] = None,
         source_checksum: str = None,
+        dirs: ProjectDirs = None,
     ) -> None:
         super().__init__(
             source,
@@ -56,6 +58,7 @@ class Snap(FileSourceHandler):
             source_branch=source_branch,
             source_depth=source_depth,
             source_checksum=source_checksum,
+            dirs=dirs,
             command="unsquashfs",
         )
 

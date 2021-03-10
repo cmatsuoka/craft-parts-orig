@@ -27,6 +27,7 @@ import requests
 
 from craft_parts import utils
 from craft_parts.cache import FileCache
+from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import url_utils
 
 from . import errors
@@ -50,9 +51,13 @@ class SourceHandler(abc.ABC):
         source_depth: Optional[int] = None,
         source_checksum: str = None,
         command: str = None,
+        dirs: ProjectDirs = None,
     ):
         if not application_name:
             application_name = utils.package_name()
+
+        if not dirs:
+            dirs = ProjectDirs()
 
         self._application_name = application_name
         self.source = str(source)
@@ -65,6 +70,8 @@ class SourceHandler(abc.ABC):
         self.source_details = None
 
         self.command = command
+
+        self._dirs = dirs
         self._checked = False
 
     # pylint: enable=too-many-arguments
@@ -138,6 +145,7 @@ class FileSourceHandler(SourceHandler, abc.ABC):
         source_depth: Optional[int] = None,
         source_checksum: str = None,
         command: str = None,
+        dirs: ProjectDirs = None,
     ):
         super().__init__(
             source,
@@ -149,6 +157,7 @@ class FileSourceHandler(SourceHandler, abc.ABC):
             source_depth=source_depth,
             source_checksum=source_checksum,
             command=command,
+            dirs=dirs,
         )
         self._file = ""
 

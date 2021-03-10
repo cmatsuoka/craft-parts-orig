@@ -72,6 +72,7 @@ class PartHandler:
             source=part.source,
             source_dir=part.part_src_dir,
             properties=self._part_properties,
+            dirs=part_info.dirs,
         )
         self._package_repo = packages.Repository()
 
