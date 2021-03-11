@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import unittest
 from pathlib import Path
 from unittest import mock
 from unittest.mock import call
@@ -30,7 +29,7 @@ class TestAptStageCache:
     # This are expensive tests, but is much more valuable than using mocks.
     # When adding tests, consider adding it to test_stage_packages(), or
     # create mocks.
-    @unittest.skip("hangs on google spread test with 'Error in function start'")
+    # @unittest.skip("hangs on google spread test with 'Error in function start'")
     def test_stage_packages(self, tmpdir):
         fetch_dir_path = Path(tmpdir, "debs")
         fetch_dir_path.mkdir(exist_ok=True, parents=True)
@@ -41,7 +40,25 @@ class TestAptStageCache:
             apt_cache.update()
 
             package_names = {"pciutils"}
-            filtered_names = {"base-files", "libc6", "libkmod2", "libudev1", "zlib1g"}
+            filtered_names = {
+                "base-files",
+                "libc6",
+                "libkmod2",
+                "libudev1",
+                "zlib1g",
+                # dependencies in focal
+                "dpkg",
+                "libacl1",
+                "libbz2-1.0",
+                "libcrypt1",
+                "liblzma5",
+                "libpcre2-8-0",
+                "libselinux1",
+                "libzstd1",
+                "pci.ids",
+                "perl-base",
+                "tar",
+            }
 
             apt_cache.mark_packages(package_names)
             apt_cache.unmark_packages(
