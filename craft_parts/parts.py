@@ -157,9 +157,9 @@ class Part:
         return self._data.get("after", []).copy()
 
     @property
-    def plugin(self) -> str:
+    def plugin(self) -> Optional[str]:
         """The name of this part's plugin."""
-        return str(self._data.get("plugin"))
+        return self._data.get("plugin")
 
     @property
     def build_environment(self) -> List[Dict[str, str]]:

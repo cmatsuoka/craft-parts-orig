@@ -106,6 +106,15 @@ class InvalidPluginAPIVersion(CraftPartsError):
         super().__init__(version=version)
 
 
+class UndefinedPlugin(CraftPartsError):
+    """The part didn't define a plugin and the part name is not a valid plugin name."""
+
+    fmt = "Plugin not defined for part {part_name!r}."
+
+    def __init__(self, part_name: str):
+        super().__init__(part_name=part_name)
+
+
 class InvalidPlugin(CraftPartsError):
     """A request was made to use a plugin that's not defined.
 

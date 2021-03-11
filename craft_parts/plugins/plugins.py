@@ -50,23 +50,27 @@ def get_plugin(
 ) -> Plugin:
     """Obtain a plugin instance for the specified part."""
 
-    plugin_class = _get_plugin_class(part.plugin, version=plugin_version)
+    plugin_class = _get_plugin_class(part=part, version=plugin_version)
     plugin_schema = validator.merge_schema(plugin_class.get_schema())
     options = PluginOptions(properties=part.properties, schema=plugin_schema)
 
     return plugin_class(options=options, part_info=part_info)
 
 
-def _get_plugin_class(name: str, *, version: str) -> PluginType:
+def _get_plugin_class(*, part: Part, version: str) -> PluginType:
     """Obtain a plugin class given the name and plugin API version."""
 
+    plugin_name = part.plugin if part.plugin else part.name
     if version not in _PLUGINS:
         raise errors.InvalidPluginAPIVersion(version)
 
-    if name not in _PLUGINS[version]:
-        raise errors.InvalidPlugin(name)
+    if plugin_name not in _PLUGINS[version]:
+        if not part.plugin:
+            raise errors.UndefinedPlugin(part.name)
 
-    return _PLUGINS[version][name]
+        raise errors.InvalidPlugin(part.plugin)
+
+    return _PLUGINS[version][plugin_name]
 
 
 def register(plugins: Dict[str, PluginType], *, version: str = "v2") -> None:

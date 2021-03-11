@@ -115,6 +115,10 @@ class TestPartBasics:
         p = Part("foo", {"plugin": "nil"})
         assert p.plugin == "nil"
 
+    def test_part_plugin_missing(self):
+        p = Part("foo", {})
+        assert p.plugin is None
+
     def test_part_build_environment(self):
         p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
         x = p.build_environment
