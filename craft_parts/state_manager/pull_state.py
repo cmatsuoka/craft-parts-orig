@@ -61,6 +61,7 @@ class PullState(PartState):
             "source-type",
             "source-branch",
             "source-subdir",
+            "stage-packages",
         ]
 
         properties: Dict[str, Any] = {}
