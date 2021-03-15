@@ -82,10 +82,8 @@ class LifecycleManager:
     :param local_plugins_dir: The directory where local plugins are, if any.
     :param plugin_version: The plugin API version. Currently only ``v2`` is
         supported.
-    :param stage_pkg_unpack: Enable unpacking stage packages defined for each
-        part into the part's install directory.
-    :param build_pkg_install: Enable installing build packages defined for each
-        part when running the execution prologue.
+    :param enable_stage_layers: Create an overlay for the base filesystem
+        image with consistent package management for stage packages.
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -101,8 +99,7 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
-        disable_stage_packages: bool = False,
-        disable_build_packages: bool = False,
+        enable_stage_layers: bool = False,
         extra_build_packages: List[str] = None,
         **custom_args,  # custom passthrough args
     ):
@@ -136,8 +133,7 @@ class LifecycleManager:
             part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
-            disable_stage_packages=disable_stage_packages,
-            disable_build_packages=disable_build_packages,
+            enable_stage_layers=enable_stage_layers,
             extra_build_packages=extra_build_packages,
         )
 

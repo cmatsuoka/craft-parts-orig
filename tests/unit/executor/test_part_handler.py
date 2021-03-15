@@ -98,7 +98,7 @@ class TestStagePackages:
             part_info=part_info,
             part_list=[part1],
             validator=fake_validator,
-            disable_stage_packages=True,
+            enable_stage_layers=True,
         )
 
         state = handler._run_pull(StepInfo(part_info, Step.PULL))

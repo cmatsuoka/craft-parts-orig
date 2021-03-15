@@ -47,23 +47,6 @@ class TestBuildPackages:
 
         install.assert_called_once_with(["pkg1", "pkg2"])
 
-    def test_dont_install_build_packages(self, mocker, fake_validator):
-        install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
-
-        part1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
-        part2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
-        info = ProjectInfo()
-
-        e = Executor(
-            project_info=info,
-            part_list=[part1, part2],
-            validator=fake_validator,
-            disable_build_packages=True,
-        )
-        e.prologue()
-
-        install.assert_not_called()
-
     def test_install_extra_build_packages(self, mocker, fake_validator):
         install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
 

@@ -221,6 +221,18 @@ def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
     return None
 
 
+def mount(device: str, mountpoint: str, *args) -> None:
+    subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+
+
+def umount(mountpoint: str) -> None:
+    subprocess.check_call(["/bin/umount", mountpoint])
+
+
+def mount_image(image: str, mountpoint: str) -> None:
+    mount(image, mountpoint, "-oloop,ro")
+
+
 _ID_TO_UBUNTU_CODENAME = {
     "17.10": "artful",
     "17.04": "zesty",

@@ -24,7 +24,7 @@ from glob import iglob
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-from craft_parts import callbacks, common, errors, packages, plugins, sources
+from craft_parts import callbacks, common, errors, layers, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.filesets import Fileset
 from craft_parts.infos import PartInfo, StepInfo
@@ -52,12 +52,12 @@ class PartHandler:
         part_info: PartInfo,
         validator: Validator,
         part_list: List[Part],
-        disable_stage_packages: bool = False,
+        enable_stage_layers: bool = False,
     ):
         self._part = part
         self._part_info = part_info
         self._part_list = part_list
-        self._disable_stage_packages = disable_stage_packages
+        self._enable_stage_layers = enable_stage_layers
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -82,6 +82,11 @@ class PartHandler:
 
         self._build_snaps = common.get_build_snaps(
             part=self._part, repository=self._package_repo, plugin=self._plugin
+        )
+
+        self._layer_manager = layers.LayerManager(
+            layer_dir=self._part_info.layer_dir,
+            base_dir=Path("/"),  # FIXME: use an appropriate base image
         )
 
     @property
@@ -163,7 +168,7 @@ class PartHandler:
                 target_arch=step_info.target_arch,
                 base=os_utils.get_build_base(),
                 stage_packages_path=self._part.part_packages_dir,
-                list_only=self._disable_stage_packages,
+                list_only=self._enable_stage_layers,
             )
         except packages_errors.PackageNotFound as err:
             raise errors.StagePackageError(self._part.name, err.message)
@@ -186,6 +191,13 @@ class PartHandler:
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )
+
+    def _install_stage_packages(self):
+        try:
+            self._layer_manager.mount_stage_packages_overlay()
+            self._layer_manager.install_packages(package_list=self._part.stage_packages)
+        finally:
+            self._layer_manager.unmount_stage_packages_overlay()
 
     def _unpack_stage_snaps(self):
         stage_snaps = self._part.stage_snaps
@@ -260,7 +272,9 @@ class PartHandler:
         self._make_dirs()
         _remove(self._part.part_build_dir)
 
-        if not self._disable_stage_packages:
+        if self._enable_stage_layers:
+            self._install_stage_packages()
+        else:
             self._unpack_stage_packages()
 
         self._unpack_stage_snaps()
@@ -402,9 +416,7 @@ class PartHandler:
 
     def _update_build(self, step_info: StepInfo) -> None:
         self._make_dirs()
-
-        if not self._disable_stage_packages:
-            self._unpack_stage_packages()
+        self._unpack_stage_packages()
 
         if not self._plugin.out_of_source_build:
             # Use the local source to update. It's important to use
