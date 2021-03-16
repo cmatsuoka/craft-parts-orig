@@ -20,6 +20,7 @@ import logging
 import os
 import os.path
 import shutil
+import time
 from glob import iglob
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -84,9 +85,9 @@ class PartHandler:
             part=self._part, repository=self._package_repo, plugin=self._plugin
         )
 
-        self._layer_manager = layers.LayerManager(
-            layer_dir=self._part_info.layer_dir,
-            base_dir=Path("/"),  # FIXME: use an appropriate base image
+        self._stage_packages_layer = layers.StagePackagesLayer(
+            root=self._part_info.layer_dir,
+            base=Path("../base"),  # FIXME
         )
 
     @property
@@ -193,11 +194,8 @@ class PartHandler:
         )
 
     def _install_stage_packages(self):
-        try:
-            self._layer_manager.mount_stage_packages_overlay()
-            self._layer_manager.install_packages(package_list=self._part.stage_packages)
-        finally:
-            self._layer_manager.unmount_stage_packages_overlay()
+        with layers.Layer(self._stage_packages_layer) as layer:
+            layer.install_packages(package_list=self._part.stage_packages)
 
     def _unpack_stage_snaps(self):
         stage_snaps = self._part.stage_snaps
@@ -280,6 +278,8 @@ class PartHandler:
         self._unpack_stage_snaps()
 
         # Copy source from the part source dir to the part build dir
+        # No hard-links being used here in case the build process modifies
+        # these files.
         shutil.copytree(
             self._part.part_src_dir, self._part.part_build_dir, symlinks=True
         )

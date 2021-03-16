@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
-from pathlib import Path
 from unittest.mock import call
 
 import pytest
@@ -55,7 +54,7 @@ class TestStagePackages:
         self, new_dir, fake_chroot, fake_apt_cache, fake_run
     ):
         parts_yaml = textwrap.dedent(
-            f"""\
+            """\
             parts:
               foo:
                 plugin: nil
@@ -80,6 +79,7 @@ class TestStagePackages:
         fake_chroot.assert_has_calls([call(new_dir / "layer/stage_packages_overlay")])
 
         upper_dir = f"{new_dir}/layer/stage_packages"
+        lower_dir = "layer/base"
         work_dir = f"{new_dir}/layer/stage_packages_work"
 
         fake_run.assert_has_calls(
@@ -88,12 +88,13 @@ class TestStagePackages:
                     [
                         "/bin/mount",
                         "-toverlay",
-                        f"-olowerdir=/,upperdir={upper_dir},workdir={work_dir}",
+                        f"-olowerdir={lower_dir},upperdir={upper_dir},workdir={work_dir}",
                         "overlay",
                         f"{new_dir}/layer/stage_packages_overlay",
                     ]
                 ),
-                call(["sudo", "--preserve-env", "apt-get", "update"]),
+                # call(["sudo", "--preserve-env", "apt-get", "update"]),
+                call(["apt-get", "update"]),
                 call(["/bin/umount", f"{new_dir}/layer/stage_packages_overlay"]),
             ]
         )

@@ -14,12 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from pathlib import Path
 
 from craft_parts.utils import os_utils
 
+logger = logging.getLogger(__name__)
 
-class Overlay:
+
+class OverlayFS:
     def __init__(
         self, *, mountpoint: Path, lowerdir: Path, upperdir: Path, workdir: Path
     ):
@@ -29,6 +32,7 @@ class Overlay:
         self._work_dir = str(workdir)
 
     def mount(self):
+        logger.debug("mount overlayfs on %s", self._mountpoint)
         os_utils.mount(
             "overlay",
             self._mountpoint,
@@ -39,4 +43,5 @@ class Overlay:
         )
 
     def unmount(self):
+        logger.debug("unmount overlayfs from %s", self._mountpoint)
         os_utils.umount(self._mountpoint)

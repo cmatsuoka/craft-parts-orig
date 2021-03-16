@@ -254,7 +254,8 @@ class Ubuntu(BaseRepository):
     @classmethod
     def refresh_build_packages(cls) -> None:
         try:
-            cmd = ["sudo", "--preserve-env", "apt-get", "update"]
+            # cmd = ["sudo", "--preserve-env", "apt-get", "update"]
+            cmd = ["apt-get", "update"]
             logger.debug("Executing: %s", cmd)
             subprocess.check_call(cmd)
         except subprocess.CalledProcessError as call_error:

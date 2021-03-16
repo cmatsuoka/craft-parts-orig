@@ -14,4 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .manager import LayerManager  # noqa: F401
+from .layer import Layer  # noqa: F401
+from .layer import PrimeLayer  # noqa: F401
+from .layer import StageLayer  # noqa: F401
+from .layer import StagePackagesLayer  # noqa: F401
