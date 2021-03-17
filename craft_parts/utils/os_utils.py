@@ -205,6 +205,16 @@ def is_inside_container() -> bool:
     return False
 
 
+def mount(device: str, mountpoint: str, *args) -> None:
+    logger.debug("mount %s on %s (%s)", device, mountpoint, ",".join(args))
+    subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+
+
+def umount(mountpoint: str) -> None:
+    logger.debug("unmount %s", mountpoint)
+    subprocess.check_call(["/bin/umount", mountpoint])
+
+
 def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),

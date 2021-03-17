@@ -101,10 +101,14 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
-        base_packages: List[str] = None,
         extra_build_packages: List[str] = None,
+        base_packages: List[str] = None,
+        base_dir: Union[str, Path] = None,
         **custom_args,  # custom passthrough args
     ):
+        if base_packages and not base_dir:
+            raise ValueError("base_dir is mandatory if base_packages are specified")
+
         self._validator = Validator(_SCHEMA_DIR / "parts.json")
         self._validator.validate(all_parts)
 
@@ -125,6 +129,7 @@ class LifecycleManager:
         ]
         self._application_name = application_name
         self._target_arch = project_info.target_arch
+        self._base_packages = base_packages
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
@@ -135,8 +140,9 @@ class LifecycleManager:
             part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
-            base_packages=base_packages,
             extra_build_packages=extra_build_packages,
+            base_packages=base_packages,
+            base_dir=base_dir,
         )
 
         # TODO: validate/transform application name, should be usable in file names
@@ -165,6 +171,8 @@ class LifecycleManager:
         :param update_system_package_list: Also refresh the list of available
             build packages to install on the system.
         """
+
+        self._executor.refresh_base_package_list()
 
         packages.Repository().update_package_list(
             application_name=self._application_name, target_arch=self._target_arch

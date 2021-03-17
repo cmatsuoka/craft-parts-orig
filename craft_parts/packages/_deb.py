@@ -312,6 +312,7 @@ class Ubuntu(BaseRepository):
         :raises craft_parts.packages.errors.BuildPackagesNotInstalled:
             if installing the packages on the host failed.
         """
+
         if not package_names:
             return []
 

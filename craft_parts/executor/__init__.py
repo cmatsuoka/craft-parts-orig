@@ -19,9 +19,10 @@
 import contextlib
 import logging
 import shutil
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
-from craft_parts import callbacks, packages
+from craft_parts import callbacks, layers, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, part_list_by_name
@@ -44,9 +45,10 @@ class Executor:
         part_list: List[Part],
         validator: Validator,
         project_info: ProjectInfo,
-        base_packages: List[str] = None,
         extra_build_packages: List[str] = None,
         extra_build_snaps: List[str] = None,
+        base_packages: List[str] = None,
+        base_dir: Union[str, Path] = None,
     ):
         self._part_list = part_list
         self._validator = validator
@@ -55,12 +57,23 @@ class Executor:
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
+        self._base_package_layers: Optional[layers.BasePackagesLayers]
+
+        if base_dir:
+            self._base_package_layers = layers.BasePackagesLayers(
+                root=project_info.dirs.layer_dir,
+                base=Path(base_dir),
+            )
+        else:
+            self._base_package_layers = None
 
     def prologue(self):
         """Prepare the execution environment."""
 
         self._install_build_packages()
         self._install_build_snaps()
+        self._install_base_packages()
+
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
     def epilogue(self):
@@ -121,6 +134,17 @@ class Executor:
                 validator=self._validator,
                 part_list=self._part_list,
             )
+
+    def refresh_base_package_list(self):
+        # FIXME: update once and inject into the chroot to ensure consistency
+        if self._base_package_layers:
+            with layers.Overlay(self._base_package_layers) as ovl:
+                ovl.refresh_package_list()
+
+    def _install_base_packages(self):
+        if self._base_package_layers:
+            with layers.Overlay(self._base_package_layers) as ovl:
+                ovl.install_packages(self._base_packages)
 
     def _install_build_packages(self):
         for part in self._part_list:

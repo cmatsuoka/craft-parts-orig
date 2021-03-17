@@ -49,3 +49,8 @@ class ProjectDirs:
     def prime_dir(self) -> Path:
         """The primed tree containing the artifacts to deploy."""
         return self._work_dir / "prime"
+
+    @property
+    def layer_dir(self) -> Path:
+        """The base directory for base system layers."""
+        return self._work_dir / "layer"
