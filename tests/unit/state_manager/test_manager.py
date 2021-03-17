@@ -19,11 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts.infos import ProjectInfo
-from craft_parts.parts import Part
 from craft_parts.schemas import Validator
-from craft_parts.state_manager import manager
-from craft_parts.steps import Step
 
 _pull_state_foo = textwrap.dedent(
     """\
@@ -60,18 +56,3 @@ def fake_state(new_dir):
     Path(new_dir / "parts/bar/state").mkdir(parents=True)
     Path(new_dir / "parts/foo/state/pull").write_text(_pull_state_foo)
     Path(new_dir / "parts/bar/state/pull").write_text(_pull_state_bar)
-
-
-@pytest.mark.usefixtures("fake_state")
-def test_state_assets(fake_validator):
-    p1 = Part("foo", {})
-    p2 = Part("bar", {})
-
-    sm = manager.StateManager(
-        project_info=ProjectInfo(),
-        part_list=[p1, p2],
-        validator=fake_validator,
-    )
-
-    assert sm.state_assets(p1, Step.PULL) == {"stage-packages": ["fake-package-foo=1"]}
-    assert sm.state_assets(p2, Step.PULL) == {"stage-packages": ["fake-package-bar=2"]}

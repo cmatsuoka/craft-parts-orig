@@ -19,10 +19,10 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from craft_parts import common, executor, packages, parts, sequencer
+from craft_parts import executor, packages, parts, sequencer
 from craft_parts.actions import Action
 from craft_parts.infos import ProjectInfo
-from craft_parts.parts import Part, part_list_by_name
+from craft_parts.parts import Part
 from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
@@ -101,8 +101,7 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
         plugin_version: str = "v2",
-        disable_stage_packages: bool = False,
-        disable_build_packages: bool = False,
+        base_packages: List[str] = None,
         extra_build_packages: List[str] = None,
         **custom_args,  # custom passthrough args
     ):
@@ -136,8 +135,7 @@ class LifecycleManager:
             part_list=self._part_list,
             validator=self._validator,
             project_info=project_info,
-            disable_stage_packages=disable_stage_packages,
-            disable_build_packages=disable_build_packages,
+            base_packages=base_packages,
             extra_build_packages=extra_build_packages,
         )
 
@@ -167,6 +165,7 @@ class LifecycleManager:
         :param update_system_package_list: Also refresh the list of available
             build packages to install on the system.
         """
+
         packages.Repository().update_package_list(
             application_name=self._application_name, target_arch=self._target_arch
         )
@@ -192,22 +191,6 @@ class LifecycleManager:
     def reload_state(self) -> None:
         """Reload the ephemeral state from disk."""
         self._sequencer.reload_state()
-
-    def get_stage_packages(self, part_names: List[str] = None) -> List[str]:
-        """Obtain the deduplicated list of stage packages from all given parts."""
-
-        selected_parts = part_list_by_name(part_names, self._part_list)
-        return common.stage_packages_from_parts(selected_parts)
-
-    def get_state_assets(
-        self, asset_name: str, *, step: Step, part_names: List[str] = None
-    ) -> List[str]:
-        """Obtain the deduplicated list of the given state asset for all given parts."""
-
-        selected_parts = part_list_by_name(part_names, self._part_list)
-        return self._sequencer.state_assets_for_step(
-            asset_name=asset_name, step=step, part_list=selected_parts
-        )
 
     def execution_context(self) -> ExecutionContext:
         return ExecutionContext(

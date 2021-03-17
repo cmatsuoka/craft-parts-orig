@@ -196,28 +196,3 @@ class TestSequencerStates:
             Action("bar", Step.BUILD, action_type=ActionType.RUN),
             Action("foo", Step.BUILD, action_type=ActionType.RUN),
         ]
-
-    def test_assets_for_step(self, fake_validator):
-        p1 = Part("foo", {"plugin": "nil"})
-        p2 = Part("bar", {"plugin": "nil"})
-
-        seq = sequencer.Sequencer(
-            part_list=[p1, p2],
-            validator=fake_validator,
-            project_info=ProjectInfo(),
-        )
-
-        asset_list = seq.state_assets_for_step(
-            asset_name="stage-packages", step=Step.PULL, part_list=[]
-        )
-        assert asset_list == []
-
-        asset_list = seq.state_assets_for_step(
-            asset_name="stage-packages", step=Step.PULL, part_list=[p1]
-        )
-        assert asset_list == ["fake-package-foo=1"]
-
-        asset_list = seq.state_assets_for_step(
-            asset_name="stage-packages", step=Step.PULL, part_list=[p1, p2]
-        )
-        assert sorted(asset_list) == ["fake-package-bar=2", "fake-package-foo=1"]

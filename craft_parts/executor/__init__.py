@@ -44,16 +44,14 @@ class Executor:
         part_list: List[Part],
         validator: Validator,
         project_info: ProjectInfo,
-        disable_stage_packages: bool = False,
-        disable_build_packages: bool = False,
+        base_packages: List[str] = None,
         extra_build_packages: List[str] = None,
         extra_build_snaps: List[str] = None,
     ):
         self._part_list = part_list
         self._validator = validator
         self._project_info = project_info
-        self._disable_stage_packages = disable_stage_packages
-        self._disable_build_packages = disable_build_packages
+        self._base_packages = base_packages
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
@@ -122,22 +120,20 @@ class Executor:
                 part_info=PartInfo(self._project_info, part),
                 validator=self._validator,
                 part_list=self._part_list,
-                disable_stage_packages=self._disable_stage_packages,
             )
 
     def _install_build_packages(self):
-        if not self._disable_build_packages:
-            for part in self._part_list:
-                self._create_part_handler(part)
+        for part in self._part_list:
+            self._create_part_handler(part)
 
-            build_packages = set()
-            for _, handler in self._handler.items():
-                build_packages.update(handler.build_packages)
+        build_packages = set()
+        for _, handler in self._handler.items():
+            build_packages.update(handler.build_packages)
 
-            if self._extra_build_packages:
-                build_packages.update(self._extra_build_packages)
+        if self._extra_build_packages:
+            build_packages.update(self._extra_build_packages)
 
-            packages.Repository.install_build_packages(sorted(build_packages))
+        packages.Repository.install_build_packages(sorted(build_packages))
 
     def _install_build_snaps(self):
         build_snaps = set()

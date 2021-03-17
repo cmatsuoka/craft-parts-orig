@@ -17,7 +17,7 @@
 """Common helpers that can be used the sequencer or the executor."""
 
 import logging
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 
 from craft_parts import packages, plugins, sources
 from craft_parts.parts import Part
@@ -81,15 +81,3 @@ def get_machine_manifest() -> Dict[str, Any]:
         "installed-packages": sorted(packages.Repository.get_installed_packages()),
         "installed-snaps": sorted(packages.snaps.get_installed_snaps()),
     }
-
-
-def stage_packages_from_parts(part_list: List[Part]) -> List[str]:
-    """Obtain the list of stage packages from all parts."""
-
-    stage_packages: Set[str] = set()
-    for part in part_list:
-        part_stage_packages = part.stage_packages
-        if part_stage_packages:
-            stage_packages.update(part_stage_packages)
-
-    return list(stage_packages)

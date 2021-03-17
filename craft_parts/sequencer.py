@@ -70,24 +70,6 @@ class Sequencer:
 
         return package_list
 
-    def state_assets_for_step(
-        self, *, asset_name: str, step: Step, part_list: List[Part]
-    ) -> List[str]:
-        """Return all state assets for the given step and part names."""
-
-        asset_list: List[str] = []
-
-        for part in part_list:
-            assets = self._sm.state_assets(part, step)
-            value = assets.get(asset_name)
-            if value:
-                if isinstance(value, list):
-                    asset_list.extend(value)
-                else:
-                    asset_list.append(value)
-
-        return asset_list
-
     def _add_all_actions(
         self,
         target_step: Step,
