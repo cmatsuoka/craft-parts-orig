@@ -72,6 +72,8 @@ class Executor:
 
         self._install_build_packages()
         self._install_build_snaps()
+
+        # TODO: do this if base packages changed or no previous state
         self._install_base_packages()
 
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
@@ -97,7 +99,7 @@ class Executor:
         handler = self._handler[part.name]
         handler.run_action(action)
 
-    def clean(self, *, initial_step: Step, part_names: List[str] = None):
+    def clean(self, initial_step: Step, *, part_names: List[str] = None):
         """Clean the given parts, or all parts if none is specified."""
 
         if not part_names:
@@ -145,6 +147,10 @@ class Executor:
         if self._base_package_layers:
             with layers.Overlay(self._base_package_layers) as ovl:
                 ovl.install_packages(self._base_packages)
+
+            self.clean(Step.STAGE)
+            layers.extract(self._base_package_layers, self._project_info.stage_dir)
+            layers.extract(self._base_package_layers, self._project_info.prime_dir)
 
     def _install_build_packages(self):
         for part in self._part_list:

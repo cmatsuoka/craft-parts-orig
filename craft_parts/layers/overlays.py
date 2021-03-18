@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 class OverlayFS:
     def __init__(
-        self, *, mountpoint: Path, lowerdir: Path, upperdir: Path, workdir: Path
+        self, *, mountpoint: Path, lower_dir: Path, upper_dir: Path, work_dir: Path
     ):
         self._mountpoint = str(mountpoint)
-        self._lower_dir = str(lowerdir)
-        self._upper_dir = str(upperdir)
-        self._work_dir = str(workdir)
+        self._lower_dir = str(lower_dir)
+        self._upper_dir = str(upper_dir)
+        self._work_dir = str(work_dir)
 
     def mount(self):
         os_utils.mount(
