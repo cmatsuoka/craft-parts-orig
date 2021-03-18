@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import os
 import shutil
@@ -111,7 +112,8 @@ class Overlay:
 
         for entry in chroot.created_files():
             relative = os.path.relpath(entry, "/")
-            os.unlink(os.path.join(self._layers.upper_dir, relative))
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(self._layers.upper_dir, relative))
 
         return False
 
