@@ -390,3 +390,12 @@ class XAttributeTooLongError(CraftPartsReportableError):
 
     def __init__(self, key: str, value: str, path: str):
         super().__init__(key=key, value=value, path=path)
+
+
+class LayerCleanError(CraftPartsError):
+    """Failed to clean a filesystem layer."""
+
+    fmt = "Cannot clean layer: {message}"
+
+    def __init__(self, message: str):
+        super().__init__(message=message)

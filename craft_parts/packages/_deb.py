@@ -297,8 +297,11 @@ class Ubuntu(BaseRepository):
 
             return apt_cache.get_packages_marked_for_installation()
 
+    # FIXME: rename to install_packages
     @classmethod
-    def install_build_packages(cls, package_names: List[str]) -> List[str]:
+    def install_build_packages(
+        cls, package_names: List[str], list_only: bool = False
+    ) -> List[str]:
         """Install packages on the host required to build.
 
         :param package_names: a list of package names to install.
@@ -331,10 +334,11 @@ class Ubuntu(BaseRepository):
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
 
-        if install_required:
-            cls._install_packages(packages)
-        else:
-            logger.debug("Requested build-packages already installed: %s", packages)
+        if not list_only:
+            if install_required:
+                cls._install_packages(packages)
+            else:
+                logger.debug("Requested build-packages already installed: %s", packages)
 
         return packages
 

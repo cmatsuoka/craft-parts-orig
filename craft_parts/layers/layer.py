@@ -14,26 +14,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import abc
 import contextlib
 import logging
 import os
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set, cast
 
-# import pychroot  # type: ignore
-
-from craft_parts import packages
+from craft_parts import errors, packages
+from craft_parts.state_manager import GlobalState, load_global_state
 
 from . import chroot
 from .overlays import OverlayFS
+
+# import pychroot  # type: ignore
 
 
 logger = logging.getLogger(__name__)
 
 
-class Layers:
+class LayerState(GlobalState):
+
+    yaml_tag = "!LayerState"
+
+    def __init__(self, *, base_packages: Set[str] = None):
+        if not base_packages:
+            base_packages = set()
+
+        self.base_packages = base_packages
+
+
+class Layers(abc.ABC):
     def __init__(
         self,
         *,
@@ -41,13 +54,15 @@ class Layers:
         upper_dir: Path,
         lower_dir: Path,
         work_dir: Path,
-        mountpoint: Path
+        mountpoint: Path,
+        state_file: str,
     ):
         self._state_dir = state_dir
         self._upper_dir = upper_dir
         self._lower_dir = lower_dir
         self._work_dir = work_dir
         self._mountpoint = mountpoint
+        self._state_file = state_file
 
         self._overlayfs = OverlayFS(
             upper_dir=upper_dir,
@@ -76,10 +91,22 @@ class Layers:
         self._work_dir.mkdir(parents=True, exist_ok=True)
         self._mountpoint.mkdir(parents=True, exist_ok=True)
 
+    def clean(self):
+        if os.path.ismount(self._mountpoint):
+            raise errors.LayerCleanError(f"{self._mountpoint} is mounted")
 
-def extract(layers: Layers, dest: Path) -> None:
-    # shutil.rmtree(dest)
-    shutil.copytree(layers.upper_dir, dest)
+        for directory in [self._upper_dir, self._work_dir, self._state_dir]:
+            with contextlib.suppress(FileNotFoundError):
+                shutil.rmtree(directory)
+
+        self.mkdirs()
+
+    def extract_to(self, dest: Path) -> None:
+        shutil.copytree(self.upper_dir, dest)
+
+    def load_state(self) -> Optional[LayerState]:
+        state_data, _ = load_global_state(self._state_dir / self._state_file)
+        return cast(LayerState, state_data)
 
 
 class BasePackagesLayers(Layers):
@@ -90,7 +117,12 @@ class BasePackagesLayers(Layers):
             lower_dir=base,
             work_dir=root / "base_packages_work",
             mountpoint=root / "base_packages_overlay",
+            state_file="base_packages",
         )
+
+    def write_state(self, *, base_packages: List[str]) -> None:
+        state = LayerState(base_packages=set(base_packages))
+        state.write(self._state_dir / self._state_file)
 
 
 class Overlay:
@@ -122,15 +154,37 @@ class Overlay:
         #    packages.Repository.refresh_build_packages()
         chroot.run(self._layers.mountpoint, packages.Repository.refresh_build_packages)
 
-    def install_packages(self, package_list: Optional[List[str]]) -> List[str]:
+    def resolve_dependencies(self, package_list: List[str]) -> List[str]:
         if not package_list:
             return []
+
+        installed_packages: List[str] = []  # FIXME
+
+        installed_packages = chroot.run(
+            self._layers.mountpoint,
+            packages.Repository.install_build_packages,
+            package_list,
+            list_only=True,
+        )
+
+        return installed_packages
+
+    def install_packages(self, package_list: List[str]) -> List[str]:
+        if not package_list:
+            return []
+
+        installed_packages: List[str] = []
 
         # with contextlib.suppress(SystemExit), pychroot.Chroot(self._layers.mountpoint):
         #     # FIXME: rename to install_packages
         #     packages.Repository.install_build_packages(package_list)
-        chroot.run(
+        result = chroot.run(
             self._layers.mountpoint,
             packages.Repository.install_build_packages,
             package_list,
         )
+
+        if result and isinstance(result, list):
+            installed_packages = result
+
+        return installed_packages

@@ -17,4 +17,6 @@
 """Part state management."""
 
 from .manager import StateManager  # noqa: F401
+from .part_state import GlobalState  # noqa: F401
 from .part_state import PartState  # noqa: F401
+from .states import load_global_state  # noqa: F401

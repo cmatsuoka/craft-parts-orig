@@ -21,7 +21,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from craft_parts import errors
 from craft_parts.parts import Part
@@ -29,12 +29,37 @@ from craft_parts.steps import Step
 from craft_parts.utils import file_utils, yaml_utils
 
 from .build_state import BuildState
-from .part_state import PartState
+from .part_state import GlobalState, PartState
 from .prime_state import PrimeState
 from .pull_state import PullState
 from .stage_state import StageState
 
 logger = logging.getLogger(__name__)
+
+
+def _load_state(filename: Path) -> Dict[str, Any]:
+    logger.debug("load state file: %s", filename)
+
+    state_data = {}
+    with filename.open() as state_file:
+        state = yaml_utils.load(state_file)
+        if state:
+            state_data = state
+
+    return state_data
+
+
+def load_global_state(
+    filename: Path,
+) -> Tuple[Optional[GlobalState], Optional[datetime]]:
+    if not filename.is_file():
+        return None, None
+
+    state_data = _load_state(filename)
+    timestamp = file_utils.timestamp(str(filename))
+    state = cast(GlobalState, state_data)
+
+    return state, timestamp
 
 
 def load_state(
@@ -46,14 +71,7 @@ def load_state(
     if not filename.is_file():
         return None, None
 
-    logger.debug("load state file: %s", filename)
-
-    state_data = {}
-    with filename.open() as state_file:
-        data = yaml_utils.load(state_file)
-        if data:
-            state_data = data
-
+    state_data = _load_state(filename)
     timestamp = file_utils.timestamp(str(filename))
 
     state: PartState

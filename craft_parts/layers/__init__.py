@@ -15,5 +15,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from .layer import BasePackagesLayers  # noqa: F401
+from .layer import LayerState  # noqa: F401
 from .layer import Overlay  # noqa: F401
-from .layer import extract  # noqa: F401

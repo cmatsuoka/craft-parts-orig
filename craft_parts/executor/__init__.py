@@ -118,6 +118,15 @@ class Executor:
             for step in selected_steps:
                 handler.clean_step(step=step)
 
+    def clean_layers(self):
+        if self._base_package_layers:
+            self._base_package_layers.clean()
+
+    def load_layer_state(self) -> Optional[layers.LayerState]:
+        if self._base_package_layers:
+            return self._base_package_layers.load_state()
+        return None
+
     def _clean_all_parts(self, *, step: Step):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._project_info.prime_dir)
@@ -137,20 +146,34 @@ class Executor:
                 part_list=self._part_list,
             )
 
-    def refresh_base_package_list(self):
+    def refresh_base_packages_list(self):
         # FIXME: update once and inject into the chroot to ensure consistency
         if self._base_package_layers:
             with layers.Overlay(self._base_package_layers) as ovl:
                 ovl.refresh_package_list()
 
-    def _install_base_packages(self):
-        if self._base_package_layers:
+    def resolve_base_packages_dependencies(self, package_list: List[str]) -> List[str]:
+        resolved_packages: List[str] = []
+        if self._base_packages and self._base_package_layers:
             with layers.Overlay(self._base_package_layers) as ovl:
-                ovl.install_packages(self._base_packages)
+                resolved_packages = ovl.resolve_dependencies(self._base_packages)
+
+            logger.debug("resolved base packages: %s", resolved_packages)
+
+        return resolved_packages
+
+    def _install_base_packages(self):
+        if self._base_packages and self._base_package_layers:
+            installed_packages: List[str] = []
+            with layers.Overlay(self._base_package_layers) as ovl:
+                installed_packages = ovl.install_packages(self._base_packages)
+
+            logger.debug("installed base packages: %s", installed_packages)
 
             self.clean(Step.STAGE)
-            layers.extract(self._base_package_layers, self._project_info.stage_dir)
-            layers.extract(self._base_package_layers, self._project_info.prime_dir)
+            self._base_package_layers.extract_to(self._project_info.stage_dir)
+            self._base_package_layers.extract_to(self._project_info.prime_dir)
+            self._base_package_layers.write_state(base_packages=installed_packages)
 
     def _install_build_packages(self):
         for part in self._part_list:

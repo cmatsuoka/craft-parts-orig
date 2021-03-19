@@ -41,6 +41,19 @@ class _State(yaml_utils.YAMLObject):
 
         return False
 
+    def write(self, filepath: Path) -> None:
+        """Write this state to disk."""
+
+        os.makedirs(filepath.parent, exist_ok=True)
+        with open(filepath, "w") as f:
+            data = yaml_utils.dump(self)
+            if data:
+                f.write(data)
+
+
+class GlobalState(_State):
+    pass
+
 
 class PartState(_State):
     """The context used to run a step for a given part.
@@ -114,15 +127,6 @@ class PartState(_State):
             self.project_options,
             self.project_options_of_interest(other_project_options),
         )
-
-    def write(self, filepath: Path) -> None:
-        """Write this state to disk."""
-
-        os.makedirs(filepath.parent, exist_ok=True)
-        with open(filepath, "w") as f:
-            data = yaml_utils.dump(self)
-            if data:
-                f.write(data)
 
 
 def _get_differing_keys(dict1, dict2) -> Set[str]:

@@ -16,13 +16,14 @@
 
 import contextlib
 import logging
+import multiprocessing as mp
 import os
 import os.path
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, List, Union
+from typing import Any, Callable, List, Union
 
 from craft_parts.utils import os_utils
 
@@ -32,33 +33,42 @@ logger = logging.getLogger(__name__)
 _BINDS = ["/sys", "/proc", "/dev"]
 
 
-def run(root: Union[str, Path], func: Callable, *args, **kwargs) -> None:
+def run(root: Union[str, Path], func: Callable, *args, **kwargs) -> Any:
     _prepare_root(root)
+
+    result = None
+    queue: mp.Queue = mp.Queue()
+
     try:
         pid = os.fork()
         if pid == 0:
             logger.debug(f"[{os.getpid()}] chroot to {root!r}")
             os.chroot(root)
             os.chdir("/")
-            func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            queue.put(result)
             sys.exit()
+
+        result = queue.get()
         os.waitpid(pid, 0)
     finally:
         _clean_root(root)
+
+    return result
 
 
 def created_files() -> List[str]:
     return ["/etc/resolv.conf"]
 
 
-def _install_file(name: str, root: str):
+def _install_file(name: str, root: Union[str, Path]):
     dest_name = os.path.join(root, os.path.relpath(name, "/"))
     if os.path.islink(dest_name):
         os.unlink(dest_name)
     shutil.copyfile(name, dest_name)
 
 
-def _prepare_root(root: str) -> None:
+def _prepare_root(root: Union[str, Path]) -> None:
     for entry in _BINDS:
         mountpoint = os.path.join(root, os.path.relpath(entry, "/"))
         os.makedirs(mountpoint, exist_ok=True)
@@ -71,7 +81,7 @@ def _prepare_root(root: str) -> None:
     )
 
 
-def _clean_root(root: str) -> None:
+def _clean_root(root: Union[str, Path]) -> None:
     with contextlib.suppress(subprocess.CalledProcessError):
         os_utils.umount(os.path.join(root, "dev/shm"))
 

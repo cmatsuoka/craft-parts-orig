@@ -145,6 +145,18 @@ class LifecycleManager:
             base_dir=base_dir,
         )
 
+        if self._base_packages:
+            # check if base packages changed
+            base_deps = self._executor.resolve_base_packages_dependencies(
+                self._base_packages
+            )
+            layer_state = self._executor.load_layer_state()
+
+            if not layer_state or set(base_deps) != set(layer_state.base_packages):
+                self.clean(Step.PULL)
+                self.reload_state()
+                self._executor.clean_layers()
+
         # TODO: validate/transform application name, should be usable in file names
         #       consider using python-slugify here
 
@@ -172,7 +184,7 @@ class LifecycleManager:
             build packages to install on the system.
         """
 
-        self._executor.refresh_base_package_list()
+        self._executor.refresh_base_packages_list()
 
         packages.Repository().update_package_list(
             application_name=self._application_name, target_arch=self._target_arch
@@ -240,7 +252,3 @@ class LifecycleManager:
         and :method:`execution_end` are called automatically.
         """
         self._executor.epilogue()
-
-    def resolve_package_dependencies(self, package_names: List[str]) -> List[str]:
-        """Expand the list of provided packages to include dependencies and versions."""
-        return self._sequencer.resolve_package_dependencies(package_names)
