@@ -145,18 +145,6 @@ class LifecycleManager:
             base_dir=base_dir,
         )
 
-        if self._base_packages:
-            # check if base packages changed
-            base_deps = self._executor.resolve_base_packages_dependencies(
-                self._base_packages
-            )
-            layer_state = self._executor.load_layer_state()
-
-            if not layer_state or set(base_deps) != set(layer_state.base_packages):
-                self.clean(Step.PULL)
-                self.reload_state()
-                self._executor.clean_layers()
-
         # TODO: validate/transform application name, should be usable in file names
         #       consider using python-slugify here
 
@@ -204,6 +192,18 @@ class LifecycleManager:
         :return: The list of :class:`Action` objects that should be executed in
             order to reach the target step for the specified parts.
         """
+
+        if self._base_packages:
+            # check if base packages changed
+            base_deps = self._executor.resolve_base_packages_dependencies(
+                self._base_packages
+            )
+            layer_state = self._executor.load_layer_state()
+
+            if not layer_state or set(base_deps) != set(layer_state.base_packages):
+                self.clean(Step.PULL)
+                self.reload_state()
+                self._executor.clean_layers()
 
         act = self._sequencer.plan(target_step, part_names)
         return act

@@ -16,6 +16,7 @@
 
 import logging
 from pathlib import Path
+from typing import List
 
 from craft_parts.utils import os_utils
 
@@ -24,10 +25,15 @@ logger = logging.getLogger(__name__)
 
 class OverlayFS:
     def __init__(
-        self, *, mountpoint: Path, lower_dir: Path, upper_dir: Path, work_dir: Path
+        self,
+        *,
+        mountpoint: Path,
+        lower_dirs: List[Path],
+        upper_dir: Path,
+        work_dir: Path
     ):
         self._mountpoint = str(mountpoint)
-        self._lower_dir = str(lower_dir)
+        self._lower_dir = ":".join([str(ldir) for ldir in lower_dirs])
         self._upper_dir = str(upper_dir)
         self._work_dir = str(work_dir)
 

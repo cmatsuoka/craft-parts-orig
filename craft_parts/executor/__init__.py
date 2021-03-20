@@ -57,15 +57,15 @@ class Executor:
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
-        self._base_package_layers: Optional[layers.BasePackagesLayers]
+        self._layer_stack: Optional[layers.BasePackageLayerStack]
 
         if base_dir:
-            self._base_package_layers = layers.BasePackagesLayers(
+            self._layer_stack = layers.BasePackageLayerStack(
                 root=project_info.dirs.layer_dir,
                 base=Path(base_dir),
             )
         else:
-            self._base_package_layers = None
+            self._layer_stack = None
 
     def prologue(self):
         """Prepare the execution environment."""
@@ -73,8 +73,8 @@ class Executor:
         self._install_build_packages()
         self._install_build_snaps()
 
-        # TODO: do this if base packages changed or no previous state
-        self._install_base_packages()
+        if self._layer_stack and not self._layer_stack.has_state():
+            self._install_base_packages()
 
         callbacks.run_prologue(self._project_info, part_list=self._part_list)
 
@@ -119,12 +119,13 @@ class Executor:
                 handler.clean_step(step=step)
 
     def clean_layers(self):
-        if self._base_package_layers:
-            self._base_package_layers.clean()
+        if self._layer_stack:
+            self._layer_stack.clean_state()
+            self._layer_stack.base_package_layers.clean()
 
     def load_layer_state(self) -> Optional[layers.LayerState]:
-        if self._base_package_layers:
-            return self._base_package_layers.load_state()
+        if self._layer_stack:
+            return self._layer_stack.load_state()
         return None
 
     def _clean_all_parts(self, *, step: Step):
@@ -147,15 +148,14 @@ class Executor:
             )
 
     def refresh_base_packages_list(self):
-        # FIXME: update once and inject into the chroot to ensure consistency
-        if self._base_package_layers:
-            with layers.Overlay(self._base_package_layers) as ovl:
+        if self._layer_stack:
+            with layers.Overlay(self._layer_stack.base_pkglist_layers) as ovl:
                 ovl.refresh_package_list()
 
     def resolve_base_packages_dependencies(self, package_list: List[str]) -> List[str]:
         resolved_packages: List[str] = []
-        if self._base_packages and self._base_package_layers:
-            with layers.Overlay(self._base_package_layers) as ovl:
+        if self._base_packages and self._layer_stack:
+            with layers.Overlay(self._layer_stack.base_pkglist_layers) as ovl:
                 resolved_packages = ovl.resolve_dependencies(self._base_packages)
 
             logger.debug("resolved base packages: %s", resolved_packages)
@@ -163,17 +163,19 @@ class Executor:
         return resolved_packages
 
     def _install_base_packages(self):
-        if self._base_packages and self._base_package_layers:
+        if self._base_packages and self._layer_stack:
             installed_packages: List[str] = []
-            with layers.Overlay(self._base_package_layers) as ovl:
+            with layers.Overlay(self._layer_stack.base_package_layers) as ovl:
                 installed_packages = ovl.install_packages(self._base_packages)
 
             logger.debug("installed base packages: %s", installed_packages)
 
             self.clean(Step.STAGE)
-            self._base_package_layers.extract_to(self._project_info.stage_dir)
-            self._base_package_layers.extract_to(self._project_info.prime_dir)
-            self._base_package_layers.write_state(base_packages=installed_packages)
+            with layers.Overlay(self._layer_stack.combined_package_layers) as ovl:
+                ovl.export_overlay(self._project_info.stage_dir)
+                ovl.export_overlay(self._project_info.prime_dir)
+
+            self._layer_stack.write_state(base_packages=installed_packages)
 
     def _install_build_packages(self):
         for part in self._part_list:

@@ -37,14 +37,14 @@ def _run_chroot(
 ) -> None:
     result = None
     try:
-        logger.debug(f"[{os.getpid()}] chroot to {root!r}")
+        logger.debug("[%s] chroot to {root!r}", os.getpid())
         os.chroot(root)
         os.chdir("/")
         result = func(*args, **kwargs)
-        logger.debug(f"[{os.getpid()}] result: %s", result)
+        logger.debug("[%s] result: %s", os.getpid(), result)
     finally:
         queue.put(result)
-        logger.debug(f"[{os.getpid()}] end of chroot execution")
+        logger.debug("[%s] end of chroot execution", os.getpid())
 
 
 def run(root: Union[str, Path], func: Callable, *args, **kwargs) -> Any:
@@ -89,7 +89,7 @@ def _prepare_root(root: Union[str, Path]) -> None:
 
 
 def _clean_root(root: Union[str, Path]) -> None:
-    logger.debug(f"[{os.getpid()}] clean root")
+    logger.debug("[%s] clean root", os.getpid())
 
     with contextlib.suppress(subprocess.CalledProcessError):
         os_utils.umount(os.path.join(root, "dev/shm"))

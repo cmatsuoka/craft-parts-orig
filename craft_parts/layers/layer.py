@@ -29,9 +29,6 @@ from craft_parts.state_manager import GlobalState, load_global_state
 from . import chroot
 from .overlays import OverlayFS
 
-# import pychroot  # type: ignore
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -46,29 +43,27 @@ class LayerState(GlobalState):
         self.base_packages = base_packages
 
 
-class Layers(abc.ABC):
+class _Layers(abc.ABC):
     def __init__(
         self,
         *,
-        state_dir: Path,
-        upper_dir: Path,
-        lower_dir: Path,
-        work_dir: Path,
-        mountpoint: Path,
-        state_file: str,
+        layer_dirs: List[Path],
     ):
-        self._state_dir = state_dir
-        self._upper_dir = upper_dir
-        self._lower_dir = lower_dir
-        self._work_dir = work_dir
-        self._mountpoint = mountpoint
-        self._state_file = state_file
+        logger.debug("layer_dirs: %s", layer_dirs)
+
+        if len(layer_dirs) < 2:
+            raise ValueError("at least two layers are required in a layer stack")
+
+        self._upper_dir = layer_dirs[0]
+        self._lower_dirs = layer_dirs[1:]
+        self._work_dir = self._upper_dir.parent / (self._upper_dir.name + "_work")
+        self._mountpoint = self._upper_dir.parent / (self._upper_dir.name + "_overlay")
 
         self._overlayfs = OverlayFS(
-            upper_dir=upper_dir,
-            lower_dir=lower_dir,
-            work_dir=work_dir,
-            mountpoint=mountpoint,
+            upper_dir=self._upper_dir,
+            lower_dirs=self._lower_dirs,
+            work_dir=self._work_dir,
+            mountpoint=self._mountpoint,
         )
 
     @property
@@ -87,46 +82,69 @@ class Layers(abc.ABC):
 
     def mkdirs(self) -> None:
         self._upper_dir.mkdir(parents=True, exist_ok=True)
-        self._lower_dir.mkdir(parents=True, exist_ok=True)
         self._work_dir.mkdir(parents=True, exist_ok=True)
         self._mountpoint.mkdir(parents=True, exist_ok=True)
 
+        for ldir in self._lower_dirs:
+            ldir.mkdir(parents=True, exist_ok=True)
+
     def clean(self):
         if os.path.ismount(self._mountpoint):
-            raise errors.LayerCleanError(f"{self._mountpoint} is mounted")
+            raise errors.CleanLayerError(f"{self._mountpoint} is mounted")
 
-        for directory in [self._upper_dir, self._work_dir, self._state_dir]:
-            with contextlib.suppress(FileNotFoundError):
-                shutil.rmtree(directory)
+        for directory in [self._upper_dir, self._work_dir]:
+            if directory:
+                with contextlib.suppress(FileNotFoundError):
+                    shutil.rmtree(directory)
 
         self.mkdirs()
 
-    def extract_to(self, dest: Path) -> None:
-        shutil.copytree(self.upper_dir, dest)
+
+class BasePackageLayerStack:
+    def __init__(self, root: Path, base: Path):
+        self._state_file = root / "state" / "base_packages"
+
+        layer_dirs = [
+            root / "base_packages",
+            root / "base_pkglist",
+            base,
+        ]
+
+        self._base_package_layers = _Layers(layer_dirs=layer_dirs)
+        self._base_pkglist_layers = _Layers(layer_dirs=layer_dirs[1:])
+        self._combined_package_layers = _Layers(layer_dirs=layer_dirs[0:2])
+
+    @property
+    def base_package_layers(self) -> _Layers:
+        return self._base_package_layers
+
+    @property
+    def base_pkglist_layers(self) -> _Layers:
+        return self._base_pkglist_layers
+
+    @property
+    def combined_package_layers(self) -> _Layers:
+        return self._combined_package_layers
+
+    def has_state(self) -> bool:
+        return self._state_file.is_file()
 
     def load_state(self) -> Optional[LayerState]:
-        state_data, _ = load_global_state(self._state_dir / self._state_file)
+        state_data, _ = load_global_state(self._state_file)
         return cast(LayerState, state_data)
 
-
-class BasePackagesLayers(Layers):
-    def __init__(self, root: Path, base: Path):
-        super().__init__(
-            state_dir=root / "state",
-            upper_dir=root / "base_packages",
-            lower_dir=base,
-            work_dir=root / "base_packages_work",
-            mountpoint=root / "base_packages_overlay",
-            state_file="base_packages",
-        )
-
     def write_state(self, *, base_packages: List[str]) -> None:
+        # TODO: add something to identify the base layer?
+        self._state_file.parent.mkdir(parents=True, exist_ok=True)
         state = LayerState(base_packages=set(base_packages))
-        state.write(self._state_dir / self._state_file)
+        state.write(self._state_file)
+
+    def clean_state(self) -> None:
+        self._state_file.unlink(missing_ok=True)
 
 
 class Overlay:
-    def __init__(self, layers: Layers):
+    def __init__(self, layers: _Layers):
         self._layers = layers
         self._layers.mkdirs()
         self._pid = os.getpid()
@@ -150,8 +168,6 @@ class Overlay:
         return False
 
     def refresh_package_list(self) -> None:
-        # with contextlib.suppress(SystemExit), pychroot.Chroot(self._layers.mountpoint):
-        #    packages.Repository.refresh_build_packages()
         chroot.run(self._layers.mountpoint, packages.Repository.refresh_build_packages)
 
     def resolve_dependencies(self, package_list: List[str]) -> List[str]:
@@ -175,9 +191,6 @@ class Overlay:
 
         installed_packages: List[str] = []
 
-        # with contextlib.suppress(SystemExit), pychroot.Chroot(self._layers.mountpoint):
-        #     # FIXME: rename to install_packages
-        #     packages.Repository.install_build_packages(package_list)
         result = chroot.run(
             self._layers.mountpoint,
             packages.Repository.install_build_packages,
@@ -188,3 +201,9 @@ class Overlay:
             installed_packages = result
 
         return installed_packages
+
+    def export_overlay(self, dest: Path) -> None:
+        if not os.path.ismount(self._layers.mountpoint):
+            raise errors.ExportOverlayError(f"{self._layers.mountpoint} is not mounted")
+
+        shutil.copytree(self._layers.mountpoint, dest)

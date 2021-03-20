@@ -392,10 +392,19 @@ class XAttributeTooLongError(CraftPartsReportableError):
         super().__init__(key=key, value=value, path=path)
 
 
-class LayerCleanError(CraftPartsError):
+class CleanLayerError(CraftPartsError):
     """Failed to clean a filesystem layer."""
 
-    fmt = "Cannot clean layer: {message}"
+    fmt = "Failed to clean layer: {message}"
+
+    def __init__(self, message: str):
+        super().__init__(message=message)
+
+
+class ExportOverlayError(CraftPartsError):
+    """Failed to export an overlay mount."""
+
+    fmt = "Failed to export overlay: {message}"
 
     def __init__(self, message: str):
         super().__init__(message=message)
