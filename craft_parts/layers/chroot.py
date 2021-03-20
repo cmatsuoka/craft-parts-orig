@@ -21,7 +21,6 @@ import os
 import os.path
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any, Callable, List, Union
 
@@ -33,26 +32,34 @@ logger = logging.getLogger(__name__)
 _BINDS = ["/sys", "/proc", "/dev"]
 
 
+def _run_chroot(
+    queue: mp.Queue, root: Union[str, Path], func: Callable, *args, **kwargs
+) -> None:
+    result = None
+    try:
+        logger.debug(f"[{os.getpid()}] chroot to {root!r}")
+        os.chroot(root)
+        os.chdir("/")
+        result = func(*args, **kwargs)
+        logger.debug(f"[{os.getpid()}] result: %s", result)
+    finally:
+        queue.put(result)
+        logger.debug(f"[{os.getpid()}] end of chroot execution")
+
+
 def run(root: Union[str, Path], func: Callable, *args, **kwargs) -> Any:
+    logger.debug("run callable: %s", func)
     _prepare_root(root)
 
     result = None
     queue: mp.Queue = mp.Queue()
-
-    try:
-        pid = os.fork()
-        if pid == 0:
-            logger.debug(f"[{os.getpid()}] chroot to {root!r}")
-            os.chroot(root)
-            os.chdir("/")
-            result = func(*args, **kwargs)
-            queue.put(result)
-            sys.exit()
-
-        result = queue.get()
-        os.waitpid(pid, 0)
-    finally:
-        _clean_root(root)
+    child = mp.Process(
+        target=_run_chroot, args=(queue, root, func, *args), kwargs=kwargs
+    )
+    child.start()
+    result = queue.get()
+    child.join()
+    _clean_root(root)
 
     return result
 
@@ -82,6 +89,8 @@ def _prepare_root(root: Union[str, Path]) -> None:
 
 
 def _clean_root(root: Union[str, Path]) -> None:
+    logger.debug(f"[{os.getpid()}] clean root")
+
     with contextlib.suppress(subprocess.CalledProcessError):
         os_utils.umount(os.path.join(root, "dev/shm"))
 
