@@ -144,9 +144,14 @@ class LifecycleManager:
             base_packages=base_packages,
             base_dir=base_dir,
         )
+        self._project_info = project_info
 
         # TODO: validate/transform application name, should be usable in file names
         #       consider using python-slugify here
+
+    @property
+    def project_info(self) -> ProjectInfo:
+        return self._project_info
 
     def clean(self, step: Optional[Step] = None, part_names: List[str] = None) -> None:
         """Clean the specified parts.""
@@ -212,7 +217,7 @@ class LifecycleManager:
         """Reload the ephemeral state from disk."""
         self._sequencer.reload_state()
 
-    def execution_context(self) -> ExecutionContext:
+    def action_executor(self) -> ExecutionContext:
         return ExecutionContext(
             self._execution_prologue, self._execution_epilogue, self._execute
         )

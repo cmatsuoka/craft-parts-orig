@@ -87,19 +87,19 @@ def _do_step(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> N
 
     if options.plan_only:
         printed = False
-        for a in actions:
-            if options.show_skipped or a.type != ActionType.SKIP:
-                print(_action_message(a))
+        for action in actions:
+            if options.show_skipped or action.type != ActionType.SKIP:
+                print(_action_message(action))
                 printed = True
         if not printed:
             print("No actions to execute.")
         sys.exit()
 
-    with lf.execution_context() as ctx:
-        for a in actions:
-            if options.show_skipped or a.type != ActionType.SKIP:
-                print(f"Execute: {_action_message(a)}")
-                ctx.execute(a)
+    with lf.action_executor() as ctx:
+        for action in actions:
+            if options.show_skipped or action.type != ActionType.SKIP:
+                print(f"Execute: {_action_message(action)}")
+                ctx.execute(action)
 
 
 def _do_clean(lf: craft_parts.LifecycleManager, options: argparse.Namespace) -> None:

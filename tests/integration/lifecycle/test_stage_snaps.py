@@ -50,7 +50,7 @@ def test_source_snap(mocker, new_dir, fake_snap_command):
     mocker.patch("craft_parts.packages.snaps.SnapPackage.is_valid", retur_value=True)
     fake_snap_command.fake_download = str(_LOCAL_DIR / "data" / "test-snap.snap")
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions[0])
 
         snaps = list(Path("parts/foo/stage_snaps").glob("*.snap"))

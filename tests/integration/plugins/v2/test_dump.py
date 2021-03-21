@@ -41,7 +41,7 @@ def test_dump_source(tmpdir):
         parts, application_name="test_dump", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
         ctx.execute(Action("foo", Step.BUILD))
 
@@ -67,7 +67,7 @@ def test_dump_ignore(tmpdir):
         parts, application_name="test_dump", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
         ctx.execute(Action("foo", Step.BUILD))
 

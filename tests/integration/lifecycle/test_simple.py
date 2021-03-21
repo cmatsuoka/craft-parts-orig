@@ -55,7 +55,7 @@ def test_actions_simple(new_dir, mocker):
         Action("bar", Step.PULL),
         Action("foobar", Step.PULL),
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)
 
     # foobar part depends on nothing
@@ -68,7 +68,7 @@ def test_actions_simple(new_dir, mocker):
         Action("foobar", Step.STAGE),
         Action("foobar", Step.PRIME),
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)
 
     # Then running build for bar that depends on foo
@@ -82,7 +82,7 @@ def test_actions_simple(new_dir, mocker):
         Action("foo", Step.STAGE, reason="required to build 'bar'"),
         Action("bar", Step.BUILD),
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)
 
     # Building bar again rebuilds it (explicit request)
@@ -94,7 +94,7 @@ def test_actions_simple(new_dir, mocker):
             "bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"
         ),
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)
 
     # Modifying foo’s source marks bar as dirty
@@ -112,7 +112,7 @@ def test_actions_simple(new_dir, mocker):
         Action("bar", Step.BUILD, action_type=ActionType.RERUN, reason="requested step"),
         # fmt: on
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)
 
     # A request to build all parts skips everything
@@ -144,5 +144,5 @@ def test_actions_simple(new_dir, mocker):
         Action("foobar", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
         # fmt: on
     ]
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(actions)

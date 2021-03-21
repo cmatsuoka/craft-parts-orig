@@ -96,7 +96,7 @@ def test_application_plugin_happy(capfd, mocker):
 
     mock_install_build_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-    with lf.execution_context() as exe:
+    with lf.action_executor() as exe:
         exe.execute(actions[1])
 
     out, _ = capfd.readouterr()

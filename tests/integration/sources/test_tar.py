@@ -44,7 +44,7 @@ def test_source_tar(tmpdir):
         parts, application_name="test_tar", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
     foo_src_dir = Path(tmpdir / "parts", "foo", "src")

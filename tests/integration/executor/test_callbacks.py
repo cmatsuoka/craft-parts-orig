@@ -76,7 +76,7 @@ def test_step_callback(tmpdir, capfd, step):
         parts, application_name="test_step_callback", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step))
 
     out, err = capfd.readouterr()
@@ -98,7 +98,7 @@ def test_prologue_callback(tmpdir, capfd):
         parts, application_name="test_prologue_callback", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
@@ -130,7 +130,7 @@ def test_callback_pre(tmpdir, capfd, step, action_type):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=action_type))
 
     out, err = capfd.readouterr()
@@ -151,7 +151,7 @@ def test_callback_post(tmpdir, capfd, step, action_type):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=action_type))
 
     out, err = capfd.readouterr()
@@ -185,7 +185,7 @@ def test_update_callback_pre(tmpdir, capfd, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     out, err = capfd.readouterr()
@@ -202,7 +202,7 @@ def test_update_callback_post(tmpdir, capfd, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     out, err = capfd.readouterr()
@@ -219,7 +219,7 @@ def test_invalid_update_callback_pre(tmpdir, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx, pytest.raises(errors.InvalidAction) as raised:
+    with lf.action_executor() as ctx, pytest.raises(errors.InvalidAction) as raised:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     name = step.name.lower()
@@ -237,7 +237,7 @@ def test_invalid_update_callback_post(tmpdir, step):
         parts, application_name="test_callback", work_dir=tmpdir, message="callback"
     )
 
-    with lf.execution_context() as ctx, pytest.raises(errors.InvalidAction) as raised:
+    with lf.action_executor() as ctx, pytest.raises(errors.InvalidAction) as raised:
         ctx.execute(Action("foo", step, action_type=ActionType.UPDATE))
 
     name = step.name.lower()
@@ -278,7 +278,7 @@ def test_callback_prologue(tmpdir, capfd):
         parts, application_name="test_callback", work_dir=tmpdir, message="prologue"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()
@@ -294,7 +294,7 @@ def test_callback_epilogue(tmpdir, capfd):
         parts, application_name="test_callback", work_dir=tmpdir, message="epilogue"
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
 
     out, err = capfd.readouterr()

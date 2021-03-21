@@ -53,7 +53,7 @@ def test_run(tmpdir):
         parts, application_name="test_steps", work_dir=tmpdir
     )
 
-    with lf.execution_context() as ctx:
+    with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
         ctx.execute(Action("foo", Step.BUILD))
         ctx.execute(Action("foo", Step.STAGE))
