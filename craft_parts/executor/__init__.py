@@ -57,10 +57,10 @@ class Executor:
         self._extra_build_packages = extra_build_packages
         self._extra_build_snaps = extra_build_snaps
         self._handler: Dict[str, PartHandler] = {}
-        self._layer_stack: Optional[layers.BasePackageLayerStack]
+        self._layer_stack: Optional[layers.BasePackagesLayerStack]
 
         if base_dir:
-            self._layer_stack = layers.BasePackageLayerStack(
+            self._layer_stack = layers.BasePackagesLayerStack(
                 root=project_info.dirs.layer_dir,
                 base=Path(base_dir),
             )
@@ -121,9 +121,9 @@ class Executor:
     def clean_layers(self):
         if self._layer_stack:
             self._layer_stack.clean_state()
-            self._layer_stack.base_package_layers.clean()
+            self._layer_stack.package_layers.clean()
 
-    def load_layer_state(self) -> Optional[layers.LayerState]:
+    def load_layer_state(self) -> Optional[layers.BasePackagesLayerState]:
         if self._layer_stack:
             return self._layer_stack.load_state()
         return None
@@ -149,13 +149,13 @@ class Executor:
 
     def refresh_base_packages_list(self):
         if self._layer_stack:
-            with layers.Overlay(self._layer_stack.base_pkglist_layers) as ovl:
+            with layers.BasePackagesOverlay(self._layer_stack.pkglist_layers) as ovl:
                 ovl.refresh_package_list()
 
     def resolve_base_packages_dependencies(self, package_list: List[str]) -> List[str]:
         resolved_packages: List[str] = []
         if self._base_packages and self._layer_stack:
-            with layers.Overlay(self._layer_stack.base_pkglist_layers) as ovl:
+            with layers.BasePackagesOverlay(self._layer_stack.pkglist_layers) as ovl:
                 resolved_packages = ovl.resolve_dependencies(self._base_packages)
 
             logger.debug("resolved base packages: %s", resolved_packages)
@@ -165,13 +165,13 @@ class Executor:
     def _install_base_packages(self):
         if self._base_packages and self._layer_stack:
             installed_packages: List[str] = []
-            with layers.Overlay(self._layer_stack.base_package_layers) as ovl:
+            with layers.BasePackagesOverlay(self._layer_stack.package_layers) as ovl:
                 installed_packages = ovl.install_packages(self._base_packages)
 
             logger.debug("installed base packages: %s", installed_packages)
 
             self.clean(Step.STAGE)
-            with layers.Overlay(self._layer_stack.combined_package_layers) as ovl:
+            with layers.BasePackagesOverlay(self._layer_stack.combined_layers) as ovl:
                 ovl.export_overlay(self._project_info.stage_dir)
                 ovl.export_overlay(self._project_info.prime_dir)
 
