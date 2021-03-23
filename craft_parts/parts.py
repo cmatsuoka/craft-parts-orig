@@ -164,7 +164,8 @@ class Part:
     @property
     def build_environment(self) -> List[Dict[str, str]]:
         """The part's build environment."""
-        return copy.deepcopy(self._data.get("build-environment", {}))
+        data: List[Dict[str, str]] = self._data.get("build-environment", [])
+        return copy.deepcopy(data)
 
     @property
     def stage_packages(self) -> Optional[List[str]]:

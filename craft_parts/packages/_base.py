@@ -337,9 +337,9 @@ def fix_pkg_config(
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         match_trim = None
         for line in input_file:
-            match = pattern.search(line)
+            match = pattern.search(str(line))
             if prefix_trim is not None and pattern_trim is not None:
-                match_trim = pattern_trim.search(line)
+                match_trim = pattern_trim.search(str(line))
             if prefix_trim is not None and match_trim is not None:
                 print("prefix={}{}".format(root, match_trim.group("prefix")))
             elif match:

@@ -95,7 +95,7 @@ def fake_snapd():
 
     server = FakeSnapd()
 
-    snapd_fake_socket_path = tempfile.mkstemp()[1]
+    snapd_fake_socket_path = str(tempfile.mkstemp()[1])
     os.unlink(snapd_fake_socket_path)
 
     socket_path_patcher = mock.patch(

@@ -211,7 +211,7 @@ def get_packages_in_base(*, base: str) -> List[str]:
     package_list = list()
     with fileinput.input(str(base_package_list_path)) as f:
         for line in f:
-            if not line.startswith("ii "):
+            if not str(line).startswith("ii "):
                 continue
             package_list.append(line.split()[1])
 
