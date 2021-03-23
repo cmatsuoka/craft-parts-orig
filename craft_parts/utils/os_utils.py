@@ -205,12 +205,14 @@ def is_inside_container() -> bool:
     return False
 
 
-def mount(device: str, mountpoint: str, *args) -> None:
-    logger.debug("mount %s on %s (%s)", device, mountpoint, ",".join(args))
-    subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+def mount(device: str, mountpoint: str, *options) -> None:
+    """Mount a filesystem on the given mountpoint."""
+    logger.debug("mount %s on %s (%s)", device, mountpoint, ",".join(options))
+    subprocess.check_call(["/bin/mount", *options, device, mountpoint])
 
 
 def umount(mountpoint: str) -> None:
+    """Unmount a filesystem."""
     logger.debug("unmount %s", mountpoint)
     subprocess.check_call(["/bin/umount", mountpoint])
 

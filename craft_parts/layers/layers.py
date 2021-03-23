@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Define a set of layers to be used by an overlay filesystem."""
+
 import abc
 import contextlib
 import logging
@@ -30,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class Layers(abc.ABC):
+    """The set of layers used by an overlay filesystem."""
+
     def __init__(
         self,
         *,
@@ -54,19 +58,24 @@ class Layers(abc.ABC):
 
     @property
     def mountpoint(self) -> Path:
+        """Where the overlay filesystem is mounted."""
         return self._mountpoint
 
     @property
     def upper_dir(self) -> Path:
+        """Where the upper dir of this layer set is located."""
         return self._upper_dir
 
     def mount(self) -> None:
+        """Mount this layer set as an overlay filesystem."""
         self._overlayfs.mount()
 
     def unmount(self) -> None:
+        """Unmount the overlay filesystem."""
         self._overlayfs.unmount()
 
     def mkdirs(self) -> None:
+        """Create the directories for the layers in this layer set."""
         self._upper_dir.mkdir(parents=True, exist_ok=True)
         self._work_dir.mkdir(parents=True, exist_ok=True)
         self._mountpoint.mkdir(parents=True, exist_ok=True)
@@ -75,6 +84,7 @@ class Layers(abc.ABC):
             ldir.mkdir(parents=True, exist_ok=True)
 
     def clean(self):
+        """Remove all the files from the layers in this layer set."""
         if os.path.ismount(self._mountpoint):
             raise errors.CleanLayerError(f"{self._mountpoint} is mounted")
 

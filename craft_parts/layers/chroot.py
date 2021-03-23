@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Execute operations changing the system root."""
+
 import contextlib
 import logging
 import multiprocessing as mp
@@ -48,11 +50,13 @@ def _run_chroot(
 
 
 def run(root: Union[str, Path], func: Callable, *args, **kwargs) -> Any:
+    """Run a callable with the given arguments inside a chroot."""
     logger.debug("run callable: %s", func)
     _prepare_root(root)
 
     result = None
     queue: mp.Queue = mp.Queue()
+    mp.set_start_method("fork")
     child = mp.Process(
         target=_run_chroot, args=(queue, root, func, *args), kwargs=kwargs
     )

@@ -151,6 +151,7 @@ class LifecycleManager:
 
     @property
     def project_info(self) -> ProjectInfo:
+        """Obtain information about this project."""
         return self._project_info
 
     def clean(self, step: Optional[Step] = None, part_names: List[str] = None) -> None:
@@ -203,12 +204,12 @@ class LifecycleManager:
             base_deps = self._executor.resolve_base_packages_dependencies(
                 self._base_packages
             )
-            layer_state = self._executor.load_layer_state()
+            layer_state = self._executor.load_base_packages_state()
 
             if not layer_state or set(base_deps) != set(layer_state.base_packages):
                 self.clean(Step.PULL)
                 self.reload_state()
-                self._executor.clean_layers()
+                self._executor.clean_base_packages_layers()
 
         act = self._sequencer.plan(target_step, part_names)
         return act
@@ -218,6 +219,7 @@ class LifecycleManager:
         self._sequencer.reload_state()
 
     def action_executor(self) -> ExecutionContext:
+        """Return a context manager for action execution."""
         return ExecutionContext(
             self._execution_prologue, self._execution_epilogue, self._execute
         )

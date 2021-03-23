@@ -118,12 +118,14 @@ class Executor:
             for step in selected_steps:
                 handler.clean_step(step=step)
 
-    def clean_layers(self):
+    def clean_base_packages_layers(self):
+        """Remove base packages state and files."""
         if self._layer_stack:
             self._layer_stack.clean_state()
             self._layer_stack.package_layers.clean()
 
-    def load_layer_state(self) -> Optional[layers.BasePackagesLayerState]:
+    def load_base_packages_state(self) -> Optional[layers.BasePackagesLayerState]:
+        """Obtain the base packages installation state."""
         if self._layer_stack:
             return self._layer_stack.load_state()
         return None
@@ -148,11 +150,13 @@ class Executor:
             )
 
     def refresh_base_packages_list(self):
+        """Update the list of available base packages."""
         if self._layer_stack:
             with layers.BasePackagesOverlay(self._layer_stack.pkglist_layers) as ovl:
                 ovl.refresh_package_list()
 
     def resolve_base_packages_dependencies(self, package_list: List[str]) -> List[str]:
+        """Compute all the dependencies for the given list of base packages."""
         resolved_packages: List[str] = []
         if self._base_packages and self._layer_stack:
             with layers.BasePackagesOverlay(self._layer_stack.pkglist_layers) as ovl:

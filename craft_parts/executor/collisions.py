@@ -70,6 +70,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
 
 def paths_collide(path1: str, path2: str) -> bool:
+    """Check whether the provided paths conflict to each other."""
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 

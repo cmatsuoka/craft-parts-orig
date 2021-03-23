@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Base package installation processing."""
+
 import contextlib
 import logging
 import os
@@ -61,34 +63,55 @@ class BasePackagesLayerStack:
 
     @property
     def package_layers(self) -> Layers:
+        """The layers used to install system packages.
+
+        The system packages are installed on a set of layers that contain
+        the base system and the list of available packages.
+        """
         return self._base_packages_layers
 
     @property
     def pkglist_layers(self) -> Layers:
+        """The layers used by the list of available packages.
+
+        The list of available packages is installed on a layer above the
+        base system.
+        """
         return self._base_pkglist_layers
 
     @property
     def combined_layers(self) -> Layers:
+        """The layers used by packages and the available package list.
+
+        This set of layers contain only the installed packages and the list
+        of available base, without files from the base system.
+        """
         return self._combined_package_layers
 
     def has_state(self) -> bool:
+        """Return whether the base package installation state is available."""
         return self._state_file.is_file()
 
     def load_state(self) -> Optional[BasePackagesLayerState]:
+        """Load the base package installation state."""
         state_data, _ = load_global_state(self._state_file)
         return cast(BasePackagesLayerState, state_data)
 
     def write_state(self, *, base_packages: List[str]) -> None:
+        """Write the base package installation state to disk."""
         # TODO: add something to identify the base layer?
         self._state_file.parent.mkdir(parents=True, exist_ok=True)
         state = BasePackagesLayerState(base_packages=set(base_packages))
         state.write(self._state_file)
 
     def clean_state(self) -> None:
+        """Remove the base package installation state."""
         self._state_file.unlink(missing_ok=True)
 
 
 class BasePackagesOverlay:
+    """Execute actions on the package overlay."""
+
     def __init__(self, layers: Layers):
         self._layers = layers
         self._layers.mkdirs()
@@ -113,9 +136,11 @@ class BasePackagesOverlay:
         return False
 
     def refresh_package_list(self) -> None:
+        """Change root and update the available package list."""
         chroot.run(self._layers.mountpoint, packages.Repository.refresh_build_packages)
 
     def resolve_dependencies(self, package_list: List[str]) -> List[str]:
+        """Change root and find dependencies for the given package list."""
         if not package_list:
             return []
 
@@ -131,6 +156,7 @@ class BasePackagesOverlay:
         return installed_packages
 
     def install_packages(self, package_list: List[str]) -> List[str]:
+        """Change root and install packages on the appropriate layer."""
         if not package_list:
             return []
 
@@ -148,6 +174,7 @@ class BasePackagesOverlay:
         return installed_packages
 
     def export_overlay(self, dest: Path) -> None:
+        """Copy the contents of the overlay tree."""
         if not os.path.ismount(self._layers.mountpoint):
             raise errors.ExportOverlayError(f"{self._layers.mountpoint} is not mounted")
 
