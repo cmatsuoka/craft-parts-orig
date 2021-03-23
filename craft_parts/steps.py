@@ -42,8 +42,10 @@ class Step(enum.IntEnum):
         return f"{self.__class__.__name__}.{self.name}"
 
     def previous_steps(self) -> List["Step"]:
-        """List the steps that should happen before the current step."""
+        """List the steps that should happen before the current step.
 
+        :returns: The list of previous steps.
+        """
         steps = []
 
         if self >= Step.BUILD:
@@ -56,8 +58,10 @@ class Step(enum.IntEnum):
         return steps
 
     def next_steps(self) -> List["Step"]:
-        """List the steps that should happen after the current step."""
+        """List the steps that should happen after the current step.
 
+        :returns: The list of next steps.
+        """
         steps = []
 
         if self == Step.PULL:
@@ -71,8 +75,10 @@ class Step(enum.IntEnum):
 
 
 def dependency_prerequisite_step(step: Step) -> Optional[Step]:
-    """Obtain the step a given step may depend on."""
+    """Obtain the step a given step may depend on.
 
+    :returns: The prerequisite step.
+    """
     #  With V2 plugins we don't need to repull if dependency is restaged
     if step == Step.PULL:
         return None

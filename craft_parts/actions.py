@@ -50,8 +50,8 @@ class Action:
     for each of the parts in the project specification.
 
     :param part_name: The name of the part this action will be
-        executed for.
-    :param step: The :class:`Step` this action corresponds to.
+        performed on.
+    :param step: The :class:`Step` this action will execute.
     :param action_type: Whether this action should run, re-run, update,
         or skip this step.
     :param reason: A textual description of why this action should be
@@ -79,26 +79,26 @@ class Action:
             and self._reason == other._reason
         )
 
+    def __repr__(self):
+        reason = f", {self._reason!r}" if self._reason else ""
+        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r}{reason})"
+
     @property
     def part_name(self) -> str:
-        """The name of part this action will be executed for."""
+        """Return the name of part this action will be performed on."""
         return self._part_name
 
     @property
     def step(self) -> Step:
-        """The step to be executed in this action."""
+        """Return the step this action will execute."""
         return self._step
 
     @property
     def type(self) -> ActionType:
-        """The type of this action."""
+        """Return the type of this action."""
         return self._type
 
     @property
     def reason(self) -> Optional[str]:
-        """The reason why this action is being executed."""
+        """Return the reason why this action is being executed."""
         return self._reason
-
-    def __repr__(self):
-        reason = f", {self._reason!r}" if self._reason else ""
-        return f"Action({self.part_name!r}, {self.step!r}, {self.type!r}{reason})"

@@ -28,29 +28,34 @@ class ProjectDirs:
     """
 
     def __init__(self, *, work_dir: Union[Path, str] = "."):
+        """Create a set of project work directories.
+
+        :param work_dir: The work directory root. If not specified, default to
+           the current directory.
+        """
         self._work_dir = Path(work_dir).absolute()
 
     @property
     def work_dir(self) -> Path:
-        """The directory holding files used during project processing."""
+        """Return the directory holding files used during project processing."""
         return self._work_dir
 
     @property
     def parts_dir(self) -> Path:
-        """The directory containing work dirs for each part."""
+        """Return the directory containing work dirs for each part."""
         return self._work_dir / "parts"
 
     @property
     def stage_dir(self) -> Path:
-        """The staging area containing the installed files from all parts."""
+        """Return the staging area containing the installed files from all parts."""
         return self._work_dir / "stage"
 
     @property
     def prime_dir(self) -> Path:
-        """The primed tree containing the artifacts to deploy."""
+        """Return the primed tree containing the artifacts to deploy."""
         return self._work_dir / "prime"
 
     @property
     def layer_dir(self) -> Path:
-        """The base directory for base system layers."""
+        """Return the base directory for base system layers."""
         return self._work_dir / "layer"

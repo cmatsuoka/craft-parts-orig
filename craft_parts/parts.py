@@ -35,6 +35,10 @@ class Part:
     different steps in order to obtain its final artifacts. The Part
     class holds the part specification data and additional configuration
     information used during step processing.
+
+    :param name: The part name.
+    :param data: A dictionary containing the part properties.
+    :param project_dirs: The project work directories.
     """
 
     def __init__(
@@ -57,79 +61,79 @@ class Part:
 
     @property
     def name(self) -> str:
-        """The part name."""
+        """Return the part name."""
         return self._name
 
     @property
     def properties(self) -> Dict[str, Any]:
-        """The part properties."""
+        """Return the part properties."""
         return self._data.copy()
 
     @property
     def parts_dir(self) -> Path:
-        """The directory containing work files for each part."""
+        """Return the directory containing work files for each part."""
         return self._dirs.parts_dir
 
     @property
     def part_src_dir(self) -> Path:
-        """The subdirectory containing this part's source code."""
+        """Return the subdirectory containing the part source code."""
         return self._part_dir / "src"
 
     @property
     def part_src_work_dir(self) -> Path:
-        """The subdirectory in source containing the source subtree (if any)."""
+        """Return the subdirectory in source containing the source subtree (if any)."""
         source_subdir = self._data.get("source-subdir", "")
         return self.part_src_dir / source_subdir
 
     @property
     def part_build_dir(self) -> Path:
-        """The subdirectory containing this part's build tree."""
+        """Return the subdirectory containing the part build tree."""
         return self._part_dir / "build"
 
     @property
     def part_build_work_dir(self) -> Path:
-        """The subdirectory in build containing the source subtree (if any)."""
+        """Return the subdirectory in build containing the source subtree (if any)."""
         source_subdir = self._data.get("source-subdir", "")
         return self.part_build_dir / source_subdir
 
     @property
     def part_install_dir(self) -> Path:
-        """The subdirectory to install this part's build artifacts."""
+        """Return the subdirectory to install the part build artifacts."""
         return self._part_dir / "install"
 
     @property
     def part_state_dir(self) -> Path:
-        """The subdirectory containing this part's lifecycle state."""
+        """Return the subdirectory containing the part lifecycle state."""
         return self._part_dir / "state"
 
     @property
     def part_packages_dir(self) -> Path:
-        """The subdirectory containing this part's stage packages directory."""
+        """Return the subdirectory containing the part stage packages directory."""
         return self._part_dir / "stage_packages"
 
     @property
     def part_snaps_dir(self) -> Path:
-        """The subdirectory containing this part's snap packages directory."""
+        """Return the subdirectory containing the part snap packages directory."""
         return self._part_dir / "stage_snaps"
 
     @property
     def part_run_dir(self) -> Path:
-        """The subdirectory containing this part's plugin scripts."""
+        """Return the subdirectory containing the part plugin scripts."""
         return self._part_dir / "run"
 
     @property
     def stage_dir(self) -> Path:
-        """The staging area containing the installed files from all parts."""
+        """Return the staging area containing the installed files from all parts."""
         return self._dirs.stage_dir
 
     @property
     def prime_dir(self) -> Path:
-        """The primed tree containing the artifacts to deploy."""
+        """Return the primed tree containing the artifacts to deploy."""
         return self._dirs.prime_dir
 
     @property
     def source(self) -> Optional[str]:
-        """This part's source property, if any."""
+        """Return the part source property, if any."""
         source = self._data.get("source")
         if source:
             return str(source)
@@ -138,38 +142,38 @@ class Part:
 
     @property
     def stage_fileset(self) -> List[str]:
-        """The list of files to stage."""
+        """Return the list of files to stage."""
         return self._data.get("stage", ["*"]).copy()
 
     @property
     def prime_fileset(self) -> List[str]:
-        """The list of files to prime."""
+        """Return the list of files to prime."""
         return self._data.get("prime", ["*"]).copy()
 
     @property
     def organize_fileset(self) -> Dict[str, str]:
-        """The list of files to organize."""
+        """Return the list of files to organize."""
         return self._data.get("organize", {}).copy()
 
     @property
     def dependencies(self) -> List[str]:
-        """The list of parts this parts depends on."""
+        """Return the list of parts this part depends on."""
         return self._data.get("after", []).copy()
 
     @property
     def plugin(self) -> Optional[str]:
-        """The name of this part's plugin."""
+        """Return the name of the part plugin."""
         return self._data.get("plugin")
 
     @property
     def build_environment(self) -> List[Dict[str, str]]:
-        """The part's build environment."""
+        """Return the part's build environment."""
         data: List[Dict[str, str]] = self._data.get("build-environment", [])
         return copy.deepcopy(data)
 
     @property
     def stage_packages(self) -> Optional[List[str]]:
-        """The list of stage packages for this part."""
+        """Return the list of stage packages for this part."""
         packages = self._data.get("stage-packages")
         if packages:
             return packages.copy()
@@ -177,7 +181,7 @@ class Part:
 
     @property
     def stage_snaps(self) -> Optional[List[str]]:
-        """The list of stage snaps for this part."""
+        """Return the list of stage snaps for this part."""
         snaps = self._data.get("stage-snaps")
         if snaps:
             return snaps.copy()
@@ -185,7 +189,7 @@ class Part:
 
     @property
     def build_packages(self) -> Optional[List[str]]:
-        """The list of build packages for this part."""
+        """Return the list of build packages for this part."""
         packages = self._data.get("build-packages")
         if packages:
             return packages.copy()
@@ -193,7 +197,7 @@ class Part:
 
     @property
     def build_snaps(self) -> Optional[List[str]]:
-        """The list of build snaps for this part."""
+        """Return the list of build snaps for this part."""
         snaps = self._data.get("build-snaps")
         if snaps:
             return snaps.copy()
@@ -204,7 +208,6 @@ class Part:
 
         :param step: the step corresponding to the scriptlet to be retrieved.
         """
-
         scr = {
             Step.PULL: "override-pull",
             Step.BUILD: "override-build",
@@ -219,8 +222,9 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
 
     :param name: The name of the part to return.
     :param part_list: The list of all known parts.
-    """
 
+    :returns: The part with the given name.
+    """
     for part in part_list:
         if part.name == name:
             return part
@@ -228,24 +232,23 @@ def part_by_name(name: str, part_list: List[Part]) -> Part:
     raise errors.InvalidPartName(name)
 
 
-def part_list_by_name(
-    part_names: Optional[List[str]], part_list: List[Part]
-) -> List[Part]:
-    """Return a list of parts from part_list that are named in part_names.
+def part_list_by_name(names: Optional[List[str]], part_list: List[Part]) -> List[Part]:
+    """Return a list of parts from part_list that are named in names.
 
-    :param part_names: The list of part names. If the list is empty or not
+    :param names: The list of part names. If the list is empty or not
         defined, return all parts from part_list.
     :param part_list: The list of all known parts.
-    """
 
-    if part_names:
+    :returns: The list of parts corresponding to the given names.
+    """
+    if names:
         # check if all part names are valid
-        valid_part_names = [p.name for p in part_list]
-        for name in part_names:
-            if name not in valid_part_names:
+        valid_names = [p.name for p in part_list]
+        for name in names:
+            if name not in valid_names:
                 raise errors.InvalidPartName(name)
 
-        selected_parts = [p for p in part_list if p.name in part_names]
+        selected_parts = [p for p in part_list if p.name in names]
     else:
         selected_parts = part_list
 
@@ -253,7 +256,12 @@ def part_list_by_name(
 
 
 def sort_parts(part_list: List[Part]) -> List[Part]:
-    """Performs an inneficient but easy to follow sorting of parts."""
+    """Perform an inneficient but easy to follow sorting of parts.
+
+    :param part_list: The list of parts to sort.
+
+    :returns: The sorted list of parts.
+    """
     sorted_parts = []  # type: List[Part]
 
     # We want to process parts in a consistent order between runs. The
@@ -282,13 +290,17 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
 
 
 def part_dependencies(
-    part_name: str, *, part_list: List[Part], recursive: bool = False
+    name: str, *, part_list: List[Part], recursive: bool = False
 ) -> Set[Part]:
-    """Returns a set of all the parts upon which the named part depends."""
+    """Return a set of all the parts upon which the named part depends.
 
-    part = next((p for p in part_list if p.name == part_name), None)
+    :param name: The name of the dependant part.
+
+    :returns: The set of parts the given part depends on.
+    """
+    part = next((p for p in part_list if p.name == name), None)
     if not part:
-        raise errors.InvalidPartName(part_name)
+        raise errors.InvalidPartName(name)
 
     dependency_names = set(part.dependencies)
     dependencies = {p for p in part_list if p.name in dependency_names}
