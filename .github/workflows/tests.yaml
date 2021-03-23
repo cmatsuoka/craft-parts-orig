@@ -44,6 +44,10 @@ jobs:
         run: |
           source ${HOME}/.venv/bin/activate
           make test-mypy
+      - name: Run pydocstyle
+        run: |
+          source ${HOME}/.venv/bin/activate
+          make test-pydocstyle
       - name: Run pyright
         run: |
           sudo apt install -y npm

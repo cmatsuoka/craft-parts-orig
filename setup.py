@@ -1,14 +1,26 @@
 #!/usr/bin/env python
+#
+# Copyright (C) 2021 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The setup script."""
 
 from setuptools import find_packages, setup  # type: ignore
 
+
 with open("README.md") as readme_file:
     readme = readme_file.read()
-
-with open("HISTORY.md") as history_file:
-    history = history_file.read()
 
 requirements = [
     "pyyaml",
@@ -41,7 +53,7 @@ setup(
     },
     install_requires=requirements,
     license="GNU General Public License v3",
-    long_description=readme + "\n\n" + history,
+    long_description=readme,
     include_package_data=True,
     keywords="craft_providers",
     name="craft-providers",

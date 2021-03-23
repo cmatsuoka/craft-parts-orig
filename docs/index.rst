@@ -21,6 +21,8 @@ Public APIs
 
 .. toctree::
 
+   parts
+
    steps_actions
 
    lifecycle

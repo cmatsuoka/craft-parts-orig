@@ -104,6 +104,10 @@ ENV/
 # IDE settings
 .vscode/
 
+# direnv
+.direnv
+.envrc
+
 # Lifecycle
 parts/
 stage/
