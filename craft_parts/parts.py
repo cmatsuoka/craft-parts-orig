@@ -294,7 +294,7 @@ def part_dependencies(
 ) -> Set[Part]:
     """Return a set of all the parts upon which the named part depends.
 
-    :param name: The name of the dependant part.
+    :param name: The name of the dependent part.
 
     :returns: The set of parts the given part depends on.
     """
