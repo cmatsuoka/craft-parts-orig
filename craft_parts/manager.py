@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from craft_parts import executor, packages, parts, sequencer
 from craft_parts.actions import Action
+from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.schemas import Validator
@@ -112,20 +113,21 @@ class LifecycleManager:
         self._validator = Validator(_SCHEMA_DIR / "parts.json")
         self._validator.validate(all_parts)
 
+        project_dirs = ProjectDirs(work_dir=work_dir)
+
         project_info = ProjectInfo(
             application_name=application_name,
             arch=arch,
             plugin_version=plugin_version,
             parallel_build_count=parallel_build_count,
+            project_dirs=project_dirs,
             local_plugins_dir=local_plugins_dir,
-            work_dir=work_dir,
             **custom_args,
         )
 
         parts_data = all_parts.get("parts", {})
         self._part_list = [
-            Part(name, p, project_dirs=project_info.dirs)
-            for name, p in parts_data.items()
+            Part(name, p, project_dirs=project_dirs) for name, p in parts_data.items()
         ]
         self._application_name = application_name
         self._target_arch = project_info.target_arch

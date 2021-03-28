@@ -41,15 +41,18 @@ class ProjectInfo:
         target_arch: str = "",
         plugin_version: str = "v2",
         parallel_build_count: int = 1,
-        work_dir: Union[str, Path] = ".",
+        project_dirs: ProjectDirs = None,
         local_plugins_dir: Union[Path, str] = None,
         **custom_args,  # custom passthrough args
     ):
+        if not project_dirs:
+            project_dirs = ProjectDirs()
+
         self._application_name = application_name
         self._set_machine(target_arch)
         self._plugin_version = plugin_version
         self._parallel_build_count = parallel_build_count
-        self._dirs = ProjectDirs(work_dir=work_dir)
+        self._dirs = project_dirs
         self._custom_args = custom_args
 
         if not local_plugins_dir:

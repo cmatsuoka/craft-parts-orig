@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from craft_parts import errors
+from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -70,7 +71,8 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
 
 def test_project_info_work_dir(new_dir):
-    info = ProjectInfo(custom1="foobar", custom2=[1, 2], work_dir="work_dir")
+    dirs = ProjectDirs(work_dir="work_dir")
+    info = ProjectInfo(custom1="foobar", custom2=[1, 2], project_dirs=dirs)
 
     assert info.parts_dir == new_dir / "work_dir/parts"
     assert info.stage_dir == new_dir / "work_dir/stage"
