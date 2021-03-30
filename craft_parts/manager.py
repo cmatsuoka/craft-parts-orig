@@ -17,7 +17,7 @@
 """The parts lifecycle manager definition and helpers."""
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 from craft_parts import executor, packages, parts, sequencer
 from craft_parts.actions import Action
@@ -189,7 +189,7 @@ class LifecycleManager:
         if update_system_package_list:
             packages.Repository.refresh_build_packages()
 
-    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.
 
         :param target_step: The final step we want to reach.

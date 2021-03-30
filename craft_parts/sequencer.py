@@ -18,7 +18,7 @@
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from craft_parts import common, errors, packages, parts, plugins, steps
 from craft_parts.actions import Action, ActionType
@@ -44,7 +44,7 @@ class Sequencer:
         self._sm = StateManager(project_info, part_list, validator)
         self._actions: List[Action] = []
 
-    def plan(self, target_step: Step, part_names: List[str] = None) -> List[Action]:
+    def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Determine the list of steps to execute for each part."""
 
         self._actions = []
@@ -73,7 +73,7 @@ class Sequencer:
     def _add_all_actions(
         self,
         target_step: Step,
-        part_names: List[str] = None,
+        part_names: Sequence[str] = None,
         reason: Optional[str] = None,
     ) -> None:
         selected_parts = part_list_by_name(part_names, self._part_list)
@@ -97,7 +97,7 @@ class Sequencer:
         current_step: Step,
         target_step: Step,
         part: Part,
-        part_names: Optional[List[str]],
+        part_names: Optional[Sequence[str]],
         reason: Optional[str] = None,
     ) -> None:
         """Verify if this step should be executed."""
