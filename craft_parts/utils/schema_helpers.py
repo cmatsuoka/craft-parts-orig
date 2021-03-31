@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,9 +32,13 @@ _VALIDATION_ERROR_CAUSES = {
 }
 
 
-def determine_preamble(error) -> str:
-    """Obtain the jsonschema validation error message preamble."""
+def determine_preamble(error: jsonschema.ValidationError) -> str:
+    """Obtain the jsonschema validation error message preamble.
 
+    :param error: The jsonschema validation error.
+
+    :returns: The error preamble.
+    """
     messages = []
     path = _determine_property_path(error)
     if path:
@@ -47,18 +51,15 @@ def determine_preamble(error) -> str:
 
 
 def determine_cause(error: jsonschema.ValidationError) -> str:
-    """Obtain the cause from the jsonschema validation error."""
+    """Obtain the cause from the jsonschema validation error.
 
+    :param error: The jsonschema validation error.
+
+    :returns: The jsonschema validation error.
+    """
     messages: List[str] = []
 
-    # error.validator_value may contain a custom validation error message.
-    # If so, use it instead of the garbage message jsonschema gives us.
-    #
-    # FIXME: pyright is unhappy with contextlib.suppress(TypeError, KeyError) here.
-    if (
-        hasattr(error.validator_value, "__iter__")
-        and "validation-failure" in error.validator_value
-    ):
+    with contextlib.suppress(TypeError, KeyError):
         msg: str = error.validator_value["validation-failure"].format(error)
         messages.append(msg)
 
@@ -97,8 +98,10 @@ def determine_cause(error: jsonschema.ValidationError) -> str:
 
 
 def determine_supplemental_info(error: jsonschema.ValidationError) -> str:
-    """Obtain additional information from the jsonschema validation error."""
+    """Obtain additional information from the jsonschema validation error.
 
+    :param error: The jsonschema validation error.
+    """
     message = _VALIDATION_ERROR_CAUSES.get(error.validator, "").format(
         validator_value=error.validator_value
     )
@@ -128,11 +131,9 @@ def _determine_property_path(error: jsonschema.ValidationError) -> List[str]:
 def _interpret_anyof(error: jsonschema.ValidationError) -> str:
     """Interpret a validation error caused by the anyOf validator.
 
-    Returns:
-        A string containing a (hopefully) helpful validation error message. It
-        may be empty.
+    :returns: A string containing a (hopefully) helpful validation error
+        message. It may be empty.
     """
-
     usages = []
     try:
         for validator in error.validator_value:

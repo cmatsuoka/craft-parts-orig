@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright 2016 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,7 +26,6 @@ def combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
     :param str prepend: String to prepend to each path in the string.
     :param str separator: String to place between each path in the string.
     """
-
     paths = ["{}{}".format(prepend, p) for p in paths]
     return separator.join(paths)
 
@@ -41,7 +40,6 @@ def format_path_variable(
     :param str prepend: String to prepend to each path in the definition.
     :param str separator: String to place between each path in the definition.
     """
-
     if not paths:
         raise ValueError("Failed to format '${}': no paths supplied".format(envvar))
 
@@ -62,7 +60,6 @@ def humanize_list(
                             the rest of the list (e.g. 'and').
     :param str item_format: Format string to use per item.
     """
-
     if not items:
         return ""
 
@@ -80,7 +77,6 @@ def humanize_list(
 
 def pluralize(container: Sized, if_one: str, if_multiple: str) -> str:
     """Return the appropriate plural form according to the number of elements."""
-
     if len(container) > 1:
         return if_multiple
 
