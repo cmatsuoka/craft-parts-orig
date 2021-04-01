@@ -26,7 +26,6 @@ from craft_parts import callbacks, layers, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, part_list_by_name
-from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -43,7 +42,6 @@ class Executor:
         self,
         *,
         part_list: List[Part],
-        validator: Validator,
         project_info: ProjectInfo,
         extra_build_packages: List[str] = None,
         extra_build_snaps: List[str] = None,
@@ -51,7 +49,6 @@ class Executor:
         base_dir: Union[str, Path] = None,
     ):
         self._part_list = part_list
-        self._validator = validator
         self._project_info = project_info
         self._base_packages = base_packages
         self._extra_build_packages = extra_build_packages
@@ -145,7 +142,6 @@ class Executor:
                 part,
                 plugin_version=self._project_info.plugin_version,
                 part_info=PartInfo(self._project_info, part),
-                validator=self._validator,
                 part_list=self._part_list,
             )
 

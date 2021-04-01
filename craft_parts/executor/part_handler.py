@@ -30,7 +30,6 @@ from craft_parts.filesets import Fileset
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.packages import errors as packages_errors
 from craft_parts.parts import Part
-from craft_parts.schemas import Validator
 from craft_parts.state_manager import PartState, states
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
@@ -50,7 +49,6 @@ class PartHandler:
         *,
         plugin_version: str,
         part_info: PartInfo,
-        validator: Validator,
         part_list: List[Part],
         disable_stage_packages: bool = False,
     ):

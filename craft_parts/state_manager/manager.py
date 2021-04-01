@@ -182,13 +182,10 @@ class _EphemeralStates:
 class StateManager:
     """Keep track of parts execution state."""
 
-    def __init__(
-        self, project_info: ProjectInfo, part_list: List[Part], validator: Validator
-    ):
+    def __init__(self, project_info: ProjectInfo, part_list: List[Part]):
         self._state = _EphemeralStates()
         self._project_info = project_info
         self._part_list = part_list
-        self._validator = validator
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
         for part in part_list:

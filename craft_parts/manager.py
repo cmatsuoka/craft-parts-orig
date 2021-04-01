@@ -110,8 +110,8 @@ class LifecycleManager:
         if base_packages and not base_dir:
             raise ValueError("base_dir is mandatory if base_packages are specified")
 
-        self._validator = Validator(_SCHEMA_DIR / "parts.json")
-        self._validator.validate(all_parts)
+        # self._validator = Validator(_SCHEMA_DIR / "parts.json")
+        # self._validator.validate(all_parts)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
 
@@ -145,12 +145,10 @@ class LifecycleManager:
         self._build_packages = build_packages
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
-            validator=self._validator,
             project_info=project_info,
         )
         self._executor = executor.Executor(
             part_list=self._part_list,
-            validator=self._validator,
             project_info=project_info,
             extra_build_packages=extra_build_packages,
             base_packages=base_packages,

@@ -24,7 +24,6 @@ from craft_parts import common, errors, packages, parts, plugins, steps
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, part_list_by_name, sort_parts
-from craft_parts.schemas import Validator
 from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -36,12 +35,11 @@ class Sequencer:
     """Obtain a list of actions from the parts specification."""
 
     def __init__(
-        self, *, part_list: List[Part], validator: Validator, project_info: ProjectInfo
+        self, *, part_list: List[Part], project_info: ProjectInfo
     ):
         self._part_list = sort_parts(part_list)
-        self._validator = validator
         self._project_info = project_info
-        self._sm = StateManager(project_info, part_list, validator)
+        self._sm = StateManager(project_info, part_list)
         self._actions: List[Action] = []
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
@@ -53,7 +51,7 @@ class Sequencer:
 
     def reload_state(self) -> None:
         """Reload the ephemeral state from disk."""
-        self._sm = StateManager(self._project_info, self._part_list, self._validator)
+        self._sm = StateManager(self._project_info, self._part_list)
 
     def resolve_package_dependencies(self, package_names: List[str]) -> List[str]:
         """Expand the list of provided packages to include dependencies and versions."""
