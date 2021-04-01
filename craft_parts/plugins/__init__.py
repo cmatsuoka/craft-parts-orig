@@ -16,7 +16,7 @@
 
 """Craft-parts plugins subsystem."""
 
-from .plugin_v2 import PluginV2  # noqa: F401
+from .plugin_v2 import PluginV2, PluginV2Properties  # noqa: F401
 from .plugins import (  # noqa: F401
     Plugin,
     PluginProperties,

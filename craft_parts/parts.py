@@ -16,7 +16,6 @@
 
 """Definitions and helpers to handle parts."""
 
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
@@ -32,7 +31,7 @@ if TYPE_CHECKING:
 # We use many property getters to prevent unintentional value overwrites
 
 
-@dataclass(repr=False, frozen=True)
+@dataclass(frozen=True)
 class _PartSpecs:
     plugin: str
     source: Optional[str]
@@ -59,17 +58,14 @@ class _PartSpecs:
     override_stage: Optional[str]
     override_prime: Optional[str]
 
-    def __repr__(self):
-        return f"Part({self.name!r})"
-
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "_PartSpecs":
 
         # TODO: validate stuff
 
         return cls(
-            plugin=data.pop("plugin"),
-            source=data.pop("source"),
+            plugin=data.pop("plugin", None),
+            source=data.pop("source", None),
             source_checksum=data.pop("source-checksum", ""),
             source_branch=data.pop("source-branch", ""),
             source_commit=data.pop("source-commit", ""),
@@ -120,7 +116,7 @@ class _PartSpecs:
             "override-build": self.override_build,
             "override-stage": self.override_stage,
             "override-prime": self.override_prime,
-       }
+        }
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.
@@ -169,6 +165,9 @@ class Part:
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self.specs = _PartSpecs.unmarshal(data)
+
+    def __repr__(self):
+        return f"Part({self.name!r})"
 
     def __getattr__(self, name):
         return getattr(self.specs, name)

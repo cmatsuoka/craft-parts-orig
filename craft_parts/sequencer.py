@@ -34,9 +34,7 @@ logger = logging.getLogger(__name__)
 class Sequencer:
     """Obtain a list of actions from the parts specification."""
 
-    def __init__(
-        self, *, part_list: List[Part], project_info: ProjectInfo
-    ):
+    def __init__(self, *, part_list: List[Part], project_info: ProjectInfo):
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
         self._sm = StateManager(project_info, part_list)
@@ -181,7 +179,7 @@ class Sequencer:
             self._add_action(part, step, reason=reason)
 
         state: states.PartState
-        part_properties = part.marshal()  # self._validator.expand_part_properties(part.properties)
+        part_properties = part.marshal()
 
         if step == Step.PULL:
             state = states.PullState(

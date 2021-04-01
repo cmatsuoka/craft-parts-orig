@@ -49,6 +49,7 @@ class PluginV2(abc.ABC):
         self._part_info = part_info
 
     @classmethod
+    @abc.abstractmethod
     def get_properties_class(cls) -> Type[PluginV2Properties]:
         """Return the plugin properties class."""
 

@@ -16,15 +16,15 @@
 
 """The parts lifecycle manager definition and helpers."""
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
-from craft_parts import executor, packages, parts, plugins, sequencer
+from craft_parts import errors, executor, packages, parts, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
@@ -110,6 +110,9 @@ class LifecycleManager:
         if base_packages and not base_dir:
             raise ValueError("base_dir is mandatory if base_packages are specified")
 
+        if "parts" not in all_parts:
+            raise errors.SchemaValidationError("'parts' is not defined")
+
         # self._validator = Validator(_SCHEMA_DIR / "parts.json")
         # self._validator.validate(all_parts)
 
@@ -125,16 +128,23 @@ class LifecycleManager:
             **custom_args,
         )
 
-        parts_data = all_parts.get("parts", {})
+        # FIXME: handle errors
+
+        parts_data = deepcopy(all_parts.get("parts"))
+        if not isinstance(parts_data, dict):
+            raise errors.SchemaValidationError("'parts' is not a dictionary")
+
         part_list = []
         for name, specs in parts_data.items():
             plugin_name = specs.get("plugin")
-            if not plugin_name:
-                plugin_name = name
-            plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
+            plugin_class = plugins.get_plugin_class(
+                name=plugin_name, version=plugin_version
+            )
             properties = plugin_class.get_properties_class().unmarshal(specs)
             part_list.append(
-                Part(name, specs, project_dirs=project_dirs, plugin_properties=properties)
+                Part(
+                    name, specs, project_dirs=project_dirs, plugin_properties=properties
+                )
             )
             # TODO: check if remaining keys in specs, we have unexpected extra properties
 

@@ -46,7 +46,7 @@ class AutotoolsPluginProperties(PluginV2Properties):
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        return cls(configure_parameters=data.get("configure-parameters", []))
+        return cls(configure_parameters=data.get("autotools-configure-parameters", []))
 
 
 class AutotoolsPlugin(PluginV2):

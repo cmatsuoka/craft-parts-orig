@@ -22,7 +22,6 @@ import pytest
 from craft_parts.executor.part_handler import PartHandler
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
-from craft_parts.schemas import Validator
 from craft_parts.steps import Step
 
 
@@ -37,17 +36,8 @@ def fake_installed_stuff(mocker):
     )
 
 
-@pytest.fixture
-def fake_validator(mocker) -> Validator:
-    mocker.patch("craft_parts.schemas.Validator._load_schema")
-    mocker.patch("craft_parts.schemas.Validator.merge_schema", return_value=dict())
-    mocker.patch("craft_parts.schemas.Validator.schema", return_value=dict())
-    mocker.patch("craft_parts.schemas.Validator.validate", return_value=True)
-    return Validator("")
-
-
 class TestStagePackages:
-    def test_unpack_stage_packages(self, mocker, new_dir, fake_validator):
+    def test_unpack_stage_packages(self, mocker, new_dir):
         getpkg = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1", "pkg2"],
@@ -63,7 +53,6 @@ class TestStagePackages:
             plugin_version="v2",
             part_info=part_info,
             part_list=[part1],
-            validator=fake_validator,
         )
 
         state = handler._run_pull(StepInfo(part_info, Step.PULL))
@@ -81,7 +70,7 @@ class TestStagePackages:
         handler._run_build(StepInfo(part_info, Step.BUILD))
         unpack.assert_called_once()
 
-    def test_dont_unpack_stage_packages(self, new_dir, mocker, fake_validator):
+    def test_dont_unpack_stage_packages(self, new_dir, mocker):
         getpkg = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1", "pkg2"],
@@ -97,7 +86,6 @@ class TestStagePackages:
             plugin_version="v2",
             part_info=part_info,
             part_list=[part1],
-            validator=fake_validator,
             disable_stage_packages=True,
         )
 

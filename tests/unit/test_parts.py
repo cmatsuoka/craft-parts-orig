@@ -29,7 +29,6 @@ class TestPartBasics:
         p = Part("foo", {"bar": "baz"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
-        assert p.properties == {"bar": "baz"}
         assert p.parts_dir == new_dir / "parts"
         assert p.part_src_dir == new_dir / "parts/foo/src"
         assert p.part_build_dir == new_dir / "parts/foo/build"
@@ -66,49 +65,20 @@ class TestPartBasics:
         p = Part("foo", {"source": "foobar"})
         assert p.source == "foobar"
 
-    def test_part_properties(self):
-        p = Part("foo", {"foo": "bar"})
-        x = p.properties
-        assert x == {"foo": "bar"}
-
-        # should be immutable
-        x["foo"] = "something else"
-        assert p.properties == {"foo": "bar"}
-
     def test_part_stage_fileset(self):
         p = Part("foo", {"stage": ["a", "b", "c"]})
-        x = p.stage_fileset
-        assert x == ["a", "b", "c"]
-
-        # should be immutable
-        x.append("extra")
         assert p.stage_fileset == ["a", "b", "c"]
 
     def test_part_prime_fileset(self):
         p = Part("foo", {"prime": ["a", "b", "c"]})
-        x = p.prime_fileset
-        assert x == ["a", "b", "c"]
-
-        # should be immutable
-        x.append("extra")
         assert p.prime_fileset == ["a", "b", "c"]
 
     def test_part_organize_fileset(self):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}})
-        x = p.organize_fileset
-        assert p.organize_fileset == {"a": "b", "c": "d"}
-
-        # should be immutable
-        x["a"] = "foo"
         assert p.organize_fileset == {"a": "b", "c": "d"}
 
     def test_part_dependencies(self):
         p = Part("foo", {"after": ["bar"]})
-        x = p.dependencies
-        assert x == ["bar"]
-
-        # should be immutable
-        x.append("extra")
         assert p.dependencies == ["bar"]
 
     def test_part_plugin(self):
@@ -117,23 +87,18 @@ class TestPartBasics:
 
     def test_part_plugin_missing(self):
         p = Part("foo", {})
-        assert p.plugin is None
+        assert p.plugin == ""
 
     def test_part_build_environment(self):
         p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
         x = p.build_environment
         assert x == [{"BAR": "bar"}]
 
-        # should be immutable
-        x[0]["BAR"] = "something else"
-        x.append({"FOOBAR": "foobar"})
-        assert p.build_environment == [{"BAR": "bar"}]
-
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"stage-packages": []}, None),
+            ({}, []),
+            ({"stage-packages": []}, []),
             ({"stage-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
@@ -142,16 +107,11 @@ class TestPartBasics:
         x = p.stage_packages
         assert x == tc_result
 
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.stage_packages == tc_result
-
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
         [
-            ({}, None),
-            ({"build-packages": []}, None),
+            ({}, []),
+            ({"build-packages": []}, []),
             ({"build-packages": ["foo", "bar"]}, ["foo", "bar"]),
         ],
     )
@@ -159,11 +119,6 @@ class TestPartBasics:
         p = Part("foo", tc_spec)
         x = p.build_packages
         assert x == tc_result
-
-        # should be immutable
-        if x is not None:
-            x.append("foobar")
-            assert p.build_packages == tc_result
 
     @pytest.mark.parametrize(
         "tc_step,tc_content",

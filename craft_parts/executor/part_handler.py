@@ -64,7 +64,7 @@ class PartHandler:
             part_info=part_info,
         )
 
-        self._part_properties = part.marshal()  # validator.expand_part_properties(part.properties)
+        self._part_properties = part.marshal()
         self._source_handler = sources.get_source_handler(
             application_name=part_info.application_name,
             source=part.source,

@@ -19,35 +19,23 @@ import pytest
 from craft_parts.executor import Executor
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.schemas import Validator
-
-
-@pytest.fixture
-def fake_validator(mocker) -> Validator:
-    mocker.patch("craft_parts.schemas.Validator._load_schema")
-    mocker.patch("craft_parts.schemas.Validator.merge_schema", return_value=dict())
-    mocker.patch("craft_parts.schemas.Validator.schema", return_value=dict())
-    mocker.patch("craft_parts.schemas.Validator.validate", return_value=True)
-    return Validator("")
 
 
 @pytest.mark.usefixtures("new_dir")
 class TestBuildPackages:
-    def test_install_build_packages(self, mocker, fake_validator):
+    def test_install_build_packages(self, mocker):
         install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
 
         part1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
         part2 = Part("bar", {"plugin": "nil", "build-packages": ["pkg2"]})
         info = ProjectInfo()
 
-        e = Executor(
-            project_info=info, part_list=[part1, part2], validator=fake_validator
-        )
+        e = Executor(project_info=info, part_list=[part1, part2])
         e.prologue()
 
         install.assert_called_once_with(["pkg1", "pkg2"])
 
-    def test_install_extra_build_packages(self, mocker, fake_validator):
+    def test_install_extra_build_packages(self, mocker):
         install = mocker.patch("craft_parts.packages.Repository.install_build_packages")
 
         part1 = Part("foo", {"plugin": "nil", "build-packages": ["pkg1"]})
@@ -57,7 +45,6 @@ class TestBuildPackages:
         e = Executor(
             project_info=info,
             part_list=[part1, part2],
-            validator=fake_validator,
             extra_build_packages=["pkg3"],
         )
         e.prologue()
