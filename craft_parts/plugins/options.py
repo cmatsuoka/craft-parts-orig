@@ -16,37 +16,6 @@
 
 """Definitions and helpers for plugin options."""
 
-from typing import Any, Dict
-
-from craft_parts import schemas
-
 
 class PluginProperties:
     pass
-
-
-class PluginOptions:
-    """Parameters to be passed to the plugin instance.
-
-    :param properties: a dictionary containing option names and values. Options
-        must conform to the plugin schema.
-    :param schema: the plugin schema.
-    """
-
-    def __init__(self, *, properties: Dict[str, Any], schema: Dict[str, Any]):
-        schema_properties = schema.get("properties", {})
-        schemas.validate_schema(data=properties, schema=schema)
-
-        self._properties: Dict[str, Any] = {}
-
-        for key in schema_properties:
-            default_value = schema_properties[key].get("default")
-            attr_value = properties.get(key, default_value)
-            self._properties[key] = attr_value
-
-    def get(self, name: str) -> Any:
-        """Return the value of the given property.
-
-        :param name: the property name.
-        """
-        return self._properties.get(name)
