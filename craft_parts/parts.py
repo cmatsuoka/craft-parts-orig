@@ -25,7 +25,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
 
 if TYPE_CHECKING:
-    from craft_parts.plugins import PluginProperties
+    from craft_parts.plugins.options import PluginProperties
 
 # pylint: disable=too-many-public-methods
 # We use many property getters to prevent unintentional value overwrites
