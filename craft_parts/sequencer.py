@@ -183,7 +183,7 @@ class Sequencer:
             self._add_action(part, step, reason=reason)
 
         state: states.PartState
-        part_properties = self._validator.expand_part_properties(part.properties)
+        part_properties = part.marshal()  # self._validator.expand_part_properties(part.properties)
 
         if step == Step.PULL:
             state = states.PullState(

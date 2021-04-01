@@ -35,17 +35,25 @@ if TYPE_CHECKING:
 @dataclass(repr=False, frozen=True)
 class PartData:
     plugin: str
-    after: List[str]
     source: Optional[str]
+    source_checksum: str
+    source_branch: str
+    source_commit: str
+    source_depth: int
     source_subdir: str
+    source_tag: str
+    source_type: str
+    disable_parallel: bool
+    after: List[str]
+    stage_snaps: List[str]
+    stage_packages: List[str]
+    build_snaps: List[str]
+    build_packages: List[str]
+    build_environment: List[Dict[str, str]]
+    build_attributes: List[str]
+    organize_fileset: Dict[str, str]
     stage_fileset: List[str]
     prime_fileset: List[str]
-    organize_fileset: Dict[str, str]
-    stage_packages: List[str]
-    stage_snaps: List[str]
-    build_packages: List[str]
-    build_snaps: List[str]
-    build_environment: List[Dict[str, str]]
     override_pull: Optional[str]
     override_build: Optional[str]
     override_stage: Optional[str]
@@ -62,22 +70,58 @@ class PartData:
 
         return cls(
             plugin=data.get("plugin"),
-            after=data.get("after", []),
             source=data.get("source"),
-            source_subdir=data.get("source_subdir", ""),
+            source_checksum=data.get("source-checksum", ""),
+            source_branch=data.get("source-branch", ""),
+            source_commit=data.get("source-commit", ""),
+            source_depth=data.get("source-depth", ""),
+            source_subdir=data.get("source-subdir", ""),
+            source_tag=data.get("source-tag", ""),
+            source_type=data.get("source-type", ""),
+            disable_parallel=data.get("disable_parallel", False),
+            after=data.get("after", []),
+            stage_snaps=data.get("stage-snaps", []),
+            stage_packages=data.get("stage-packages", []),
+            build_snaps=data.get("build-snaps", []),
+            build_packages=data.get("build-packages", []),
+            build_environment=data.get("build-environment", []),
+            build_attributes=data.get("build-attributes", []),
+            organize_fileset=data.get("organize", {}),
             stage_fileset=data.get("stage", ["*"]),
             prime_fileset=data.get("prime", ["*"]),
-            organize_fileset=data.get("organize", {}),
-            stage_packages=data.get("stage-packages", []),
-            stage_snaps=data.get("stage-snaps", []),
-            build_packages=data.get("build-packages", []),
-            build_snaps=data.get("build-snaps", []),
-            build_environment=data.get("build-environment", []),
             override_pull=data.get("override-pull"),
             override_build=data.get("override-build"),
             override_stage=data.get("override-stage"),
             override_prime=data.get("override-prime"),
         )
+
+    def marshal(self) -> Dict[str, Any]:
+        return {
+            "plugin": self.plugin,
+            "source": self.source,
+            "source-checksum": self.source_checksum,
+            "source-branch": self.source_branch,
+            "source-commit": self.source_commit,
+            "source-depth": self.source_depth,
+            "source-subdir": self.source_subdir,
+            "source-tag": self.source_tag,
+            "source-type": self.source_type,
+            "disable-parallel": self.disable_parallel,
+            "after": self.after,
+            "stage-snaps": self.stage_snaps,
+            "stage-packages": self.stage_packages,
+            "build-snaps": self.build_snaps,
+            "build-packages": self.build_packages,
+            "build-environment": self.build_environment,
+            "build-attributes": self.build_attributes,
+            "organize": self.organize_fileset,
+            "stage": self.stage_fileset,
+            "prime": self.prime_fileset,
+            "override-pull": self.override_pull,
+            "override-build": self.override_build,
+            "override-stage": self.override_stage,
+            "override-prime": self.override_prime,
+       }
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.

@@ -350,7 +350,7 @@ class StateManager:
             # about, and we're comparing it to those same keys in the current
             # state (current_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            part_properties = self._validator.expand_part_properties(part.properties)
+            part_properties = part.marshal()  # self._validator.expand_part_properties(part.properties)
             properties = state.diff_properties_of_interest(part_properties)
 
             # state project_options contains the old project options that this
@@ -400,7 +400,7 @@ class StateManager:
                     application_name=self._project_info.application_name,
                     source=part.source,
                     source_dir=part.part_src_dir,
-                    properties=self._validator.expand_part_properties(part.properties),
+                    properties=part.marshal(),  # self._validator.expand_part_properties(part.properties),
                     dirs=self._project_info.dirs,
                 )
                 self._source_handler_cache[part.name] = source_handler
