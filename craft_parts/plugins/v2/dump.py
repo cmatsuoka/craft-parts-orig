@@ -19,13 +19,23 @@
 This plugin just dumps the content from a specified part source.
 """
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Type
 
-from ..plugin_v2 import PluginV2
+from ..plugin_v2 import PluginV2, PluginV2Properties
+
+
+class DumpPluginProperties(PluginV2Properties):
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]):
+        return cls()
 
 
 class DumpPlugin(PluginV2):
     """Copy the content from the part source."""
+
+    @classmethod
+    def get_properties_class(cls) -> Type[DumpPluginProperties]:
+        return DumpPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

@@ -17,11 +17,18 @@
 """Plugins V2 definitions."""
 
 import abc
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set, Type
 
 from craft_parts.infos import PartInfo
 
-from .options import PluginOptions
+from .options import PluginProperties
+
+
+class PluginV2Properties(PluginProperties, abc.ABC):
+    @classmethod
+    @abc.abstractmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PluginV2Properties":
+        pass
 
 
 class PluginV2(abc.ABC):
@@ -31,10 +38,19 @@ class PluginV2(abc.ABC):
     :param options: an object representing part defined properties.
     """
 
-    def __init__(self, *, options: PluginOptions, part_info: PartInfo) -> None:
+    def __init__(
+        self, *, options: Optional[PluginProperties], part_info: PartInfo
+    ) -> None:
+        if not options:
+            options = PluginProperties()
+
         self._name = part_info.part_name
         self._options = options
         self._part_info = part_info
+
+    @classmethod
+    def get_properties_class(cls) -> Type[PluginV2Properties]:
+        """Return the plugin properties class."""
 
     @classmethod
     @abc.abstractmethod

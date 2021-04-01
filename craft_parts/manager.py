@@ -19,7 +19,7 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
-from craft_parts import executor, packages, parts, sequencer
+from craft_parts import executor, packages, parts, plugins, sequencer
 from craft_parts.actions import Action
 from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
@@ -126,9 +126,19 @@ class LifecycleManager:
         )
 
         parts_data = all_parts.get("parts", {})
-        self._part_list = [
-            Part(name, p, project_dirs=project_dirs) for name, p in parts_data.items()
-        ]
+        part_list = []
+        for name, p in parts_data.items():
+            plugin_name = p.get("plugin")
+            # TODO: handle error
+            if not plugin_name:
+                plugin_name = name
+            plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
+            properties = plugin_class.get_properties_class().unmarshal(p)
+            part_list.append(
+                Part(name, p, project_dirs=project_dirs, plugin_properties=properties)
+            )
+        self._part_list = part_list
+
         self._application_name = application_name
         self._target_arch = project_info.target_arch
         self._base_packages = base_packages

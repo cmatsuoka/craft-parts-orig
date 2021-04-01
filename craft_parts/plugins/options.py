@@ -21,6 +21,10 @@ from typing import Any, Dict
 from craft_parts import schemas
 
 
+class PluginProperties:
+    pass
+
+
 class PluginOptions:
     """Parameters to be passed to the plugin instance.
 

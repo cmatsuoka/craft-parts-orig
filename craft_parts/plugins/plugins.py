@@ -22,11 +22,13 @@ from typing import Dict, Type, Union
 from craft_parts import errors
 from craft_parts.infos import PartInfo
 from craft_parts.parts import Part
-from craft_parts.schemas import Validator
 
 from . import v2
-from .options import PluginOptions
+from .options import PluginProperties
 from .plugin_v2 import PluginV2
+
+# from craft_parts.schemas import Validator
+
 
 Plugin = Union[PluginV2]
 PluginType = Type[Plugin]
@@ -46,31 +48,32 @@ _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 
 def get_plugin(
-    *, part: Part, plugin_version: str, validator: Validator, part_info: PartInfo
+    *,
+    part: Part,
+    plugin_version: str,
+    part_info: PartInfo,
+    properties: PluginProperties = None,
 ) -> Plugin:
     """Obtain a plugin instance for the specified part."""
 
-    plugin_class = _get_plugin_class(part=part, version=plugin_version)
-    plugin_schema = validator.merge_schema(plugin_class.get_schema())
-    options = PluginOptions(properties=part.properties, schema=plugin_schema)
+    plugin_name = part.plugin if part.plugin else part.name
+    plugin_class = get_plugin_class(name=plugin_name, version=plugin_version)
+    # plugin_schema = validator.merge_schema(plugin_class.get_schema())
+    # options = PluginOptions(properties=part.properties, schema=plugin_schema)
 
-    return plugin_class(options=options, part_info=part_info)
+    return plugin_class(options=properties, part_info=part_info)
 
 
-def _get_plugin_class(*, part: Part, version: str) -> PluginType:
+def get_plugin_class(*, name: str, version: str) -> PluginType:
     """Obtain a plugin class given the name and plugin API version."""
 
-    plugin_name = part.plugin if part.plugin else part.name
     if version not in _PLUGINS:
         raise errors.InvalidPluginAPIVersion(version)
 
-    if plugin_name not in _PLUGINS[version]:
-        if not part.plugin:
-            raise errors.UndefinedPlugin(part.name)
+    if name not in _PLUGINS[version]:
+        raise errors.InvalidPlugin(name)
 
-        raise errors.InvalidPlugin(part.plugin)
-
-    return _PLUGINS[version][plugin_name]
+    return _PLUGINS[version][name]
 
 
 def register(plugins: Dict[str, PluginType], *, version: str = "v2") -> None:

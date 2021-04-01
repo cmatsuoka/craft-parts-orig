@@ -34,13 +34,27 @@ In addition, this plugin uses the following plugin-specific keywords:
       './configure --help'
 """
 
-from typing import Any, Dict, List, Set
+from dataclasses import dataclass
+from typing import Any, Dict, List, Set, Type, cast
 
-from ..plugin_v2 import PluginV2
+from ..plugin_v2 import PluginV2, PluginV2Properties
+
+
+@dataclass(frozen=True)
+class AutotoolsPluginProperties(PluginV2Properties):
+    configure_parameters: List[str]
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]):
+        return cls(configure_parameters=data.get("configure-parameters", []))
 
 
 class AutotoolsPlugin(PluginV2):
     """The autotools plugin."""
+
+    @classmethod
+    def get_properties_class(cls) -> Type[AutotoolsPluginProperties]:
+        return AutotoolsPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
@@ -68,7 +82,8 @@ class AutotoolsPlugin(PluginV2):
         return dict()
 
     def _get_configure_command(self) -> str:
-        cmd = ["./configure"] + self._options.get("autotools-configure-parameters")
+        options = cast(AutotoolsPluginProperties, self._options)
+        cmd = ["./configure"] + options.configure_parameters
         return " ".join(cmd)
 
     def get_build_commands(self) -> List[str]:

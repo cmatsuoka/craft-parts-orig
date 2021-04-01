@@ -62,7 +62,7 @@ class PartHandler:
         self._plugin = plugins.get_plugin(
             part=part,
             plugin_version=plugin_version,
-            validator=validator,
+            properties=part.plugin_options,
             part_info=part_info,
         )
 

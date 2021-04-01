@@ -16,9 +16,19 @@
 
 """The make plugin implementation."""
 
-from typing import Any, Dict, List, Set
+from dataclasses import dataclass
+from typing import Any, Dict, List, Set, Type, cast
 
-from ..plugin_v2 import PluginV2
+from ..plugin_v2 import PluginV2, PluginV2Properties
+
+
+@dataclass(frozen=True)
+class MakePluginProperties(PluginV2Properties):
+    make_parameters: List[str]
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]):
+        return cls(make_parameters=data.get("make-parameters", []))
 
 
 class MakePlugin(PluginV2):
@@ -40,6 +50,10 @@ class MakePlugin(PluginV2):
           (list of strings)
           Pass the given parameters to the make command.
     """
+
+    @classmethod
+    def get_properties_class(cls) -> Type[MakePluginProperties]:
+        return MakePluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
@@ -72,7 +86,8 @@ class MakePlugin(PluginV2):
         if target:
             cmd.append(target)
 
-        cmd.extend(self._options.get("make-parameters"))
+        options = cast(MakePluginProperties, self._options)
+        cmd.extend(options.make_parameters)
 
         return " ".join(cmd)
 
