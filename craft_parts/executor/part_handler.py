@@ -64,10 +64,10 @@ class PartHandler:
             part_info=part_info,
         )
 
-        self._part_properties = part.marshal()
+        self._part_properties = part.spec.marshal()
         self._source_handler = sources.get_source_handler(
             application_name=part_info.application_name,
-            source=part.source,
+            source=part.spec.source,
             source_dir=part.part_src_dir,
             properties=self._part_properties,
             dirs=part_info.dirs,
@@ -150,7 +150,7 @@ class PartHandler:
         )
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:
-        stage_packages = self._part.stage_packages
+        stage_packages = self._part.spec.stage_packages
         if not stage_packages:
             return None
 
@@ -169,7 +169,7 @@ class PartHandler:
         return fetched_packages
 
     def _fetch_stage_snaps(self):
-        stage_snaps = self._part.stage_snaps
+        stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return None
 
@@ -186,7 +186,7 @@ class PartHandler:
         )
 
     def _unpack_stage_snaps(self):
-        stage_snaps = self._part.stage_snaps
+        stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return
 
@@ -350,7 +350,7 @@ class PartHandler:
             plugin=self._plugin,
             source_handler=self._source_handler,
         )
-        scriptlet = self._part.get_scriptlet(step_info.step)
+        scriptlet = self._part.spec.get_scriptlet(step_info.step)
         if scriptlet:
             step_handler.run_scriptlet(
                 scriptlet, scriptlet_name=scriptlet_name, workdir=workdir
@@ -441,7 +441,7 @@ class PartHandler:
             os.makedirs(dir_name, exist_ok=True)
 
     def _organize(self, *, overwrite=False):
-        fileset = Fileset(self._part.organize_fileset, name="organize")
+        fileset = Fileset(self._part.spec.organize_fileset, name="organize")
         organize_filesets(
             part_name=self._part.name,
             fileset=fileset,

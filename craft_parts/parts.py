@@ -164,13 +164,10 @@ class Part:
         self.plugin_options = plugin_properties
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
-        self.specs = _PartSpecs.unmarshal(data)
+        self.spec = _PartSpecs.unmarshal(data)
 
     def __repr__(self):
         return f"Part({self.name!r})"
-
-    def __getattr__(self, name):
-        return getattr(self.specs, name)
 
     @property
     def parts_dir(self) -> Path:
@@ -185,7 +182,7 @@ class Part:
     @property
     def part_src_work_dir(self) -> Path:
         """Return the subdirectory in source containing the source subtree (if any)."""
-        return self.part_src_dir / self.specs.source_subdir
+        return self.part_src_dir / self.spec.source_subdir
 
     @property
     def part_build_dir(self) -> Path:
@@ -195,7 +192,7 @@ class Part:
     @property
     def part_build_work_dir(self) -> Path:
         """Return the subdirectory in build containing the source subtree (if any)."""
-        return self.part_build_dir / self.specs.source_subdir
+        return self.part_build_dir / self.spec.source_subdir
 
     @property
     def part_install_dir(self) -> Path:
@@ -234,7 +231,7 @@ class Part:
 
     @property
     def dependencies(self) -> List[str]:
-        return self.specs.after
+        return self.spec.after
 
 
 def part_by_name(name: str, part_list: List[Part]) -> Part:

@@ -179,7 +179,7 @@ class Sequencer:
             self._add_action(part, step, reason=reason)
 
         state: states.PartState
-        part_properties = part.marshal()
+        part_properties = part.spec.marshal()
 
         if step == Step.PULL:
             state = states.PullState(

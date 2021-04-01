@@ -60,22 +60,22 @@ class TestPartBasics:
 
     def test_part_source(self):
         p = Part("foo", {})
-        assert p.source is None
+        assert p.spec.source is None
 
         p = Part("foo", {"source": "foobar"})
-        assert p.source == "foobar"
+        assert p.spec.source == "foobar"
 
     def test_part_stage_fileset(self):
         p = Part("foo", {"stage": ["a", "b", "c"]})
-        assert p.stage_fileset == ["a", "b", "c"]
+        assert p.spec.stage_fileset == ["a", "b", "c"]
 
     def test_part_prime_fileset(self):
         p = Part("foo", {"prime": ["a", "b", "c"]})
-        assert p.prime_fileset == ["a", "b", "c"]
+        assert p.spec.prime_fileset == ["a", "b", "c"]
 
     def test_part_organize_fileset(self):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}})
-        assert p.organize_fileset == {"a": "b", "c": "d"}
+        assert p.spec.organize_fileset == {"a": "b", "c": "d"}
 
     def test_part_dependencies(self):
         p = Part("foo", {"after": ["bar"]})
@@ -83,16 +83,15 @@ class TestPartBasics:
 
     def test_part_plugin(self):
         p = Part("foo", {"plugin": "nil"})
-        assert p.plugin == "nil"
+        assert p.spec.plugin == "nil"
 
     def test_part_plugin_missing(self):
         p = Part("foo", {})
-        assert p.plugin == ""
+        assert p.spec.plugin is None
 
     def test_part_build_environment(self):
         p = Part("foo", {"build-environment": [{"BAR": "bar"}]})
-        x = p.build_environment
-        assert x == [{"BAR": "bar"}]
+        assert p.spec.build_environment == [{"BAR": "bar"}]
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
@@ -104,8 +103,7 @@ class TestPartBasics:
     )
     def test_part_stage_packages(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.stage_packages
-        assert x == tc_result
+        assert p.spec.stage_packages == tc_result
 
     @pytest.mark.parametrize(
         "tc_spec,tc_result",
@@ -117,8 +115,7 @@ class TestPartBasics:
     )
     def test_part_build_packages(self, tc_spec, tc_result):
         p = Part("foo", tc_spec)
-        x = p.build_packages
-        assert x == tc_result
+        assert p.spec.build_packages == tc_result
 
     @pytest.mark.parametrize(
         "tc_step,tc_content",
@@ -139,7 +136,7 @@ class TestPartBasics:
                 "override-prime": "prime",
             },
         )
-        assert p.get_scriptlet(tc_step) == tc_content
+        assert p.spec.get_scriptlet(tc_step) == tc_content
 
     @pytest.mark.parametrize(
         "step",
@@ -147,7 +144,7 @@ class TestPartBasics:
     )
     def test_part_get_scriptlet_none(self, step):
         p = Part("foo", {})
-        assert p.get_scriptlet(step) is None
+        assert p.spec.get_scriptlet(step) is None
 
 
 class TestPartOrdering:

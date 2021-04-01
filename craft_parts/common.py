@@ -32,12 +32,12 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
 
     all_packages: List[str] = []
 
-    build_packages = part.build_packages
+    build_packages = part.spec.build_packages
     if build_packages:
         logger.debug("part build packages: %s", build_packages)
         all_packages.extend(build_packages)
 
-    source = part.source
+    source = part.spec.source
     if source:
         source_type = sources.get_source_type_from_uri(source)
         source_build_packages = repository.get_packages_for_source_type(source_type)
@@ -59,7 +59,7 @@ def get_build_snaps(*, part: Part, repository, plugin: Plugin) -> List[str]:
 
     all_snaps: List[str] = []
 
-    build_snaps = part.build_snaps
+    build_snaps = part.spec.build_snaps
     if build_snaps:
         logger.debug("part build snaps: %s", build_snaps)
         all_snaps.extend(build_snaps)
