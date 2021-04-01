@@ -28,7 +28,7 @@ class MakePluginProperties(PluginV2Properties):
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        return cls(make_parameters=data.get("make-parameters", []))
+        return cls(make_parameters=data.pop("make-parameters", []))
 
 
 class MakePlugin(PluginV2):

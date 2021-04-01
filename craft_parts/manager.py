@@ -127,16 +127,17 @@ class LifecycleManager:
 
         parts_data = all_parts.get("parts", {})
         part_list = []
-        for name, p in parts_data.items():
-            plugin_name = p.get("plugin")
-            # TODO: handle error
+        for name, specs in parts_data.items():
+            plugin_name = specs.get("plugin")
             if not plugin_name:
                 plugin_name = name
             plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
-            properties = plugin_class.get_properties_class().unmarshal(p)
+            properties = plugin_class.get_properties_class().unmarshal(specs)
             part_list.append(
-                Part(name, p, project_dirs=project_dirs, plugin_properties=properties)
+                Part(name, specs, project_dirs=project_dirs, plugin_properties=properties)
             )
+            # TODO: check if remaining keys in specs, we have unexpected extra properties
+
         self._part_list = part_list
 
         self._application_name = application_name

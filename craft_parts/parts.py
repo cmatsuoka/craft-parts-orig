@@ -64,35 +64,34 @@ class _PartSpecs:
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "_PartSpecs":
-        data = deepcopy(data)
 
         # TODO: validate stuff
 
         return cls(
-            plugin=data.get("plugin"),
-            source=data.get("source"),
-            source_checksum=data.get("source-checksum", ""),
-            source_branch=data.get("source-branch", ""),
-            source_commit=data.get("source-commit", ""),
-            source_depth=data.get("source-depth", ""),
-            source_subdir=data.get("source-subdir", ""),
-            source_tag=data.get("source-tag", ""),
-            source_type=data.get("source-type", ""),
-            disable_parallel=data.get("disable_parallel", False),
-            after=data.get("after", []),
-            stage_snaps=data.get("stage-snaps", []),
-            stage_packages=data.get("stage-packages", []),
-            build_snaps=data.get("build-snaps", []),
-            build_packages=data.get("build-packages", []),
-            build_environment=data.get("build-environment", []),
-            build_attributes=data.get("build-attributes", []),
-            organize_fileset=data.get("organize", {}),
-            stage_fileset=data.get("stage", ["*"]),
-            prime_fileset=data.get("prime", ["*"]),
-            override_pull=data.get("override-pull"),
-            override_build=data.get("override-build"),
-            override_stage=data.get("override-stage"),
-            override_prime=data.get("override-prime"),
+            plugin=data.pop("plugin"),
+            source=data.pop("source"),
+            source_checksum=data.pop("source-checksum", ""),
+            source_branch=data.pop("source-branch", ""),
+            source_commit=data.pop("source-commit", ""),
+            source_depth=data.pop("source-depth", ""),
+            source_subdir=data.pop("source-subdir", ""),
+            source_tag=data.pop("source-tag", ""),
+            source_type=data.pop("source-type", ""),
+            disable_parallel=data.pop("disable_parallel", False),
+            after=data.pop("after", []),
+            stage_snaps=data.pop("stage-snaps", []),
+            stage_packages=data.pop("stage-packages", []),
+            build_snaps=data.pop("build-snaps", []),
+            build_packages=data.pop("build-packages", []),
+            build_environment=data.pop("build-environment", []),
+            build_attributes=data.pop("build-attributes", []),
+            organize_fileset=data.pop("organize", {}),
+            stage_fileset=data.pop("stage", ["*"]),
+            prime_fileset=data.pop("prime", ["*"]),
+            override_pull=data.pop("override-pull", None),
+            override_build=data.pop("override-build", None),
+            override_stage=data.pop("override-stage", None),
+            override_prime=data.pop("override-prime", None),
         )
 
     def marshal(self) -> Dict[str, Any]:
