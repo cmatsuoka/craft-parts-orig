@@ -38,7 +38,7 @@ class ProjectInfo:
         self,
         *,
         application_name: str = utils.package_name(),
-        target_arch: str = "",
+        arch: str = "",
         plugin_version: str = "v2",
         parallel_build_count: int = 1,
         project_dirs: ProjectDirs = None,
@@ -49,7 +49,7 @@ class ProjectInfo:
             project_dirs = ProjectDirs()
 
         self._application_name = application_name
-        self._set_machine(target_arch)
+        self._set_machine(arch)
         self._plugin_version = plugin_version
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs

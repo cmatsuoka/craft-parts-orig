@@ -17,12 +17,7 @@
 """The exceptions that can be raised when using craft_parts."""
 
 from abc import ABC
-from pathlib import Path
-from typing import List, Union
-
-import jsonschema  # type: ignore
-
-from craft_parts.utils import schema_helpers
+from typing import List
 
 
 class CraftPartsError(Exception, ABC):
@@ -320,55 +315,16 @@ class StageFilesConflictError(CraftPartsError):
         )
 
 
-class SchemaNotFound(CraftPartsReportableError):
-    """Failed to find a schema definition."""
-
-    fmt = "Unable to find the schema definition file {path!r}."
-
-    def __init__(self, path: Union[str, Path]) -> None:
-        super().__init__(path=path)
-
-
 class SchemaValidationError(CraftPartsError):
     """The parts data failed schema validation.
 
     :param message: the error message from the schema validator.
     """
 
-    fmt = "Schema validation error: {message}"
+    fmt = "Schema validation error: {message}."
 
     def __init__(self, message: str):
         super().__init__(message=message)
-
-    @classmethod
-    def from_validation_error(cls, error: jsonschema.ValidationError):
-        """Take a jsonschema.ValidationError and create a SnapcraftSchemaError.
-
-        The validation errors coming from jsonschema are a nightmare. This
-        class tries to make them a bit more understandable.
-        """
-
-        messages: List[str] = []
-
-        preamble = schema_helpers.determine_preamble(error)
-        cause = schema_helpers.determine_cause(error)
-        supplement = schema_helpers.determine_supplemental_info(error)
-
-        if preamble:
-            messages.append(preamble)
-
-        # If we have a preamble we are not at the root
-        if supplement and preamble:
-            messages.append(error.message)
-            messages.append(f"({supplement})")
-        elif supplement:
-            messages.append(supplement)
-        elif cause:
-            messages.append(cause)
-        else:
-            messages.append(error.message)
-
-        return cls(" ".join(messages))
 
 
 class XAttributeError(CraftPartsReportableError):

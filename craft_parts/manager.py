@@ -26,6 +26,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils import formatting_utils
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
 
@@ -111,10 +112,7 @@ class LifecycleManager:
             raise ValueError("base_dir is mandatory if base_packages are specified")
 
         if "parts" not in all_parts:
-            raise errors.SchemaValidationError("'parts' is not defined")
-
-        # self._validator = Validator(_SCHEMA_DIR / "parts.json")
-        # self._validator.validate(all_parts)
+            raise errors.SchemaValidationError("parts definition is missing")
 
         project_dirs = ProjectDirs(work_dir=work_dir)
 
@@ -128,28 +126,15 @@ class LifecycleManager:
             **custom_args,
         )
 
-        # FIXME: handle errors
-
         parts_data = deepcopy(all_parts.get("parts"))
         if not isinstance(parts_data, dict):
-            raise errors.SchemaValidationError("'parts' is not a dictionary")
+            raise errors.SchemaValidationError("parts definition is malformed")
 
         part_list = []
-        for name, specs in parts_data.items():
-            plugin_name = specs.get("plugin")
-            plugin_class = plugins.get_plugin_class(
-                name=plugin_name, version=plugin_version
-            )
-            properties = plugin_class.get_properties_class().unmarshal(specs)
-            part_list.append(
-                Part(
-                    name, specs, project_dirs=project_dirs, plugin_properties=properties
-                )
-            )
-            # TODO: check if remaining keys in specs, we have unexpected extra properties
+        for name, spec in parts_data.items():
+            part_list.append(_build_part(name, spec, project_dirs, plugin_version))
 
         self._part_list = part_list
-
         self._application_name = application_name
         self._target_arch = project_info.target_arch
         self._base_packages = base_packages
@@ -280,3 +265,34 @@ class LifecycleManager:
         and :method:`execution_end` are called automatically.
         """
         self._executor.epilogue()
+
+
+def _build_part(
+    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, plugin_version: str
+) -> Part:
+    if not isinstance(spec, dict):
+        raise errors.SchemaValidationError(f"part {name!r} definition is malformed")
+
+    plugin_name = spec.get("plugin")
+    if not plugin_name:
+        plugin_name = name
+
+    plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
+
+    # unmarshal plugin properties, handled entries are popped from specs
+    properties = plugin_class.get_properties_class().unmarshal(spec)
+
+    # initialize part and unmarshal part specs, handled entries are popped
+    part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
+
+    # all entries should have been handled
+    if any(spec):
+        remainder = spec.keys()
+        raise errors.SchemaValidationError(
+            "additional properties are not allowed ({} {} unexpected)".format(
+                formatting_utils.humanize_list(remainder, "and"),
+                formatting_utils.pluralize(remainder, "is", "are"),
+            )
+        )
+
+    return part

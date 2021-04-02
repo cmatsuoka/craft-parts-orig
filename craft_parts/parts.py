@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class _PartSpecs:
+class PartSpecs:
     plugin: str
     source: Optional[str]
     source_checksum: str
@@ -59,7 +59,7 @@ class _PartSpecs:
     override_prime: Optional[str]
 
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "_PartSpecs":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpecs":
 
         # TODO: validate stuff
 
@@ -164,7 +164,7 @@ class Part:
         self.plugin_options = plugin_properties
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
-        self.spec = _PartSpecs.unmarshal(data)
+        self.spec = PartSpecs.unmarshal(data)
 
     def __repr__(self):
         return f"Part({self.name!r})"

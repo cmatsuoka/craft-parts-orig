@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-
-from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.v2 import NilPlugin
@@ -36,20 +33,12 @@ class TestPluginNil:
 
         self._plugin = NilPlugin(options=properties, part_info=part_info)
 
-    @pytest.mark.skip("schema validation not implemented")
     def test_schema(self):
         schema = NilPlugin.get_schema()
         assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
         assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
         assert schema["properties"] == {}
-
-        with pytest.raises(errors.SchemaValidationError) as raised:
-            NilPlugin.get_properties_class().unmarshal({"invalid": True})
-        assert (
-            str(raised.value) == "Schema validation error: Additional properties "
-            "are not allowed ('invalid' was unexpected)"
-        )
 
     def test_get_build_packages(self):
         assert self._plugin.get_build_packages() == set()

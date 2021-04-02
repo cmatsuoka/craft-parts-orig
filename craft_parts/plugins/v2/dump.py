@@ -21,12 +21,19 @@ This plugin just dumps the content from a specified part source.
 
 from typing import Any, Dict, List, Set, Type
 
+from craft_parts import errors
+
 from ..plugin_v2 import PluginV2, PluginV2Properties
 
 
 class DumpPluginProperties(PluginV2Properties):
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
+        # "source" is a required property
+        if "source" not in data:
+            raise errors.SchemaValidationError(
+                "'source' is required by the dump plugin"
+            )
         return cls()
 
 

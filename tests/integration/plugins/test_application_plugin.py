@@ -27,9 +27,11 @@ from craft_parts import Action, ActionType, Step, errors, plugins
 
 @dataclass(frozen=True)
 class ApplicationPluginProperties(plugins.PluginV2Properties):
+    stuff: List[str]
+
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        return cls()
+        return cls(stuff=data.pop("stuff", []))
 
 
 class ApplicationPlugin(plugins.PluginV2):

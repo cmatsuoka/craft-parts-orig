@@ -16,9 +16,6 @@
 
 from pathlib import Path
 
-import pytest
-
-from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.v2 import MakePlugin
@@ -41,7 +38,6 @@ class TestPluginMake:
 
         self._plugin = MakePlugin(options=properties, part_info=part_info)
 
-    @pytest.mark.skip("schema validation not implemented")
     def test_schema(self):
         schema = MakePlugin.get_schema()
         assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
@@ -55,13 +51,6 @@ class TestPluginMake:
                 "default": [],
             }
         }
-
-        with pytest.raises(errors.SchemaValidationError) as raised:
-            MakePlugin.get_properties_class().unmarshal({"invalid": True})
-        assert (
-            str(raised.value) == "Schema validation error: Additional properties "
-            "are not allowed ('invalid' was unexpected)"
-        )
 
     def test_get_build_packages(self):
         assert self._plugin.get_build_packages() == {

@@ -45,7 +45,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
 
     x = ProjectInfo(
         application_name="test",
-        target_arch=tc_arch,
+        arch=tc_arch,
         parallel_build_count=16,
         local_plugins_dir="/some/path",
         custom1="foobar",
@@ -104,7 +104,7 @@ def test_project_info_default():
 )
 def test_local_plugin_dir(tc_param, tc_result):
     info = ProjectInfo(
-        target_arch="x86_64",
+        arch="x86_64",
         local_plugins_dir=tc_param,
     )
     assert info.local_plugins_dir == tc_result
@@ -113,7 +113,7 @@ def test_local_plugin_dir(tc_param, tc_result):
 def test_invalid_arch():
     with pytest.raises(errors.InvalidArchitecture) as raised:
         ProjectInfo(
-            target_arch="invalid",
+            arch="invalid",
         )
     assert str(raised.value) == "Architecture 'invalid' is not supported."
 

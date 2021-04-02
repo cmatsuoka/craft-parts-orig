@@ -40,7 +40,6 @@ class TestPluginDump:
 
         self._plugin = DumpPlugin(options=options, part_info=part_info)
 
-    @pytest.mark.skip("schema validation not implemented")
     def test_schema(self):
         schema = DumpPlugin.get_schema()
         assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
@@ -48,18 +47,12 @@ class TestPluginDump:
         assert schema["additionalProperties"] is False
         assert schema["properties"] == {}
 
+    def test_unmarshal(self):
         with pytest.raises(errors.SchemaValidationError) as raised:
             DumpPlugin.get_properties_class().unmarshal({})
         assert (
             str(raised.value) == "Schema validation error: 'source' "
-            "is a required property"
-        )
-
-        with pytest.raises(errors.SchemaValidationError) as raised:
-            DumpPlugin.get_properties_class().unmarshal({"invalid": True})
-        assert (
-            str(raised.value) == "Schema validation error: Additional properties "
-            "are not allowed ('invalid' was unexpected)"
+            "is required by the dump plugin."
         )
 
     def test_get_build_packages(self):
