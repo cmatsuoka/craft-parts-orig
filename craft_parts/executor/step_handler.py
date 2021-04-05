@@ -276,7 +276,7 @@ def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
     build_script_path.chmod(0o755)
 
     try:
-        subprocess.run([build_script_path], check=True, cwd=part.part_build_work_dir)
+        subprocess.run([build_script_path], check=True, cwd=part.part_build_subdir)
     except subprocess.CalledProcessError as process_error:
         raise errors.PluginBuildError(part_name=part.name) from process_error
 

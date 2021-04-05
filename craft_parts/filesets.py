@@ -27,7 +27,12 @@ from craft_parts.utils import file_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(self, entries: Union[List[str], Dict[str, str]], *, name: str = ""):
+    def __init__(
+        self, entries: Union[List[str], Dict[str, str], None], *, name: str = ""
+    ):
+        if not entries:
+            entries = []
+
         self._name = name
         if isinstance(entries, dict):
             self._dict = entries

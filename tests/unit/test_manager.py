@@ -68,12 +68,12 @@ class TestLifecycleManager:
         data = deepcopy(self._data)
         data["parts"]["foo"].update({"invalid": True, "also-invalid": True})
 
-        with pytest.raises(errors.SchemaValidationError) as raised:
+        with pytest.raises(errors.PartSpecificationError):  # as raised:
             manager.LifecycleManager(data, application_name="test_manager")
-        assert str(raised.value) == (
-            "Schema validation error: additional properties are not allowed "
-            "('also-invalid' and 'invalid' are unexpected)."
-        )
+        # assert str(raised.value) == (
+        #    "Schema validation error: additional properties are not allowed "
+        #    "('also-invalid' and 'invalid' are unexpected)."
+        # )
 
     def test_invalid_arch(self):
         with pytest.raises(errors.InvalidArchitecture):  # as raised:

@@ -32,7 +32,7 @@ _pull_state_foo = textwrap.dedent(
       plugin: nil
       source-subdir: ''
       source-type: ''
-      source-depth: ''
+      source-depth: 0
       source-branch: ''
       source-tag: ''
       source-commit: ''
@@ -52,7 +52,7 @@ _pull_state_bar = textwrap.dedent(
       plugin: nil
       source-subdir: ''
       source-type: ''
-      source-depth: ''
+      source-depth: 0
       source-branch: ''
       source-tag: ''
       source-commit: ''

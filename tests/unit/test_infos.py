@@ -128,9 +128,9 @@ def test_part_info(new_dir):
 
     assert x.part_name == "foo"
     assert x.part_src_dir == new_dir / "parts/foo/src"
-    assert x.part_src_work_dir == new_dir / "parts/foo/src"
+    assert x.part_src_subdir == new_dir / "parts/foo/src"
     assert x.part_build_dir == new_dir / "parts/foo/build"
-    assert x.part_build_work_dir == new_dir / "parts/foo/build"
+    assert x.part_build_subdir == new_dir / "parts/foo/build"
     assert x.part_install_dir == new_dir / "parts/foo/install"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"
@@ -151,9 +151,9 @@ def test_step_info(new_dir):
 
     assert x.part_name == "foo"
     assert x.part_src_dir == new_dir / "parts/foo/src"
-    assert x.part_src_work_dir == new_dir / "parts/foo/src"
+    assert x.part_src_subdir == new_dir / "parts/foo/src"
     assert x.part_build_dir == new_dir / "parts/foo/build"
-    assert x.part_build_work_dir == new_dir / "parts/foo/build"
+    assert x.part_build_subdir == new_dir / "parts/foo/build"
     assert x.part_install_dir == new_dir / "parts/foo/install"
     assert x.stage_dir == new_dir / "stage"
     assert x.prime_dir == new_dir / "prime"

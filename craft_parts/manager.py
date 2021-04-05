@@ -26,7 +26,6 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
-from craft_parts.utils import formatting_utils
 
 _SCHEMA_DIR = Path(__file__).parent / "data" / "schema"
 
@@ -286,13 +285,13 @@ def _build_part(
     part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
 
     # all entries should have been handled
-    if any(spec):
-        remainder = spec.keys()
-        raise errors.SchemaValidationError(
-            "additional properties are not allowed ({} {} unexpected)".format(
-                formatting_utils.humanize_list(remainder, "and"),
-                formatting_utils.pluralize(remainder, "is", "are"),
-            )
-        )
+    # if any(spec):
+    #    remainder = spec.keys()
+    #    raise errors.SchemaValidationError(
+    #        "additional properties are not allowed ({} {} unexpected)".format(
+    #            formatting_utils.humanize_list(remainder, "and"),
+    #            formatting_utils.pluralize(remainder, "is", "are"),
+    #        )
+    #    )
 
     return part

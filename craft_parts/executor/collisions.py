@@ -34,8 +34,12 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
 
     all_parts_files: Dict[str, Dict[str, Any]] = {}
     for part in part_list:
+        stage_files = part.spec.stage_fileset
+        if not stage_files:
+            continue
+
         # Gather our own files up
-        stage_fileset = Fileset(part.spec.stage_fileset, name="stage")
+        stage_fileset = Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dir)
         part_files, part_directories = filesets.migratable_filesets(
             stage_fileset, srcdir

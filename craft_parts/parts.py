@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright 2021 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,9 +16,10 @@
 
 """Definitions and helpers to handle parts."""
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
+
+from pydantic import BaseModel, Field, ValidationError
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
@@ -27,101 +28,77 @@ from craft_parts.steps import Step
 if TYPE_CHECKING:
     from craft_parts.plugins.options import PluginProperties
 
-# pylint: disable=too-many-public-methods
-# We use many property getters to prevent unintentional value overwrites
 
+class PartSpec(BaseModel):
+    """The part specification data."""
 
-@dataclass(frozen=True)
-class PartSpecs:
-    plugin: str
+    plugin: Optional[str]
     source: Optional[str]
-    source_checksum: str
-    source_branch: str
-    source_commit: str
-    source_depth: int
-    source_subdir: str
-    source_tag: str
-    source_type: str
-    disable_parallel: bool
-    after: List[str]
-    stage_snaps: List[str]
-    stage_packages: List[str]
-    build_snaps: List[str]
-    build_packages: List[str]
-    build_environment: List[Dict[str, str]]
-    build_attributes: List[str]
-    organize_fileset: Dict[str, str]
-    stage_fileset: List[str]
-    prime_fileset: List[str]
+    source_checksum: Optional[str] = ""
+    source_branch: Optional[str] = ""
+    source_commit: Optional[str] = ""
+    source_depth: Optional[int] = 0
+    source_subdir: Optional[str] = ""
+    source_tag: Optional[str] = ""
+    source_type: Optional[str] = ""
+    disable_parallel: Optional[bool] = False
+    after: Optional[List[str]] = []
+    stage_snaps: Optional[List[str]] = []
+    stage_packages: Optional[List[str]] = []
+    build_snaps: Optional[List[str]] = []
+    build_packages: Optional[List[str]] = []
+    build_environment: Optional[List[Dict[str, str]]] = []
+    build_attributes: Optional[List[str]] = []
+    organize_fileset: Optional[Dict[str, str]] = Field({}, alias="organize")
+    stage_fileset: Optional[List[str]] = Field(["*"], alias="stage")
+    prime_fileset: Optional[List[str]] = Field(["*"], alias="prime")
     override_pull: Optional[str]
     override_build: Optional[str]
     override_stage: Optional[str]
     override_prime: Optional[str]
 
+    class Config:
+        """Pydantic model configuration."""
+
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
     @classmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpecs":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PartSpec":
+        """Create and populate a new ``PartSpec`` object from dictionary data.
 
-        # TODO: validate stuff
+        The unmarshal method validates and consumes entries in the input
+        dictionary, populating the corresponding fields in the data object.
 
-        return cls(
-            plugin=data.pop("plugin", None),
-            source=data.pop("source", None),
-            source_checksum=data.pop("source-checksum", ""),
-            source_branch=data.pop("source-branch", ""),
-            source_commit=data.pop("source-commit", ""),
-            source_depth=data.pop("source-depth", ""),
-            source_subdir=data.pop("source-subdir", ""),
-            source_tag=data.pop("source-tag", ""),
-            source_type=data.pop("source-type", ""),
-            disable_parallel=data.pop("disable_parallel", False),
-            after=data.pop("after", []),
-            stage_snaps=data.pop("stage-snaps", []),
-            stage_packages=data.pop("stage-packages", []),
-            build_snaps=data.pop("build-snaps", []),
-            build_packages=data.pop("build-packages", []),
-            build_environment=data.pop("build-environment", []),
-            build_attributes=data.pop("build-attributes", []),
-            organize_fileset=data.pop("organize", {}),
-            stage_fileset=data.pop("stage", ["*"]),
-            prime_fileset=data.pop("prime", ["*"]),
-            override_pull=data.pop("override-pull", None),
-            override_build=data.pop("override-build", None),
-            override_stage=data.pop("override-stage", None),
-            override_prime=data.pop("override-prime", None),
-        )
+        :param data: The dictionary data to unmarshal and consume.
+
+        :return: The newly created object.
+
+        :raise ValueError: If data is not a dictionary.
+        """
+        if not isinstance(data, dict):
+            raise ValueError("part data is not a dictionary")
+
+        spec = PartSpec(**data)
+
+        return spec
 
     def marshal(self) -> Dict[str, Any]:
-        return {
-            "plugin": self.plugin,
-            "source": self.source,
-            "source-checksum": self.source_checksum,
-            "source-branch": self.source_branch,
-            "source-commit": self.source_commit,
-            "source-depth": self.source_depth,
-            "source-subdir": self.source_subdir,
-            "source-tag": self.source_tag,
-            "source-type": self.source_type,
-            "disable-parallel": self.disable_parallel,
-            "after": self.after,
-            "stage-snaps": self.stage_snaps,
-            "stage-packages": self.stage_packages,
-            "build-snaps": self.build_snaps,
-            "build-packages": self.build_packages,
-            "build-environment": self.build_environment,
-            "build-attributes": self.build_attributes,
-            "organize": self.organize_fileset,
-            "stage": self.stage_fileset,
-            "prime": self.prime_fileset,
-            "override-pull": self.override_pull,
-            "override-build": self.override_build,
-            "override-stage": self.override_stage,
-            "override-prime": self.override_prime,
-        }
+        """Create a dictionary containing the part specification data.
+
+        :return: The newly created dictionary.
+
+        """
+        return self.dict(by_alias=True)
 
     def get_scriptlet(self, step: Step) -> Optional[str]:
         """Return the scriptlet contents, if any, for the given step.
 
         :param step: the step corresponding to the scriptlet to be retrieved.
+
+        :return: The scriptlet for the given step, if any.
         """
         return {
             Step.PULL: self.override_pull,
@@ -142,6 +119,8 @@ class Part:
     :param name: The part name.
     :param data: A dictionary containing the part properties.
     :param project_dirs: The project work directories.
+
+    :raise PartSpecificationError: If part validation fails.
     """
 
     def __init__(
@@ -152,19 +131,29 @@ class Part:
         project_dirs: ProjectDirs = None,
         plugin_properties: "Optional[PluginProperties]" = None,
     ):
+        if not isinstance(data, dict):
+            raise errors.PartSpecificationError(
+                part_name=name, message="part data is not a dictionary"
+            )
 
         if not project_dirs:
             project_dirs = ProjectDirs()
 
         plugin_name: str = data.get("plugin", "")
-        # TODO: handle error
 
         self.name = name
         self.plugin = plugin_name
         self.plugin_options = plugin_properties
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
-        self.spec = PartSpecs.unmarshal(data)
+        self._part_dir = project_dirs.parts_dir / name
+
+        try:
+            self.spec = PartSpec.unmarshal(data)
+        except ValidationError as err:
+            raise errors.PartSpecificationError.from_validation_error(
+                part_name=name, error_list=err.errors()
+            )
 
     def __repr__(self):
         return f"Part({self.name!r})"
@@ -180,9 +169,11 @@ class Part:
         return self._part_dir / "src"
 
     @property
-    def part_src_work_dir(self) -> Path:
+    def part_src_subdir(self) -> Path:
         """Return the subdirectory in source containing the source subtree (if any)."""
-        return self.part_src_dir / self.spec.source_subdir
+        if self.spec.source_subdir:
+            return self.part_src_dir / self.spec.source_subdir
+        return self.part_src_dir
 
     @property
     def part_build_dir(self) -> Path:
@@ -190,9 +181,11 @@ class Part:
         return self._part_dir / "build"
 
     @property
-    def part_build_work_dir(self) -> Path:
+    def part_build_subdir(self) -> Path:
         """Return the subdirectory in build containing the source subtree (if any)."""
-        return self.part_build_dir / self.spec.source_subdir
+        if self.spec.source_subdir:
+            return self.part_build_dir / self.spec.source_subdir
+        return self.part_build_dir
 
     @property
     def part_install_dir(self) -> Path:
@@ -231,6 +224,9 @@ class Part:
 
     @property
     def dependencies(self) -> List[str]:
+        """Return the list of parts this part depends on."""
+        if not self.spec.after:
+            return []
         return self.spec.after
 
 
@@ -259,10 +255,12 @@ def part_list_by_name(
     :param part_list: The list of all known parts.
 
     :returns: The list of parts corresponding to the given names.
+
+    :raises InvalidPartName: if a part name is not defined.
     """
     if names:
         # check if all part names are valid
-        valid_names = [p.name for p in part_list]
+        valid_names = {p.name for p in part_list}
         for name in names:
             if name not in valid_names:
                 raise errors.InvalidPartName(name)
@@ -280,6 +278,8 @@ def sort_parts(part_list: List[Part]) -> List[Part]:
     :param part_list: The list of parts to sort.
 
     :returns: The sorted list of parts.
+
+    :raises PartDependencyCycle: if there are circular dependencies.
     """
     sorted_parts = []  # type: List[Part]
 
@@ -316,6 +316,8 @@ def part_dependencies(
     :param name: The name of the dependent part.
 
     :returns: The set of parts the given part depends on.
+
+    :raises InvalidPartName: if a part name is not defined.
     """
     part = next((p for p in part_list if p.name == name), None)
     if not part:

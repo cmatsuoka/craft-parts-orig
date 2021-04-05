@@ -144,9 +144,9 @@ class PartInfo:
         self._project_info = project_info
         self._part_name = part.name
         self._part_src_dir = part.part_src_dir
-        self._part_src_work_dir = part.part_src_work_dir
+        self._part_src_subdir = part.part_src_subdir
         self._part_build_dir = part.part_build_dir
-        self._part_build_work_dir = part.part_build_work_dir
+        self._part_build_subdir = part.part_build_subdir
         self._part_install_dir = part.part_install_dir
         self._part_state_dir = part.part_state_dir
 
@@ -161,9 +161,9 @@ class PartInfo:
         return self._part_src_dir
 
     @property
-    def part_src_work_dir(self) -> Path:
+    def part_src_subdir(self) -> Path:
         """The subdirectory in source containing the source subtree (if any)."""
-        return self._part_src_work_dir
+        return self._part_src_subdir
 
     @property
     def part_build_dir(self) -> Path:
@@ -171,9 +171,9 @@ class PartInfo:
         return self._part_build_dir
 
     @property
-    def part_build_work_dir(self) -> Path:
+    def part_build_subdir(self) -> Path:
         """The subdirectory in build containing the source subtree (if any)."""
-        return self._part_build_work_dir
+        return self._part_build_subdir
 
     @property
     def part_install_dir(self) -> Path:

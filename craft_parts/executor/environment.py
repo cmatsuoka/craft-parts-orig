@@ -53,6 +53,8 @@ def generate_part_environment(
 
     # Part's (user) say.
     user_build_environment = part.spec.build_environment
+    if not user_build_environment:
+        user_build_environment = []
 
     # Create the script.
     with io.StringIO() as run_environment:

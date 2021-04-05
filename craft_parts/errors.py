@@ -17,7 +17,7 @@
 """The exceptions that can be raised when using craft_parts."""
 
 from abc import ABC
-from typing import List
+from typing import Any, Dict, List
 
 
 class CraftPartsError(Exception, ABC):
@@ -364,3 +364,14 @@ class ExportOverlayError(CraftPartsError):
 
     def __init__(self, message: str):
         super().__init__(message=message)
+
+
+class PartSpecificationError(CraftPartsError):
+    fmt = "Part {part_name!r} specification error: {message}."
+
+    def __init__(self, *, part_name: str, message: str):
+        super().__init__(part_name=part_name, message=message)
+
+    @classmethod
+    def from_validation_error(cls, *, part_name: str, error_list: List[Dict[str, Any]]):
+        return cls(part_name=part_name, message=str(error_list))

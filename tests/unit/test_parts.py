@@ -26,7 +26,7 @@ class TestPartBasics:
     """Test basic part creation and representation."""
 
     def test_part(self, new_dir):
-        p = Part("foo", {"bar": "baz"})
+        p = Part("foo", {"plugin": "nil"})
         assert f"{p!r}" == "Part('foo')"
         assert p.name == "foo"
         assert p.parts_dir == new_dir / "parts"
@@ -54,9 +54,9 @@ class TestPartBasics:
     def test_part_src_build_work_dir(self, new_dir):
         p = Part("foo", {"source-subdir": "foobar"})
         assert p.part_src_dir == new_dir / "parts/foo/src"
-        assert p.part_src_work_dir == new_dir / "parts/foo/src/foobar"
+        assert p.part_src_subdir == new_dir / "parts/foo/src/foobar"
         assert p.part_build_dir == new_dir / "parts/foo/build"
-        assert p.part_build_work_dir == new_dir / "parts/foo/build/foobar"
+        assert p.part_build_subdir == new_dir / "parts/foo/build/foobar"
 
     def test_part_source(self):
         p = Part("foo", {})
