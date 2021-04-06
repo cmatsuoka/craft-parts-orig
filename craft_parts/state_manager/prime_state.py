@@ -16,7 +16,7 @@
 
 """State definitions for the prime state."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Set
 
 from .part_state import PartState
 
@@ -24,32 +24,12 @@ from .part_state import PartState
 class PrimeState(PartState):
     """Hold context information for the prime step."""
 
-    yaml_tag = "!PrimeState"
+    dependency_paths: Optional[Set[str]] = set()
+    primed_stage_packages: Optional[Set[str]] = set()
 
-    def __init__(
-        self,
-        *,
-        files,
-        directories,
-        dependency_paths=None,
-        part_properties: Dict[str, Any] = None,
-        project_options: Dict[str, Any] = None,
-        primed_stage_packages=None,
-    ):
-        super().__init__(
-            part_properties=part_properties,
-            project_options=project_options,
-            files=files,
-            directories=directories,
-        )
-
-        self.dependency_paths = set()
-        self.primed_stage_packages = primed_stage_packages
-        if self.primed_stage_packages is None:
-            self.primed_stage_packages = set()
-
-        if dependency_paths:
-            self.dependency_paths = dependency_paths
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PrimeState":
+        return cls(**data)
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties.

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2021 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,22 +24,9 @@ from .part_state import PartState
 class StageState(PartState):
     """Hold context information for the stage step."""
 
-    yaml_tag = "!StageState"
-
-    def __init__(
-        self,
-        *,
-        files,
-        directories,
-        part_properties: Dict[str, Any] = None,
-        project_options: Dict[str, Any] = None,
-    ):
-        super().__init__(
-            part_properties=part_properties,
-            project_options=project_options,
-            files=files,
-            directories=directories,
-        )
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "StageState":
+        return cls(**data)
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties.

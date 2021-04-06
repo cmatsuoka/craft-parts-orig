@@ -17,8 +17,12 @@
 """The part state for a given step."""
 
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
+
+from pydantic import Field
+from pydantic_yaml import YamlModel  # type: ignore
 
 from craft_parts.utils import yaml_utils
 
@@ -55,7 +59,7 @@ class GlobalState(_State):
     pass
 
 
-class PartState(_State):
+class PartState(YamlModel, ABC):
     """The context used to run a step for a given part.
 
     The part state contains environmental and project-specific configuration
@@ -63,70 +67,66 @@ class PartState(_State):
     new lifecycle execution the step will run again.
     """
 
-    def __init__(
-        self,
-        *,
-        part_properties: Dict[str, Any] = None,
-        project_options: Dict[str, Any] = None,
-        files: Set[str] = None,
-        directories: Set[str] = None,
-        assets: Dict[str, Any] = None,
-    ):
-        super().__init__()
+    part_properties: Optional[Dict[str, Any]] = Field({}, alias="properties")
+    project_options: Optional[Dict[str, Any]] = {}
+    files: Optional[Set[str]] = set()
+    directories: Optional[Set[str]] = set()
 
-        if assets:
-            self.assets = assets
+    class Config:
+        """Pydantic model configuration."""
 
-        if not files:
-            files = set()
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+        allow_population_by_field_name = True
 
-        if not directories:
-            directories = set()
-
-        self.files = files
-        self.directories = directories
-
-        if part_properties:
-            self.properties = self.properties_of_interest(part_properties)
-        else:
-            self.properties = {}
-
-        if project_options:
-            self.project_options = self.project_options_of_interest(project_options)
-        else:
-            self.project_options = {}
-
+    @abstractmethod
     def properties_of_interest(self, part_properties) -> Dict[str, Any]:
-        """Extract the properties concerning this step from the options.
+        """Return relevant properties concerning this step."""
 
-        Note that these options come from the YAML for a given part.
-        """
-
-        raise NotImplementedError
-
+    @abstractmethod
     def project_options_of_interest(
         self, project_options: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Extract the options concerning this step from the project."""
-
-        raise NotImplementedError
+        """Return relevant options concerning this step."""
 
     def diff_properties_of_interest(self, other_properties: Dict[str, Any]) -> Set[str]:
         """Return set of properties that differ."""
 
         return _get_differing_keys(
-            self.properties, self.properties_of_interest(other_properties)
+            self.properties_of_interest(self.part_properties),
+            self.properties_of_interest(other_properties),
         )
 
     def diff_project_options_of_interest(
         self, other_project_options: Dict[str, Any]
     ) -> Set[str]:
         """Return set of project options that differ."""
+        project_options = self.project_options
+        if project_options is None:
+            project_options = {}
 
         return _get_differing_keys(
-            self.project_options,
+            self.project_options_of_interest(project_options),
             self.project_options_of_interest(other_project_options),
         )
+
+    def marshal(self) -> Dict[str, Any]:
+        """Create a dictionary containing the part state data.
+
+        :return: The newly created dictionary.
+
+        """
+        return self.dict(by_alias=True)
+
+    def write(self, filepath: Path) -> None:
+        """Write this state to disk."""
+
+        os.makedirs(filepath.parent, exist_ok=True)
+        yaml_data = self.yaml(by_alias=True)
+        with open(filepath, "w") as f:
+            f.write(yaml_data)
 
 
 def _get_differing_keys(dict1, dict2) -> Set[str]:

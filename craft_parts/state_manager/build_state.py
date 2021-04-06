@@ -16,7 +16,7 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .part_state import PartState
 
@@ -24,34 +24,27 @@ from .part_state import PartState
 class BuildState(PartState):
     """Hold context information for the build step."""
 
-    yaml_tag = "!BuildState"
+    #    assets = {
+    #        "build-snaps": build_snaps,
+    #        "build-packages": build_packages,
+    #    }
 
-    def __init__(
-        self,
-        *,
-        part_properties=None,
-        project_options: Dict[str, Any] = None,
-        build_snaps: List[str] = None,
-        build_packages: List[str] = None,
-        machine_assets: Optional[Dict[str, Any]] = None,
-    ):
-        assets = {
-            "build-snaps": build_snaps,
-            "build-packages": build_packages,
-        }
-        if machine_assets:
-            assets.update(machine_assets)
+    assets: Optional[Dict[str, Any]] = {}
+    machine_assets: Optional[Dict[str, Any]] = {}
 
-        super().__init__(
-            part_properties=part_properties,
-            project_options=project_options,
-            assets=assets,
-        )
+    # machine_assets: Optional[Dict[str, Any]] = None
+
+    #    if machine_assets:
+    #        assets.update(machine_assets)
+
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "BuildState":
+        return cls(**data)
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the properties concerning this step from part_properties."""
 
-        schema_properties = [
+        relevant_properties = [
             "after",
             "build-attributes",
             "build-packages",
@@ -61,7 +54,7 @@ class BuildState(PartState):
         ]
 
         properties: Dict[str, Any] = {}
-        for name in schema_properties:
+        for name in relevant_properties:
             properties[name] = part_properties.get(name)
 
         return properties

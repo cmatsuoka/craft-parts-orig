@@ -194,7 +194,6 @@ class Sequencer:
             plugin = plugins.get_plugin(
                 part=part,
                 plugin_version=self._project_info.plugin_version,
-                # validator=self._validator,
                 part_info=part_info,
             )
 
@@ -202,10 +201,17 @@ class Sequencer:
                 part=part, repository=package_repo, plugin=plugin
             )
 
+            build_snaps = common.get_build_snaps(
+                part=part, repository=package_repo, plugin=plugin
+            )
+
             state = states.BuildState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                build_packages=build_packages,
+                assets={
+                    "build-packages": build_packages,
+                    "build-snaps": build_snaps,
+                },
                 machine_assets=common.get_machine_manifest(),
             )
 

@@ -248,10 +248,13 @@ class PartHandler:
         state = states.PullState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            stage_packages=fetched_packages,
-            stage_snaps=fetched_snaps,
-            source_details=getattr(self._source_handler, "source_details", None),
+            assets={
+                "stage-packages": fetched_packages,
+                "stage-snaps": fetched_snaps,
+                "source-details": getattr(self._source_handler, "source_details", None),
+            },
         )
+
         return state
 
     def _run_build(self, step_info: StepInfo, *, update=False) -> PartState:
@@ -297,7 +300,10 @@ class PartHandler:
         state = states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            build_packages=self._build_packages,
+            assets={
+                "build-packages": self._build_packages,
+                "build-snaps": self._build_snaps,
+            },
             machine_assets=common.get_machine_manifest(),
         )
         return state
@@ -470,14 +476,22 @@ def _clean_shared_area(
     primed_files = state.files
     primed_directories = state.directories
 
+    if primed_files is None:
+        primed_files = set()
+
+    if primed_directories is None:
+        primed_directories = set()
+
     # We want to make sure we don't remove a file or directory that's
     # being used by another part. So we'll examine the state for all parts
     # in the project and leave any files or directories found to be in
     # common.
     for other_name, other_state in part_states.items():
         if other_state and (other_name != part_name):
-            primed_files -= other_state.files
-            primed_directories -= other_state.directories
+            if other_state.files:
+                primed_files -= other_state.files
+            if other_state.directories:
+                primed_directories -= other_state.directories
 
     # Finally, clean the files and directories that are specific to this
     # part.

@@ -27,7 +27,6 @@ from craft_parts.steps import Step
 
 _pull_state_foo = textwrap.dedent(
     """\
-    !PullState
     properties:
       plugin: nil
       source-subdir: ''
@@ -47,7 +46,6 @@ _pull_state_foo = textwrap.dedent(
 
 _pull_state_bar = textwrap.dedent(
     """\
-    !PullState
     properties:
       plugin: nil
       source-subdir: ''

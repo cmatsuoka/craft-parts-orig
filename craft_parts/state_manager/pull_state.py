@@ -16,7 +16,7 @@
 
 """State definitions for the pull step."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional
 
 from .part_state import PartState
 
@@ -24,33 +24,16 @@ from .part_state import PartState
 class PullState(PartState):
     """Hold context information for the pull step."""
 
-    yaml_tag = "!PullState"
+    assets: Optional[Dict[str, Any]] = {}
 
-    def __init__(
-        self,
-        *,
-        part_properties: Dict[str, Any] = None,
-        project_options: Dict[str, Any] = None,
-        stage_packages: List[str] = None,
-        stage_snaps: List[str] = None,
-        source_details=None,
-    ):
-        assets = {
-            "stage-packages": stage_packages,
-            "stage-snaps": stage_snaps,
-            "source-details": source_details,
-        }
-
-        super().__init__(
-            part_properties=part_properties,
-            project_options=project_options,
-            assets=assets,
-        )
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PullState":
+        return cls(**data)
 
     def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract the properties concerning this step from part_properties."""
+        """Return relevant properties concerning this step."""
 
-        schema_properties = [
+        relevant_properties = [
             "override-pull",
             "parse-info",
             "plugin",
@@ -65,7 +48,7 @@ class PullState(PartState):
         ]
 
         properties: Dict[str, Any] = {}
-        for name in schema_properties:
+        for name in relevant_properties:
             properties[name] = part_properties.get(name)
 
         return properties

@@ -23,10 +23,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 
+import yaml
+
 from craft_parts import errors
 from craft_parts.parts import Part
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, yaml_utils
+from craft_parts.utils import file_utils
 
 from .build_state import BuildState
 from .part_state import GlobalState, PartState
@@ -40,11 +42,8 @@ logger = logging.getLogger(__name__)
 def _load_state(filename: Path) -> Dict[str, Any]:
     logger.debug("load state file: %s", filename)
 
-    state_data = {}
-    with filename.open() as state_file:
-        state = yaml_utils.load(state_file)
-        if state:
-            state_data = state
+    with open(filename) as f:
+        state_data = yaml.safe_load(f)
 
     return state_data
 
@@ -74,16 +73,14 @@ def load_state(
     state_data = _load_state(filename)
     timestamp = file_utils.timestamp(str(filename))
 
-    state: PartState
-
     if step == Step.PULL:
-        state = cast(PullState, state_data)
+        state = PullState.unmarshal(state_data)
     elif step == Step.BUILD:
-        state = cast(BuildState, state_data)
+        state = BuildState.unmarshal(state_data)
     elif step == Step.STAGE:
-        state = cast(StageState, state_data)
+        state = StageState.unmarshal(state_data)
     elif step == Step.PRIME:
-        state = cast(PrimeState, state_data)
+        state = PrimeState.unmarshal(state_data)
     else:
         raise errors.InternalError(f"invalid step {step!r}")
 
