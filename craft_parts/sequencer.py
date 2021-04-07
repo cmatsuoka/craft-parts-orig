@@ -205,14 +205,16 @@ class Sequencer:
                 part=part, repository=package_repo, plugin=plugin
             )
 
+            assets = {
+                "build-packages": build_packages,
+                "build-snaps": build_snaps,
+            }
+            assets.update(common.get_machine_manifest())
+
             state = states.BuildState(
                 part_properties=part_properties,
                 project_options=self._project_info.project_options,
-                assets={
-                    "build-packages": build_packages,
-                    "build-snaps": build_snaps,
-                },
-                machine_assets=common.get_machine_manifest(),
+                assets=assets,
             )
 
         elif step == Step.STAGE:

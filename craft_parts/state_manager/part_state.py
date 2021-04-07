@@ -19,7 +19,7 @@
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Set
 
 from pydantic import Field
 from pydantic_yaml import YamlModel  # type: ignore
@@ -67,10 +67,10 @@ class PartState(YamlModel, ABC):
     new lifecycle execution the step will run again.
     """
 
-    part_properties: Optional[Dict[str, Any]] = Field({}, alias="properties")
-    project_options: Optional[Dict[str, Any]] = {}
-    files: Optional[Set[str]] = set()
-    directories: Optional[Set[str]] = set()
+    part_properties: Dict[str, Any] = Field({}, alias="properties")
+    project_options: Dict[str, Any] = {}
+    files: Set[str] = set()
+    directories: Set[str] = set()
 
     class Config:
         """Pydantic model configuration."""
@@ -103,12 +103,8 @@ class PartState(YamlModel, ABC):
         self, other_project_options: Dict[str, Any]
     ) -> Set[str]:
         """Return set of project options that differ."""
-        project_options = self.project_options
-        if project_options is None:
-            project_options = {}
-
         return _get_differing_keys(
-            self.project_options_of_interest(project_options),
+            self.project_options_of_interest(self.project_options),
             self.project_options_of_interest(other_project_options),
         )
 

@@ -16,7 +16,7 @@
 
 """State definitions for the prime state."""
 
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Set
 
 from .part_state import PartState
 
@@ -24,8 +24,8 @@ from .part_state import PartState
 class PrimeState(PartState):
     """Hold context information for the prime step."""
 
-    dependency_paths: Optional[Set[str]] = set()
-    primed_stage_packages: Optional[Set[str]] = set()
+    dependency_paths: Set[str] = set()
+    primed_stage_packages: Set[str] = set()
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PrimeState":

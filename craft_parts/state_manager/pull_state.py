@@ -16,7 +16,7 @@
 
 """State definitions for the pull step."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .part_state import PartState
 
@@ -24,7 +24,7 @@ from .part_state import PartState
 class PullState(PartState):
     """Hold context information for the pull step."""
 
-    assets: Optional[Dict[str, Any]] = {}
+    assets: Dict[str, Any] = {}
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]) -> "PullState":

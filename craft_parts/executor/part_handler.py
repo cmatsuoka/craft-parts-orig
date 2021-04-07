@@ -296,15 +296,17 @@ class PartHandler:
         # instead of an update.
         self._organize(overwrite=update)
 
+        assets = {
+            "build-packages": self._build_packages,
+            "build-snaps": self._build_snaps,
+        }
+        assets.update(common.get_machine_manifest())
+
         # TODO: check what else should be part of the build state
         state = states.BuildState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            assets={
-                "build-packages": self._build_packages,
-                "build-snaps": self._build_snaps,
-            },
-            machine_assets=common.get_machine_manifest(),
+            assets=assets,
         )
         return state
 
@@ -476,22 +478,14 @@ def _clean_shared_area(
     primed_files = state.files
     primed_directories = state.directories
 
-    if primed_files is None:
-        primed_files = set()
-
-    if primed_directories is None:
-        primed_directories = set()
-
     # We want to make sure we don't remove a file or directory that's
     # being used by another part. So we'll examine the state for all parts
     # in the project and leave any files or directories found to be in
     # common.
     for other_name, other_state in part_states.items():
         if other_state and (other_name != part_name):
-            if other_state.files:
-                primed_files -= other_state.files
-            if other_state.directories:
-                primed_directories -= other_state.directories
+            primed_files -= other_state.files
+            primed_directories -= other_state.directories
 
     # Finally, clean the files and directories that are specific to this
     # part.

@@ -16,7 +16,7 @@
 
 """State definitions for the build step."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .part_state import PartState
 
@@ -29,8 +29,7 @@ class BuildState(PartState):
     #        "build-packages": build_packages,
     #    }
 
-    assets: Optional[Dict[str, Any]] = {}
-    machine_assets: Optional[Dict[str, Any]] = {}
+    assets: Dict[str, Any] = {}
 
     # machine_assets: Optional[Dict[str, Any]] = None
 
