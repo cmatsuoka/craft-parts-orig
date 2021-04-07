@@ -93,7 +93,7 @@ class TestOrganize:
         organize_fileset = Fileset(organize_set)
 
         if isinstance(expected, type) and issubclass(expected, Exception):
-            with pytest.raises(expected) as error:
+            with pytest.raises(expected) as error:  # type: ignore
                 organize_filesets(
                     part_name="part-name",
                     fileset=organize_fileset,

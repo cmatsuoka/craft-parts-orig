@@ -82,7 +82,7 @@ class PartState(YamlModel, ABC):
         allow_population_by_field_name = True
 
     @abstractmethod
-    def properties_of_interest(self, part_properties) -> Dict[str, Any]:
+    def properties_of_interest(self, part_properties: Dict[str, Any]) -> Dict[str, Any]:
         """Return relevant properties concerning this step."""
 
     @abstractmethod

@@ -20,7 +20,7 @@ import contextlib
 import itertools
 import logging
 from datetime import datetime
-from typing import Dict, Final, List, Optional
+from typing import Dict, Final, List, Optional, Tuple
 
 from craft_parts import errors, parts, sources, steps
 from craft_parts.infos import ProjectInfo
@@ -28,11 +28,12 @@ from craft_parts.parts import Part
 from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
+from craft_parts.utils import file_utils
 
 from .dirty_report import Dependency, DirtyReport
 from .outdated_report import OutdatedReport
 from .part_state import PartState
-from .states import load_state
+from .states import load_state, state_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -57,53 +58,19 @@ class _StateWrapper:
     def __init__(
         self,
         state: PartState,
-        timestamp: Optional[datetime] = None,
         serial: int = 0,
         updated: bool = False,
     ):
-        if (timestamp and serial) or not (timestamp or serial):
-            raise errors.InternalError("either timestamp or serial must be provided")
-
-        self._state: Final[PartState] = state
-        self._timestamp: Final[Optional[datetime]] = timestamp
-        self._serial: Final[int] = serial
-        self._updated: Final[bool] = updated
-
-    @property
-    def state(self) -> PartState:
-        """The wrapped state data."""
-        return self._state
-
-    @property
-    def timestamp(self) -> Optional[datetime]:
-        """The state timestamp metadata set from the state file."""
-        return self._timestamp
-
-    @property
-    def updated(self) -> bool:
-        """Verify whether this state was updated after reported outdated."""
-        return self._updated
+        self.state: Final[PartState] = state
+        self.serial: Final[int] = serial
+        self.updated: Final[bool] = updated
 
     def is_newer_than(self, other: "_StateWrapper"):
         """Verify if this state is newer than the specified state.
 
         :param other: The state to compare this state to.
         """
-
-        # both states have timestamps, check which is newer
-        if self.timestamp and other.timestamp:
-            return self.timestamp > other.timestamp
-
-        # we have a timestamp and the other doesn't, other is newer
-        if self.timestamp and not other.timestamp:
-            return False
-
-        # we don't have a timestamp but other does, we're newer
-        if not self.timestamp and other.timestamp:
-            return True
-
-        # neither state has a timestamp, compare serials
-        return self._serial > other._serial
+        return self.serial > other.serial
 
 
 class _EphemeralStates:
@@ -187,16 +154,16 @@ class StateManager:
         self._part_list = part_list
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
-        for part in part_list:
-            # Initialize from persistent state
-            for step in list(Step):
-                state, timestamp = load_state(part, step)
-                if state and timestamp:
-                    self._state.set(
-                        part_name=part.name,
-                        step=step,
-                        state=_StateWrapper(state, timestamp=timestamp),
-                    )
+        part_step_list = _sort_step_by_state_timestamp(part_list)
+
+        for part, step, _ in part_step_list:
+            state = load_state(part, step)
+            if state:
+                self._state.set(
+                    part_name=part.name,
+                    step=step,
+                    state=_StateWrapper(state),
+                )
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
@@ -420,3 +387,17 @@ class StateManager:
                 return OutdatedReport(previous_step_modified=previous_step)
 
         return None
+
+
+def _sort_step_by_state_timestamp(
+    part_list: List[Part],
+) -> List[Tuple[Part, Step, datetime]]:
+    state_files: List[Tuple[Part, Step, datetime]] = []
+    for part in part_list:
+        for step in list(Step):
+            path = state_file_path(part, step)
+            if path.is_file():
+                timestamp = file_utils.timestamp(str(path))
+                state_files.append((part, step, timestamp))
+
+    return sorted(state_files, key=lambda item: item[2])

@@ -61,17 +61,14 @@ def load_global_state(
     return state, timestamp
 
 
-def load_state(
-    part: Part, step: Step
-) -> Tuple[Optional[PartState], Optional[datetime]]:
+def load_state(part: Part, step: Step) -> Optional[PartState]:
     """Retrieve the persistent state for the given part and step."""
 
     filename = state_file_path(part, step)
     if not filename.is_file():
-        return None, None
+        return None
 
     state_data = _load_state(filename)
-    timestamp = file_utils.timestamp(str(filename))
 
     if step == Step.PULL:
         state = PullState.unmarshal(state_data)
@@ -84,7 +81,7 @@ def load_state(
     else:
         raise errors.InternalError(f"invalid step {step!r}")
 
-    return state, timestamp
+    return state
 
 
 def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
@@ -92,7 +89,7 @@ def load_part_states(step: Step, part_list: List[Part]) -> Dict[str, PartState]:
 
     states: Dict[str, PartState] = {}
     for part in part_list:
-        state, _ = load_state(part, step)
+        state = load_state(part, step)
         if state:
             states[part.name] = state
     return states
