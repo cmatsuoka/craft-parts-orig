@@ -19,8 +19,9 @@
 import contextlib
 import itertools
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Final, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from craft_parts import errors, parts, sources, steps
 from craft_parts.infos import ProjectInfo
@@ -43,6 +44,7 @@ _DirtyReports = Dict[str, Dict[Step, Optional[DirtyReport]]]
 _OutdatedReports = Dict[str, Dict[Step, Optional[OutdatedReport]]]
 
 
+@dataclass(frozen=True)
 class _StateWrapper:
     """A wrapper for the in-memory PartState class with extra metadata.
 
@@ -55,15 +57,9 @@ class _StateWrapper:
     phase).
     """
 
-    def __init__(
-        self,
-        state: PartState,
-        serial: int = 0,
-        updated: bool = False,
-    ):
-        self.state: Final[PartState] = state
-        self.serial: Final[int] = serial
-        self.updated: Final[bool] = updated
+    state: PartState
+    serial: int
+    step_updated: bool = False
 
     def is_newer_than(self, other: "_StateWrapper"):
         """Verify if this state is newer than the specified state.
@@ -79,7 +75,7 @@ class _EphemeralStates:
         self._serial_gen = itertools.count(1)
 
     def new_ephemeral_state(
-        self, state: PartState, updated: bool = False
+        self, state: PartState, step_updated: bool = False
     ) -> _StateWrapper:
         """Create a state wrapper from a pure in-memory state.
 
@@ -89,7 +85,9 @@ class _EphemeralStates:
 
         # We use serials instead of timestamps for in-memory states to avoid
         # doing logic based on timestamp comparisons during the planning phase.
-        stw = _StateWrapper(state, serial=next(self._serial_gen), updated=updated)
+        stw = _StateWrapper(
+            state, serial=next(self._serial_gen), step_updated=step_updated
+        )
         return stw
 
     def set(
@@ -135,13 +133,13 @@ class _EphemeralStates:
         stw = self.get(part_name=part_name, step=step)
         if stw:
             # rewrap the state with new metadata
-            new_stw = self.new_ephemeral_state(stw.state, updated=True)
+            new_stw = self.new_ephemeral_state(stw.state, step_updated=True)
             self.set(part_name=part_name, step=step, state=new_stw)
 
     def was_updated(self, *, part_name: str, step: Step) -> bool:
         """Verify whether the part and step was updated."""
         if self.test(part_name=part_name, step=step):
-            return self._state[part_name][step].updated
+            return self._state[part_name][step].step_updated
         return False
 
 
@@ -159,11 +157,7 @@ class StateManager:
         for part, step, _ in part_step_list:
             state = load_state(part, step)
             if state:
-                self._state.set(
-                    part_name=part.name,
-                    step=step,
-                    state=_StateWrapper(state),
-                )
+                self.set_state(part, step, state=state)
 
     def set_state(self, part: Part, step: Step, *, state: PartState) -> None:
         """Set the ephemeral state of the given part and step."""
