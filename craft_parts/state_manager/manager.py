@@ -120,21 +120,23 @@ class _EphemeralStates:
             return self._state[part_name][step]
         return None
 
-    def update_timestamp(self, *, part_name: str, step: Step) -> None:
+    def update_serial(
+        self, *, part_name: str, step: Step, step_updated: bool = False
+    ) -> None:
         """Update the state timestamp (actually adds an ephemeral serial)."""
         stw = self.get(part_name=part_name, step=step)
         if stw:
             # rewrap the state with new metadata
-            new_stw = self.new_ephemeral_state(stw.state)
+            new_stw = self.new_ephemeral_state(stw.state, step_updated=step_updated)
             self.set(part_name=part_name, step=step, state=new_stw)
 
-    def set_updated(self, *, part_name: str, step: Step) -> None:
-        """Mark this part and step as updated."""
-        stw = self.get(part_name=part_name, step=step)
-        if stw:
-            # rewrap the state with new metadata
-            new_stw = self.new_ephemeral_state(stw.state, step_updated=True)
-            self.set(part_name=part_name, step=step, state=new_stw)
+    # def set_updated(self, *, part_name: str, step: Step) -> None:
+    #     """Mark this part and step as updated."""
+    #     stw = self.get(part_name=part_name, step=step)
+    #     if stw:
+    #         # rewrap the state with new metadata
+    #         new_stw = self.new_ephemeral_state(stw.state, step_updated=True)
+    #         self.set(part_name=part_name, step=step, state=new_stw)
 
     def was_updated(self, *, part_name: str, step: Step) -> bool:
         """Verify whether the part and step was updated."""
@@ -166,7 +168,7 @@ class StateManager:
 
     def update_state_timestamp(self, part: Part, step: Step) -> None:
         """Update the given part and step state's timestamp."""
-        self._state.update_timestamp(part_name=part.name, step=step)
+        self._state.update_serial(part_name=part.name, step=step)
 
     def should_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part should run.
@@ -328,7 +330,7 @@ class StateManager:
 
     def mark_step_updated(self, part: Part, step: Step):
         """Mark the given part and step as updated."""
-        self._state.set_updated(part_name=part.name, step=step)
+        self._state.update_serial(part_name=part.name, step=step, step_updated=True)
 
     def _outdated_report_for_part(
         self, part: Part, step: Step
