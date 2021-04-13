@@ -14,46 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
-
-import pytest
-
-from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.v2 import DumpPlugin
+from craft_parts.plugins.nil import NilPlugin
 
 # pylint: disable=attribute-defined-outside-init
 
 
-class TestPluginDump:
-    """Dump plugin tests."""
+class TestPluginNil:
+    """Nil plugin tests."""
 
     def setup_method(self):
-        options = DumpPlugin.properties_class.unmarshal({"source": "of all evil"})
+        properties = NilPlugin.properties_class.unmarshal({})
+        part = Part("foo", {})
 
         project_info = ProjectInfo()
-
-        part = Part("foo", {})
         part_info = PartInfo(project_info=project_info, part=part)
-        part_info._part_install_dir = Path("install/dir")
 
-        self._plugin = DumpPlugin(options=options, part_info=part_info)
+        self._plugin = NilPlugin(options=properties, part_info=part_info)
 
     def test_schema(self):
-        schema = DumpPlugin.get_schema()
+        schema = NilPlugin.get_schema()
         assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
         assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
         assert schema["properties"] == {}
-
-    def test_unmarshal(self):
-        with pytest.raises(errors.SchemaValidationError) as raised:
-            DumpPlugin.properties_class.unmarshal({})
-        assert (
-            str(raised.value) == "Schema validation error: 'source' "
-            "is required by the dump plugin."
-        )
 
     def test_get_build_packages(self):
         assert self._plugin.get_build_packages() == set()
@@ -63,6 +48,4 @@ class TestPluginDump:
         assert self._plugin.get_build_environment() == dict()
 
     def test_get_build_commands(self):
-        assert self._plugin.get_build_commands() == [
-            'cp --archive --link --no-dereference . "install/dir"'
-        ]
+        assert self._plugin.get_build_commands() == list()

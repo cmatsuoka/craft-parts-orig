@@ -81,8 +81,6 @@ class LifecycleManager:
     :param parallel_build_count: The maximum number of concurrent jobs to be
         used to build each part of this project.
     :param local_plugins_dir: The directory where local plugins are, if any.
-    :param plugin_version: The plugin API version. Currently only ``v2`` is
-        supported.
     :param stage_pkg_unpack: Enable unpacking stage packages defined for each
         part into the part's install directory.
     :param build_pkg_install: Enable installing build packages defined for each
@@ -101,7 +99,6 @@ class LifecycleManager:
         arch: str = "",
         parallel_build_count: int = 1,
         local_plugins_dir: str = "",
-        plugin_version: str = "v2",
         extra_build_packages: List[str] = None,
         base_packages: List[str] = None,
         base_dir: Union[str, Path] = None,
@@ -118,7 +115,6 @@ class LifecycleManager:
         project_info = ProjectInfo(
             application_name=application_name,
             arch=arch,
-            plugin_version=plugin_version,
             parallel_build_count=parallel_build_count,
             project_dirs=project_dirs,
             local_plugins_dir=local_plugins_dir,
@@ -131,7 +127,7 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, plugin_version))
+            part_list.append(_build_part(name, spec, project_dirs))
 
         self._part_list = part_list
         self._application_name = application_name
@@ -266,9 +262,7 @@ class LifecycleManager:
         self._executor.epilogue()
 
 
-def _build_part(
-    name: str, spec: Dict[str, Any], project_dirs: ProjectDirs, plugin_version: str
-) -> Part:
+def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> Part:
     if not isinstance(spec, dict):
         raise errors.SchemaValidationError(f"part {name!r} definition is malformed")
 
@@ -276,8 +270,8 @@ def _build_part(
     if not plugin_name:
         plugin_name = name
 
-    plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
-    properties: Optional[plugins.PluginV2Properties]
+    plugin_class = plugins.get_plugin_class(plugin_name)
+    properties: Optional[plugins.PluginProperties]
 
     # unmarshal plugin properties, handled entries are popped from specs
     if plugin_class.properties_class:

@@ -47,7 +47,6 @@ class PartHandler:
         self,
         part: Part,
         *,
-        plugin_version: str,
         part_info: PartInfo,
         part_list: List[Part],
         disable_stage_packages: bool = False,
@@ -59,7 +58,6 @@ class PartHandler:
 
         self._plugin = plugins.get_plugin(
             part=part,
-            plugin_version=plugin_version,
             properties=part.plugin_options,
             part_info=part_info,
         )

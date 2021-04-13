@@ -19,11 +19,12 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set, cast
 
-from ..plugin_v2 import PluginV2, PluginV2Properties
+from .base import Plugin
+from .properties import PluginProperties
 
 
 @dataclass(frozen=True)
-class MakePluginProperties(PluginV2Properties):
+class MakePluginProperties(PluginProperties):
     make_parameters: List[str]
 
     @classmethod
@@ -31,7 +32,7 @@ class MakePluginProperties(PluginV2Properties):
         return cls(make_parameters=data.pop("make-parameters", []))
 
 
-class MakePlugin(PluginV2):
+class MakePlugin(Plugin):
     """A plugin useful for building make based parts.
 
     Make based projects are projects that have a Makefile that drives the

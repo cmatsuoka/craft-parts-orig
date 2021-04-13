@@ -37,11 +37,12 @@ In addition, this plugin uses the following plugin-specific keywords:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set, cast
 
-from ..plugin_v2 import PluginV2, PluginV2Properties
+from .base import Plugin
+from .properties import PluginProperties
 
 
 @dataclass(frozen=True)
-class AutotoolsPluginProperties(PluginV2Properties):
+class AutotoolsPluginProperties(PluginProperties):
     configure_parameters: List[str]
 
     @classmethod
@@ -49,7 +50,7 @@ class AutotoolsPluginProperties(PluginV2Properties):
         return cls(configure_parameters=data.get("autotools-configure-parameters", []))
 
 
-class AutotoolsPlugin(PluginV2):
+class AutotoolsPlugin(Plugin):
     """The autotools plugin."""
 
     properties_class = AutotoolsPluginProperties

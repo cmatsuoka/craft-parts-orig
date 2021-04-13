@@ -50,7 +50,6 @@ class TestStagePackages:
 
         handler = PartHandler(
             part1,
-            plugin_version="v2",
             part_info=part_info,
             part_list=[part1],
         )
@@ -83,7 +82,6 @@ class TestStagePackages:
 
         handler = PartHandler(
             part1,
-            plugin_version="v2",
             part_info=part_info,
             part_list=[part1],
             disable_stage_packages=True,

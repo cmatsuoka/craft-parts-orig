@@ -140,7 +140,6 @@ class Executor:
             # create the part handler for a new part
             self._handler[part.name] = PartHandler(
                 part,
-                plugin_version=self._project_info.plugin_version,
                 part_info=PartInfo(self._project_info, part),
                 part_list=self._part_list,
             )

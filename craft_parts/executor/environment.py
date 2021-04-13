@@ -20,7 +20,6 @@ import io
 import logging
 from typing import Dict
 
-from craft_parts import errors, plugins
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -37,9 +36,6 @@ def generate_part_environment(
 
     :returns: str with the build step environment.
     """
-    if not isinstance(plugin, plugins.PluginV2):
-        raise errors.InternalError("Plugin version not supported.")
-
     # Craft parts' say.
     our_build_environment = _basic_environment_for_part(part=part, step_info=step_info)
 

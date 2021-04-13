@@ -21,17 +21,10 @@ from typing import Any, Dict, List, Optional, Set, Type
 
 from craft_parts.infos import PartInfo
 
-from .options import PluginProperties
+from .properties import PluginProperties
 
 
-class PluginV2Properties(PluginProperties, abc.ABC):
-    @classmethod
-    @abc.abstractmethod
-    def unmarshal(cls, data: Dict[str, Any]) -> "PluginV2Properties":
-        pass
-
-
-class PluginV2(abc.ABC):
+class Plugin(abc.ABC):
     """The base class for plugins conforming to the plugin API version 2.
 
     :cvar properties_class: The plugin properties class.
@@ -40,7 +33,7 @@ class PluginV2(abc.ABC):
     :param options: an object representing part defined properties.
     """
 
-    properties_class: Type[PluginV2Properties]
+    properties_class: Type[PluginProperties]
 
     def __init__(
         self, *, options: Optional[PluginProperties], part_info: PartInfo

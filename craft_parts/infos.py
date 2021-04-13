@@ -39,7 +39,6 @@ class ProjectInfo:
         *,
         application_name: str = utils.package_name(),
         arch: str = "",
-        plugin_version: str = "v2",
         parallel_build_count: int = 1,
         project_dirs: ProjectDirs = None,
         local_plugins_dir: Union[Path, str] = None,
@@ -50,7 +49,6 @@ class ProjectInfo:
 
         self._application_name = application_name
         self._set_machine(arch)
-        self._plugin_version = plugin_version
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
         self._custom_args = custom_args
@@ -85,11 +83,6 @@ class ProjectInfo:
     def is_cross_compiling(self) -> bool:
         """Whether the target and host architectures are different."""
         return self.__target_machine != self.__platform_arch
-
-    @property
-    def plugin_version(self) -> str:
-        """The plugin API version used in this project."""
-        return self._plugin_version
 
     @property
     def parallel_build_count(self) -> int:

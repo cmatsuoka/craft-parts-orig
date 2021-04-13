@@ -14,33 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The dump plugin.
+"""The nil plugin.
 
-This plugin just dumps the content from a specified part source.
+Using this, parts can be defined purely by utilizing properties that are
+automatically included, e.g. stage-packages.
 """
 
 from typing import Any, Dict, List, Set
 
-from craft_parts import errors
+from .base import Plugin
+from .properties import PluginProperties
 
-from ..plugin_v2 import PluginV2, PluginV2Properties
 
-
-class DumpPluginProperties(PluginV2Properties):
+class NilPluginProperties(PluginProperties):
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        # "source" is a required property
-        if "source" not in data:
-            raise errors.SchemaValidationError(
-                "'source' is required by the dump plugin"
-            )
         return cls()
 
 
-class DumpPlugin(PluginV2):
-    """Copy the content from the part source."""
+class NilPlugin(Plugin):
+    """The nil plugin, useful for parts with no source."""
 
-    properties_class = DumpPluginProperties
+    properties_class = NilPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
@@ -49,7 +44,6 @@ class DumpPlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {},
-            "required": ["source"],
         }
 
     def get_build_snaps(self) -> Set[str]:
@@ -62,5 +56,4 @@ class DumpPlugin(PluginV2):
         return dict()
 
     def get_build_commands(self) -> List[str]:
-        install_dir = self._part_info.part_install_dir
-        return [f'cp --archive --link --no-dereference . "{install_dir}"']
+        return list()

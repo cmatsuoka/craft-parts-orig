@@ -26,7 +26,7 @@ from craft_parts.dirs import ProjectDirs
 from craft_parts.steps import Step
 
 if TYPE_CHECKING:
-    from craft_parts.plugins.options import PluginProperties
+    from craft_parts.plugins.properties import PluginProperties
 
 
 class PartSpec(BaseModel):

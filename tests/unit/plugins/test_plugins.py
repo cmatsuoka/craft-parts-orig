@@ -36,11 +36,10 @@ class TestGetPlugin:
 
         plugin = plugins.get_plugin(
             part=part,
-            plugin_version="v2",
             part_info=part_info,
         )
 
-        assert isinstance(plugin, plugins.v2.NilPlugin)
+        assert isinstance(plugin, plugins.nil.NilPlugin)
 
     def test_get_plugin_fallback(self):
         part = Part("nil", {})
@@ -49,11 +48,10 @@ class TestGetPlugin:
 
         plugin = plugins.get_plugin(
             part=part,
-            plugin_version="v2",
             part_info=part_info,
         )
 
-        assert isinstance(plugin, plugins.v2.NilPlugin)
+        assert isinstance(plugin, plugins.nil.NilPlugin)
 
     def test_get_plugin_invalid(self):
         part = Part("foo", {"plugin": "invalid"})
@@ -63,7 +61,6 @@ class TestGetPlugin:
         with pytest.raises(errors.InvalidPlugin) as raised:
             plugins.get_plugin(
                 part=part,
-                plugin_version="v2",
                 part_info=part_info,
             )
 
@@ -78,7 +75,6 @@ class TestGetPlugin:
         with pytest.raises(errors.UndefinedPlugin) as raised:
             plugins.get_plugin(
                 part=part,
-                plugin_version="v2",
                 part_info=part_info,
             )
 

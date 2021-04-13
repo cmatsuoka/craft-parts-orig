@@ -27,7 +27,7 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set
 
-from craft_parts import errors, filesets, packages, plugins
+from craft_parts import errors, filesets, packages
 from craft_parts.executor import collisions
 from craft_parts.filesets import Fileset
 from craft_parts.infos import StepInfo
@@ -93,9 +93,6 @@ class StepHandler:
         return FilesAndDirs(set(), set())
 
     def _builtin_build(self) -> FilesAndDirs:
-        if not isinstance(self._plugin, plugins.PluginV2):
-            raise errors.InternalError("Plugin version not supported.")
-
         _do_v2_build(part=self._part, plugin=self._plugin, env=self._env)
         return FilesAndDirs(set(), set())
 

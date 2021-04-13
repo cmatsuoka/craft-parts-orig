@@ -26,7 +26,7 @@ from craft_parts import Action, ActionType, Step, errors, plugins
 
 
 @dataclass(frozen=True)
-class ApplicationPluginProperties(plugins.PluginV2Properties):
+class ApplicationPluginProperties(plugins.PluginProperties):
     stuff: List[str]
 
     @classmethod
@@ -34,7 +34,7 @@ class ApplicationPluginProperties(plugins.PluginV2Properties):
         return cls(stuff=data.pop("stuff", []))
 
 
-class ApplicationPlugin(plugins.PluginV2):
+class ApplicationPlugin(plugins.Plugin):
     """Our application plugin."""
 
     properties_class = ApplicationPluginProperties

@@ -19,7 +19,7 @@
 import logging
 from typing import Any, Dict, List
 
-from craft_parts import packages, plugins, sources
+from craft_parts import packages, sources
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
 from craft_parts.utils import os_utils
@@ -45,11 +45,10 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
             logger.debug("source build packages: %s", source_build_packages)
             all_packages.extend(source_build_packages)
 
-    if isinstance(plugin, plugins.PluginV2):
-        plugin_build_packages = plugin.get_build_packages()
-        if plugin_build_packages:
-            logger.debug("plugin build packages: %s", plugin_build_packages)
-            all_packages.extend(plugin_build_packages)
+    plugin_build_packages = plugin.get_build_packages()
+    if plugin_build_packages:
+        logger.debug("plugin build packages: %s", plugin_build_packages)
+        all_packages.extend(plugin_build_packages)
 
     return all_packages
 
@@ -64,11 +63,10 @@ def get_build_snaps(*, part: Part, repository, plugin: Plugin) -> List[str]:
         logger.debug("part build snaps: %s", build_snaps)
         all_snaps.extend(build_snaps)
 
-    if isinstance(plugin, plugins.PluginV2):
-        plugin_build_snaps = plugin.get_build_snaps()
-        if plugin_build_snaps:
-            logger.debug("plugin build snaps: %s", plugin_build_snaps)
-            all_snaps.extend(plugin_build_snaps)
+    plugin_build_snaps = plugin.get_build_snaps()
+    if plugin_build_snaps:
+        logger.debug("plugin build snaps: %s", plugin_build_snaps)
+        all_snaps.extend(plugin_build_snaps)
 
     return all_snaps
 

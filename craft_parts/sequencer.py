@@ -193,7 +193,6 @@ class Sequencer:
 
             plugin = plugins.get_plugin(
                 part=part,
-                plugin_version=self._project_info.plugin_version,
                 part_info=part_info,
             )
 

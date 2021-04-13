@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Plugins conforming to the plugin API version 2."""
+"""Definitions and helpers for plugin options."""
 
-from .autotools import AutotoolsPlugin  # noqa: F401
-from .dump import DumpPlugin  # noqa: F401
-from .make import MakePlugin  # noqa: F401
-from .nil import NilPlugin  # noqa: F401
+from typing import Any, Dict
+
+
+class PluginProperties:
+    @classmethod
+    def unmarshal(cls, data: Dict[str, Any]) -> "PluginProperties":
+        return cls()
