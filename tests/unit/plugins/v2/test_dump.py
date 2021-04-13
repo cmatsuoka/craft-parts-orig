@@ -30,7 +30,7 @@ class TestPluginDump:
     """Dump plugin tests."""
 
     def setup_method(self):
-        options = DumpPlugin.get_properties_class().unmarshal({"source": "of all evil"})
+        options = DumpPlugin.properties_class.unmarshal({"source": "of all evil"})
 
         project_info = ProjectInfo()
 
@@ -49,7 +49,7 @@ class TestPluginDump:
 
     def test_unmarshal(self):
         with pytest.raises(errors.SchemaValidationError) as raised:
-            DumpPlugin.get_properties_class().unmarshal({})
+            DumpPlugin.properties_class.unmarshal({})
         assert (
             str(raised.value) == "Schema validation error: 'source' "
             "is required by the dump plugin."

@@ -19,7 +19,7 @@
 This plugin just dumps the content from a specified part source.
 """
 
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Set
 
 from craft_parts import errors
 
@@ -40,9 +40,7 @@ class DumpPluginProperties(PluginV2Properties):
 class DumpPlugin(PluginV2):
     """Copy the content from the part source."""
 
-    @classmethod
-    def get_properties_class(cls) -> Type[DumpPluginProperties]:
-        return DumpPluginProperties
+    properties_class = DumpPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

@@ -27,7 +27,7 @@ class TestPluginMake:
     """Make plugin tests."""
 
     def setup_method(self):
-        properties = MakePlugin.get_properties_class().unmarshal({})
+        properties = MakePlugin.properties_class.unmarshal({})
         part = Part("foo", {})
 
         project_info = ProjectInfo()
@@ -69,7 +69,7 @@ class TestPluginMake:
         ]
 
     def test_get_build_commands_with_configure_parameters(self):
-        options = MakePlugin.get_properties_class().unmarshal(
+        options = MakePlugin.properties_class.unmarshal(
             {"make-parameters": ["FLAVOR=gtk3"]}
         )
         part = Part("foo", {})

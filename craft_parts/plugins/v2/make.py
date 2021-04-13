@@ -17,7 +17,7 @@
 """The make plugin implementation."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set, Type, cast
+from typing import Any, Dict, List, Set, cast
 
 from ..plugin_v2 import PluginV2, PluginV2Properties
 
@@ -51,9 +51,7 @@ class MakePlugin(PluginV2):
           Pass the given parameters to the make command.
     """
 
-    @classmethod
-    def get_properties_class(cls) -> Type[MakePluginProperties]:
-        return MakePluginProperties
+    properties_class = MakePluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

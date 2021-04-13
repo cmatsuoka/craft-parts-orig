@@ -34,9 +34,13 @@ class PluginV2Properties(PluginProperties, abc.ABC):
 class PluginV2(abc.ABC):
     """The base class for plugins conforming to the plugin API version 2.
 
+    :cvar properties_class: The plugin properties class.
+
     :param part_name: the name of the part this plugin is instantiated to.
     :param options: an object representing part defined properties.
     """
+
+    properties_class: Type[PluginV2Properties]
 
     def __init__(
         self, *, options: Optional[PluginProperties], part_info: PartInfo
@@ -47,11 +51,6 @@ class PluginV2(abc.ABC):
         self._name = part_info.part_name
         self._options = options
         self._part_info = part_info
-
-    @classmethod
-    @abc.abstractmethod
-    def get_properties_class(cls) -> Type[PluginV2Properties]:
-        """Return the plugin properties class."""
 
     @classmethod
     @abc.abstractmethod

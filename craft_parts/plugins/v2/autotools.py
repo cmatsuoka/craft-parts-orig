@@ -35,7 +35,7 @@ In addition, this plugin uses the following plugin-specific keywords:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set, Type, cast
+from typing import Any, Dict, List, Set, cast
 
 from ..plugin_v2 import PluginV2, PluginV2Properties
 
@@ -52,9 +52,7 @@ class AutotoolsPluginProperties(PluginV2Properties):
 class AutotoolsPlugin(PluginV2):
     """The autotools plugin."""
 
-    @classmethod
-    def get_properties_class(cls) -> Type[AutotoolsPluginProperties]:
-        return AutotoolsPluginProperties
+    properties_class = AutotoolsPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

@@ -16,7 +16,7 @@
 
 import textwrap
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Set
 
 import pytest
 import yaml
@@ -37,9 +37,7 @@ class ApplicationPluginProperties(plugins.PluginV2Properties):
 class ApplicationPlugin(plugins.PluginV2):
     """Our application plugin."""
 
-    @classmethod
-    def get_properties_class(cls) -> Type[ApplicationPluginProperties]:
-        return ApplicationPluginProperties
+    properties_class = ApplicationPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

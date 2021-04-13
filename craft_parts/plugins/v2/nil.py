@@ -20,7 +20,7 @@ Using this, parts can be defined purely by utilizing properties that are
 automatically included, e.g. stage-packages.
 """
 
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Set
 
 from ..plugin_v2 import PluginV2, PluginV2Properties
 
@@ -34,9 +34,7 @@ class NilPluginProperties(PluginV2Properties):
 class NilPlugin(PluginV2):
     """The nil plugin, useful for parts with no source."""
 
-    @classmethod
-    def get_properties_class(cls) -> Type[NilPluginProperties]:
-        return NilPluginProperties
+    properties_class = NilPluginProperties
 
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:

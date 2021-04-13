@@ -277,9 +277,13 @@ def _build_part(
         plugin_name = name
 
     plugin_class = plugins.get_plugin_class(name=plugin_name, version=plugin_version)
+    properties: Optional[plugins.PluginV2Properties]
 
     # unmarshal plugin properties, handled entries are popped from specs
-    properties = plugin_class.get_properties_class().unmarshal(spec)
+    if plugin_class.properties_class:
+        properties = plugin_class.properties_class.unmarshal(spec)
+    else:
+        properties = None
 
     # initialize part and unmarshal part specs, handled entries are popped
     part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)

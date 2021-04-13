@@ -28,7 +28,7 @@ class TestPluginAutotools:
     """Autotools plugin tests."""
 
     def setup_method(self):
-        properties = AutotoolsPlugin.get_properties_class().unmarshal({})
+        properties = AutotoolsPlugin.properties_class.unmarshal({})
         part = Part("foo", {})
 
         project_info = ProjectInfo()
@@ -77,7 +77,7 @@ class TestPluginAutotools:
         ]
 
     def test_get_build_commands_with_configure_parameters(self):
-        options = AutotoolsPlugin.get_properties_class().unmarshal(
+        options = AutotoolsPlugin.properties_class.unmarshal(
             {"autotools-configure-parameters": ["--with-foo=true", "--prefix=/foo"]},
         )
 

@@ -25,7 +25,7 @@ class TestPluginNil:
     """Nil plugin tests."""
 
     def setup_method(self):
-        properties = NilPlugin.get_properties_class().unmarshal({})
+        properties = NilPlugin.properties_class.unmarshal({})
         part = Part("foo", {})
 
         project_info = ProjectInfo()
