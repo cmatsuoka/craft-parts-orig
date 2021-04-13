@@ -20,7 +20,6 @@ import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from craft_parts import errors, parts, sources, steps
@@ -29,7 +28,6 @@ from craft_parts.parts import Part
 from craft_parts.sources import SourceHandler
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils
 
 from .dirty_report import Dependency, DirtyReport
 from .outdated_report import OutdatedReport
@@ -120,9 +118,7 @@ class _EphemeralStates:
             return self._state[part_name][step]
         return None
 
-    def update_serial(
-        self, *, part_name: str, step: Step, step_updated: bool = False
-    ) -> None:
+    def rewrap(self, *, part_name: str, step: Step, step_updated: bool = False) -> None:
         """Update the state timestamp (actually adds an ephemeral serial)."""
         stw = self.get(part_name=part_name, step=step)
         if stw:
@@ -154,7 +150,7 @@ class StateManager:
         self._part_list = part_list
         self._source_handler_cache: Dict[str, Optional[SourceHandler]] = {}
 
-        part_step_list = _sort_step_by_state_timestamp(part_list)
+        part_step_list = _sort_steps_by_state_timestamp(part_list)
 
         for part, step, _ in part_step_list:
             state = load_state(part, step)
@@ -168,7 +164,7 @@ class StateManager:
 
     def update_state_timestamp(self, part: Part, step: Step) -> None:
         """Update the given part and step state's timestamp."""
-        self._state.update_serial(part_name=part.name, step=step)
+        self._state.rewrap(part_name=part.name, step=step)
 
     def should_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part should run.
@@ -330,7 +326,7 @@ class StateManager:
 
     def mark_step_updated(self, part: Part, step: Step):
         """Mark the given part and step as updated."""
-        self._state.update_serial(part_name=part.name, step=step, step_updated=True)
+        self._state.rewrap(part_name=part.name, step=step, step_updated=True)
 
     def _outdated_report_for_part(
         self, part: Part, step: Step
@@ -385,15 +381,26 @@ class StateManager:
         return None
 
 
-def _sort_step_by_state_timestamp(
+def _sort_steps_by_state_timestamp(
     part_list: List[Part],
-) -> List[Tuple[Part, Step, datetime]]:
-    state_files: List[Tuple[Part, Step, datetime]] = []
+) -> List[Tuple[Part, Step, int]]:
+    """Sort steps based on state file timestamp.
+
+    Return a sorted list of parts and steps according to the timestamp
+    of the state file for the part and step. If there's no corresponding
+    state file, the step is ignored.
+
+    :param part_list: The list of all parts whose steps should be sorted.
+
+    :return: The sorted list of tuples containing part, step, and state
+        file modification time.
+    """
+    state_files: List[Tuple[Part, Step, int]] = []
     for part in part_list:
         for step in list(Step):
             path = state_file_path(part, step)
             if path.is_file():
-                timestamp = file_utils.timestamp(str(path))
-                state_files.append((part, step, timestamp))
+                mtime = path.stat().st_mtime_ns
+                state_files.append((part, step, mtime))
 
     return sorted(state_files, key=lambda item: item[2])
