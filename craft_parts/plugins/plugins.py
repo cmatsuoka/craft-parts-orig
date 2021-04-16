@@ -57,6 +57,9 @@ def get_plugin(
     # plugin_schema = validator.merge_schema(plugin_class.get_schema())
     # options = PluginOptions(properties=part.properties, schema=plugin_schema)
 
+    if not properties:
+        properties = PluginProperties()
+
     return plugin_class(options=properties, part_info=part_info)
 
 
