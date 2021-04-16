@@ -143,7 +143,7 @@ class Part:
 
         self.name = name
         self.plugin = plugin_name
-        self.plugin_options = plugin_properties
+        self.plugin_properties = plugin_properties
         self._dirs = project_dirs
         self._part_dir = project_dirs.parts_dir / name
         self._part_dir = project_dirs.parts_dir / name

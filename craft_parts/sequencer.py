@@ -194,6 +194,7 @@ class Sequencer:
             plugin = plugins.get_plugin(
                 part=part,
                 part_info=part_info,
+                properties=part.plugin_properties,
             )
 
             build_packages = common.get_build_packages(

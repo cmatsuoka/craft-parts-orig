@@ -48,7 +48,7 @@ def get_plugin(
     *,
     part: Part,
     part_info: PartInfo,
-    properties: PluginProperties = None,
+    properties: PluginProperties,  # = None,
 ) -> Plugin:
     """Obtain a plugin instance for the specified part."""
 
