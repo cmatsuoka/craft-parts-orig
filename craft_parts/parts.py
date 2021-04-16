@@ -17,16 +17,14 @@
 """Definitions and helpers to handle parts."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, List, Optional, Sequence, Set
 
 from pydantic import BaseModel, Field, ValidationError
 
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
+from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-
-if TYPE_CHECKING:
-    from craft_parts.plugins.properties import PluginProperties
 
 
 class PartSpec(BaseModel):
@@ -138,6 +136,9 @@ class Part:
 
         if not project_dirs:
             project_dirs = ProjectDirs()
+
+        if not plugin_properties:
+            plugin_properties = PluginProperties()
 
         plugin_name: str = data.get("plugin", "")
 

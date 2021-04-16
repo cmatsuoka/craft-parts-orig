@@ -17,17 +17,17 @@
 """Definitions and helpers to handle plugins."""
 
 import copy
-from typing import Dict, Type
+from typing import TYPE_CHECKING, Dict, Type
 
 from craft_parts import errors
-from craft_parts.infos import PartInfo
-from craft_parts.parts import Part
 
 from . import autotools, dump, make, nil
 from .base import Plugin
 from .properties import PluginProperties
 
-# from craft_parts.schemas import Validator
+if TYPE_CHECKING:
+    from craft_parts.infos import PartInfo
+    from craft_parts.parts import Part
 
 
 PluginType = Type[Plugin]
@@ -46,8 +46,8 @@ _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)
 
 def get_plugin(
     *,
-    part: Part,
-    part_info: PartInfo,
+    part: "Part",
+    part_info: "PartInfo",
     properties: PluginProperties,  # = None,
 ) -> Plugin:
     """Obtain a plugin instance for the specified part."""
@@ -56,9 +56,6 @@ def get_plugin(
     plugin_class = get_plugin_class(plugin_name)
     # plugin_schema = validator.merge_schema(plugin_class.get_schema())
     # options = PluginOptions(properties=part.properties, schema=plugin_schema)
-
-    if not properties:
-        properties = PluginProperties()
 
     return plugin_class(options=properties, part_info=part_info)
 

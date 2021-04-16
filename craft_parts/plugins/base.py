@@ -17,11 +17,12 @@
 """Plugins V2 definitions."""
 
 import abc
-from typing import Any, Dict, List, Set, Type
-
-from craft_parts.infos import PartInfo
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Type
 
 from .properties import PluginProperties
+
+if TYPE_CHECKING:
+    from craft_parts.infos import PartInfo
 
 
 class Plugin(abc.ABC):
@@ -35,7 +36,7 @@ class Plugin(abc.ABC):
 
     properties_class: Type[PluginProperties]
 
-    def __init__(self, *, options: PluginProperties, part_info: PartInfo) -> None:
+    def __init__(self, *, options: PluginProperties, part_info: "PartInfo") -> None:
         self._name = part_info.part_name
         self._options = options
         self._part_info = part_info

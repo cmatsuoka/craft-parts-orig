@@ -35,8 +35,7 @@ class TestGetPlugin:
         part_info = PartInfo(project_info=project_info, part=part)
 
         plugin = plugins.get_plugin(
-            part=part,
-            part_info=part_info,
+            part=part, part_info=part_info, properties=plugins.nil.NilPluginProperties()
         )
 
         assert isinstance(plugin, plugins.nil.NilPlugin)
@@ -47,8 +46,7 @@ class TestGetPlugin:
         part_info = PartInfo(project_info=project_info, part=part)
 
         plugin = plugins.get_plugin(
-            part=part,
-            part_info=part_info,
+            part=part, part_info=part_info, properties=plugins.nil.NilPluginProperties()
         )
 
         assert isinstance(plugin, plugins.nil.NilPlugin)
@@ -62,6 +60,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
+                properties=None,  # type: ignore
             )
 
         assert str(raised.value) == "A plugin named 'invalid' is not registered."
@@ -76,6 +75,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
+                properties=None,  # type: ignore
             )
 
         assert str(raised.value) == "Plugin not defined for part 'foo'."
