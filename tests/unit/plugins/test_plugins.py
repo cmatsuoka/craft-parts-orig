@@ -16,10 +16,10 @@
 
 import pytest
 
-from craft_parts import errors
+from craft_parts import errors, plugins
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins import plugins
+from craft_parts.plugins import nil_plugin
 
 
 class TestGetPlugin:
@@ -35,10 +35,12 @@ class TestGetPlugin:
         part_info = PartInfo(project_info=project_info, part=part)
 
         plugin = plugins.get_plugin(
-            part=part, part_info=part_info, properties=plugins.nil.NilPluginProperties()
+            part=part,
+            part_info=part_info,
+            properties=nil_plugin.NilPluginProperties(),
         )
 
-        assert isinstance(plugin, plugins.nil.NilPlugin)
+        assert isinstance(plugin, nil_plugin.NilPlugin)
 
     def test_get_plugin_fallback(self):
         part = Part("nil", {})
@@ -46,10 +48,12 @@ class TestGetPlugin:
         part_info = PartInfo(project_info=project_info, part=part)
 
         plugin = plugins.get_plugin(
-            part=part, part_info=part_info, properties=plugins.nil.NilPluginProperties()
+            part=part,
+            part_info=part_info,
+            properties=nil_plugin.NilPluginProperties(),
         )
 
-        assert isinstance(plugin, plugins.nil.NilPlugin)
+        assert isinstance(plugin, nil_plugin.NilPlugin)
 
     def test_get_plugin_invalid(self):
         part = Part("foo", {"plugin": "invalid"})

@@ -16,47 +16,47 @@
 
 from pathlib import Path
 
-import pytest
-
-from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.dump import DumpPlugin
+from craft_parts.plugins.make_plugin import MakePlugin
 
 # pylint: disable=attribute-defined-outside-init
 
 
-class TestPluginDump:
-    """Dump plugin tests."""
+class TestPluginMake:
+    """Make plugin tests."""
 
     def setup_method(self):
-        options = DumpPlugin.properties_class.unmarshal({"source": "of all evil"})
+        properties = MakePlugin.properties_class.unmarshal({})
+        part = Part("foo", {})
 
         project_info = ProjectInfo()
+        project_info._parallel_build_count = 42
 
-        part = Part("foo", {})
         part_info = PartInfo(project_info=project_info, part=part)
         part_info._part_install_dir = Path("install/dir")
 
-        self._plugin = DumpPlugin(options=options, part_info=part_info)
+        self._plugin = MakePlugin(options=properties, part_info=part_info)
 
     def test_schema(self):
-        schema = DumpPlugin.get_schema()
+        schema = MakePlugin.get_schema()
         assert schema["$schema"] == "http://json-schema.org/draft-04/schema#"
         assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
-        assert schema["properties"] == {}
-
-    def test_unmarshal(self):
-        with pytest.raises(errors.SchemaValidationError) as raised:
-            DumpPlugin.properties_class.unmarshal({})
-        assert (
-            str(raised.value) == "Schema validation error: 'source' "
-            "is required by the dump plugin."
-        )
+        assert schema["properties"] == {
+            "make-parameters": {
+                "type": "array",
+                "uniqueItems": True,
+                "items": {"type": "string"},
+                "default": [],
+            }
+        }
 
     def test_get_build_packages(self):
-        assert self._plugin.get_build_packages() == set()
+        assert self._plugin.get_build_packages() == {
+            "gcc",
+            "make",
+        }
         assert self._plugin.get_build_snaps() == set()
 
     def test_get_build_environment(self):
@@ -64,5 +64,25 @@ class TestPluginDump:
 
     def test_get_build_commands(self):
         assert self._plugin.get_build_commands() == [
-            'cp --archive --link --no-dereference . "install/dir"'
+            'make -j"42"',
+            'make -j"42" install DESTDIR="install/dir"',
+        ]
+
+    def test_get_build_commands_with_configure_parameters(self):
+        options = MakePlugin.properties_class.unmarshal(
+            {"make-parameters": ["FLAVOR=gtk3"]}
+        )
+        part = Part("foo", {})
+
+        project_info = ProjectInfo()
+        project_info._parallel_build_count = 8
+
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("/tmp")
+
+        plugin = MakePlugin(options=options, part_info=part_info)
+
+        assert plugin.get_build_commands() == [
+            'make -j"8" FLAVOR=gtk3',
+            'make -j"8" install FLAVOR=gtk3 DESTDIR="/tmp"',
         ]

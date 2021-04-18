@@ -21,8 +21,11 @@ from typing import TYPE_CHECKING, Dict, Type
 
 from craft_parts import errors
 
-from . import autotools, dump, make, nil
+from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
+from .dump_plugin import DumpPlugin
+from .make_plugin import MakePlugin
+from .nil_plugin import NilPlugin
 from .properties import PluginProperties
 
 if TYPE_CHECKING:
@@ -35,10 +38,10 @@ PluginType = Type[Plugin]
 
 # Plugin registry by plugin API version
 _BUILTIN_PLUGINS: Dict[str, PluginType] = {
-    "autotools": autotools.AutotoolsPlugin,
-    "dump": dump.DumpPlugin,
-    "make": make.MakePlugin,
-    "nil": nil.NilPlugin,
+    "autotools": AutotoolsPlugin,
+    "dump": DumpPlugin,
+    "make": MakePlugin,
+    "nil": NilPlugin,
 }
 
 _PLUGINS = copy.deepcopy(_BUILTIN_PLUGINS)

@@ -18,7 +18,7 @@ from pathlib import Path
 
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.autotools import AutotoolsPlugin
+from craft_parts.plugins.autotools_plugin import AutotoolsPlugin
 
 # pylint: disable=attribute-defined-outside-init
 # pylint: disable=line-too-long
