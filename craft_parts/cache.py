@@ -23,8 +23,6 @@ from typing import Optional
 
 from xdg import BaseDirectory  # type: ignore
 
-from craft_parts.utils import file_utils
-
 logger = logging.getLogger(__name__)
 
 
@@ -52,7 +50,7 @@ class FileCache(Cache):
         super().__init__(name)
         self.file_cache = os.path.join(self.cache_root, namespace)
 
-    def cache(self, *, filename: str, algorithm: str, digest: str) -> Optional[str]:
+    def cache(self, *, filename: str, key: str) -> Optional[str]:
         """Cache a file revision with hash in XDG cache, unless it already exists.
         :param str filename: path to the file to cache.
         :param str algorithm: algorithm used to calculate the hash as
@@ -60,16 +58,7 @@ class FileCache(Cache):
         :param str digest: hash for filename calculated with algorithm.
         :returns: path to cached file.
         """
-        # First we verify
-        calculated_hash = file_utils.calculate_hash(filename, algorithm=algorithm)
-        if calculated_hash != digest:
-            logger.warning(
-                "Skipping caching of %s as the expected hash does not match "
-                "the one provided",
-                filename,
-            )
-            return None
-        cached_file_path = os.path.join(self.file_cache, algorithm, digest)
+        cached_file_path = os.path.join(self.file_cache, key)
         os.makedirs(os.path.dirname(cached_file_path), exist_ok=True)
         try:
             if not os.path.isfile(cached_file_path):
@@ -82,7 +71,7 @@ class FileCache(Cache):
             return None
         return cached_file_path
 
-    def get(self, *, algorithm: str, digest: str):
+    def get(self, *, key):
         """Get the filepath which matches the hash calculated with algorithm.
 
         :param str algorithm: algorithm used to calculate the hash as
@@ -90,9 +79,9 @@ class FileCache(Cache):
         :param str digest: hash for filename calculated with algorithm.
         :returns: path to cached file.
         """
-        cached_file_path = os.path.join(self.file_cache, algorithm, digest)
+        cached_file_path = os.path.join(self.file_cache, key)
         if os.path.exists(cached_file_path):
-            logger.debug("Cache hit for hash %s", digest)
+            logger.debug("Cache hit for key %s", key)
             return cached_file_path
 
         return None

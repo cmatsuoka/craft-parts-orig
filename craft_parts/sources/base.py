@@ -202,13 +202,11 @@ class FileSourceHandler(SourceHandler, abc.ABC):
         else:
             self._file = filepath
 
-        digest: str = ""
-
         # First check if we already have the source file cached.
         file_cache = FileCache(self._application_name)
         if self.source_checksum:
-            algorithm, digest = split_checksum(self.source_checksum)
-            cache_file = file_cache.get(algorithm=algorithm, digest=digest)
+            split_checksum(self.source_checksum)
+            cache_file = file_cache.get(key=self.source_checksum)
             if cache_file:
                 # We make this copy as the provisioning logic can delete
                 # this file and we don't want that.
@@ -233,8 +231,8 @@ class FileSourceHandler(SourceHandler, abc.ABC):
         # We verify the file if source_checksum is defined
         # and we cache the file for future reuse.
         if self.source_checksum:
-            algorithm, digest = verify_checksum(self.source_checksum, self._file)
-            file_cache.cache(filename=self._file, algorithm=algorithm, digest=digest)
+            verify_checksum(self.source_checksum, self._file)
+            file_cache.cache(filename=self._file, key=self.source_checksum)
         return self._file
 
     @abc.abstractmethod
