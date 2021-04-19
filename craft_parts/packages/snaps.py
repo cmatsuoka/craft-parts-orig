@@ -58,7 +58,8 @@ class SnapPackage:
     snapd and the store data can change in between validation and execution.
     """
 
-    # FIXME: see https://github.com/snapcore/snapcraft/pull/3502/files
+    # FIXME: see https://github.com/snapcore/snapcraft/pull/3502
+    #            https://github.com/snapcore/snapcraft/pull/3505
 
     @classmethod
     def is_valid_snap(cls, snap: str) -> bool:
