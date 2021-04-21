@@ -16,20 +16,19 @@
 
 """The make plugin implementation."""
 
-from dataclasses import dataclass
 from typing import Any, Dict, List, Set, cast
 
-from .base import Plugin
+from .base import Plugin, PluginModel, extract_plugin_properties
 from .properties import PluginProperties
 
 
-@dataclass(frozen=True)
-class MakePluginProperties(PluginProperties):
-    make_parameters: List[str]
+class MakePluginProperties(PluginProperties, PluginModel):
+    make_parameters: List[str] = []
 
     @classmethod
     def unmarshal(cls, data: Dict[str, Any]):
-        return cls(make_parameters=data.get("make-parameters", []))
+        plugin_data = extract_plugin_properties(data, plugin_name="make")
+        return cls(**plugin_data)
 
 
 class MakePlugin(Plugin):

@@ -19,6 +19,8 @@
 import abc
 from typing import TYPE_CHECKING, Any, Dict, List, Set, Type
 
+from pydantic import BaseModel
+
 from .properties import PluginProperties
 
 if TYPE_CHECKING:
@@ -87,3 +89,28 @@ class Plugin(abc.ABC):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
+
+
+class PluginModel(BaseModel):
+    """Model for plugins using pydantic validation."""
+
+    class Config:
+        """Pydantic model configuration."""
+
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        alias_generator = lambda s: s.replace("_", "-")  # noqa: E731
+
+
+def extract_plugin_properties(
+    data: Dict[str, Any], *, plugin_name: str
+) -> Dict[str, Any]:
+    plugin_data: Dict[str, Any] = {}
+    prefix = f"{plugin_name}-"
+
+    for key, value in data.items():
+        if key.startswith(prefix):
+            plugin_data[key] = value
+
+    return plugin_data

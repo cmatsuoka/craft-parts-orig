@@ -272,7 +272,7 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
 
     plugin_class = plugins.get_plugin_class(plugin_name)
     properties = plugin_class.properties_class.unmarshal(spec)
-    _strip_plugin_properties(plugin_name=plugin_name, spec=spec)
+    _strip_plugin_properties(spec, plugin_name=plugin_name)
 
     # initialize part and unmarshal part specs
     part = Part(name, spec, project_dirs=project_dirs, plugin_properties=properties)
@@ -290,8 +290,8 @@ def _build_part(name: str, spec: Dict[str, Any], project_dirs: ProjectDirs) -> P
     return part
 
 
-def _strip_plugin_properties(*, plugin_name: str, spec: Dict[str, Any]) -> None:
+def _strip_plugin_properties(data: Dict[str, Any], *, plugin_name: str) -> None:
     prefix = f"{plugin_name}-"
-    for key in spec:
+    for key in data:
         if key.startswith(prefix):
-            del spec[prefix]
+            del data[key]

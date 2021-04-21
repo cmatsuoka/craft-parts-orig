@@ -16,6 +16,9 @@
 
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.make_plugin import MakePlugin
@@ -68,7 +71,7 @@ class TestPluginMake:
             'make -j"42" install DESTDIR="install/dir"',
         ]
 
-    def test_get_build_commands_with_configure_parameters(self):
+    def test_get_build_commands_with_parameters(self):
         options = MakePlugin.properties_class.unmarshal(
             {"make-parameters": ["FLAVOR=gtk3"]}
         )
@@ -86,3 +89,11 @@ class TestPluginMake:
             'make -j"8" FLAVOR=gtk3',
             'make -j"8" install FLAVOR=gtk3 DESTDIR="/tmp"',
         ]
+
+    def test_invalid_parameters(self):
+        with pytest.raises(ValidationError) as raised:
+            MakePlugin.properties_class.unmarshal({"make-invalid": True})
+        err = raised.value.errors()
+        assert len(err) == 1
+        assert err[0]["loc"] == ("make-invalid",)
+        assert err[0]["type"] == "value_error.extra"
