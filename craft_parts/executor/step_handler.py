@@ -93,7 +93,28 @@ class StepHandler:
         return FilesAndDirs(set(), set())
 
     def _builtin_build(self) -> FilesAndDirs:
-        _do_v2_build(part=self._part, plugin=self._plugin, env=self._env)
+
+        # Plugin commands.
+        plugin_build_commands = self._plugin.get_build_commands()
+
+        # Save script to execute.
+        build_script_path = self._part.part_run_dir.absolute() / "build.sh"
+        with build_script_path.open("w") as run_file:
+            print(self._env, file=run_file)
+            print("set -x", file=run_file)
+
+            for build_command in plugin_build_commands:
+                print(build_command, file=run_file)
+
+        build_script_path.chmod(0o755)
+
+        try:
+            subprocess.run(
+                [build_script_path], check=True, cwd=self._part.part_build_subdir
+            )
+        except subprocess.CalledProcessError as process_error:
+            raise errors.PluginBuildError(part_name=self._part.name) from process_error
+
         return FilesAndDirs(set(), set())
 
     def _builtin_stage(self) -> FilesAndDirs:
@@ -252,30 +273,6 @@ class StepHandler:
             raise errors.InvalidControlAPICall(
                 self._part.name, scriptlet_name, f"invalid function {function_name!r}"
             )
-
-
-def _do_v2_build(*, part: Part, plugin: Plugin, env: str) -> None:
-    # Save script to execute.
-    build_script_path = part.part_run_dir.absolute() / "build.sh"
-
-    # Plugin commands.
-    plugin_build_commands = plugin.get_build_commands()
-
-    with build_script_path.open("w") as run_file:
-        print(env, file=run_file)
-        print("set -x", file=run_file)
-
-        for build_command in plugin_build_commands:
-            print(build_command, file=run_file)
-
-        run_file.flush()
-
-    build_script_path.chmod(0o755)
-
-    try:
-        subprocess.run([build_script_path], check=True, cwd=part.part_build_subdir)
-    except subprocess.CalledProcessError as process_error:
-        raise errors.PluginBuildError(part_name=part.name) from process_error
 
 
 def _migrate_files(
