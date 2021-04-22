@@ -44,7 +44,7 @@ def test_actions_simple(new_dir, mocker):
     parts = yaml.safe_load(parts_yaml)
 
     Path("a.tar.gz").touch()
-    mocker.patch("craft_parts.sources.Tar.provision")  # don't try to untar the file
+    mocker.patch("craft_parts.sources.tar.Tar.provision")  # don't try to untar the file
 
     # first run
     # command: pull

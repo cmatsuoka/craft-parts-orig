@@ -19,7 +19,8 @@ import shutil
 
 import pytest
 
-from craft_parts import errors, sources
+from craft_parts import errors
+from craft_parts.sources import sources
 
 # pylint: disable=attribute-defined-outside-init
 

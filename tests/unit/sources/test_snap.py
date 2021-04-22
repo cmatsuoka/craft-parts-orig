@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from craft_parts import sources
+from craft_parts.sources import snap, sources
 
 _LOCAL_DIR = Path(__file__).parent
 
@@ -90,7 +90,7 @@ class TestGetName:
 
         with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
             print("name: my-snap", file=snap_yaml_file)
-        assert sources.snap._get_snap_name(".") == "my-snap"
+        assert snap._get_snap_name(".") == "my-snap"
 
     def test_no_name_yaml(self):
         os.mkdir("meta")
@@ -99,10 +99,10 @@ class TestGetName:
             print("summary: no name", file=snap_yaml_file)
 
         with pytest.raises(sources.errors.InvalidSnapPackage):
-            sources.snap._get_snap_name(".")
+            snap._get_snap_name(".")
 
     def test_no_snap_yaml(self):
         os.mkdir("meta")
 
         with pytest.raises(sources.errors.InvalidSnapPackage):
-            sources.snap._get_snap_name(".")
+            snap._get_snap_name(".")

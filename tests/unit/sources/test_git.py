@@ -22,8 +22,7 @@ from unittest import mock
 
 import pytest
 
-from craft_parts import sources
-from craft_parts.sources import errors
+from craft_parts.sources import errors, sources
 
 
 def _call(cmd: List[str]) -> None:
@@ -40,7 +39,7 @@ def _fake_git_command_error(*args, **kwargs):
 
 @pytest.fixture
 def mock_get_source_details(mocker) -> None:
-    mocker.patch("craft_parts.sources.Git._get_source_details", return_value="")
+    mocker.patch("craft_parts.sources.git.Git._get_source_details", return_value="")
 
 
 @pytest.fixture

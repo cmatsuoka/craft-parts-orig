@@ -16,8 +16,7 @@
 
 import pytest
 
-from craft_parts import sources
-from craft_parts.sources import errors
+from craft_parts.sources import errors, sources
 
 
 @pytest.mark.parametrize("tc_url,tc_handler", [(".", sources.Local)])

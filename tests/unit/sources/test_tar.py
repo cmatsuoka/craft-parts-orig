@@ -20,7 +20,7 @@ import tarfile
 import pytest
 import requests
 
-from craft_parts import sources
+from craft_parts.sources import sources
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -29,7 +29,7 @@ class TestTar:
     """Tests for the tar source handler."""
 
     def test_pull_tarball_must_download_to_sourcedir(self, mocker, http_server):
-        mock_prov = mocker.patch("craft_parts.sources.Tar.provision")
+        mock_prov = mocker.patch("craft_parts.sources.tar.Tar.provision")
 
         plugin_name = "test_plugin"
         dest_dir = os.path.join("parts", plugin_name, "src")
@@ -51,7 +51,7 @@ class TestTar:
     def test_pull_twice_downloads_once(self, mocker, http_server):
         """If a source checksum is defined, the cache should be tried first."""
 
-        mocker.patch("craft_parts.sources.Tar.provision")
+        mocker.patch("craft_parts.sources.tar.Tar.provision")
 
         source = "http://{}:{}/{file_name}".format(
             *http_server.server_address, file_name="test.tar"
