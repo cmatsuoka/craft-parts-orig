@@ -70,15 +70,12 @@ class PartHandler:
             properties=self._part_properties,
             dirs=part_info.dirs,
         )
-        self._package_repo = packages.Repository()
 
         self._build_packages = common.get_build_packages(
-            part=self._part, repository=self._package_repo, plugin=self._plugin
+            part=self._part, plugin=self._plugin
         )
 
-        self._build_snaps = common.get_build_snaps(
-            part=self._part, repository=self._package_repo, plugin=self._plugin
-        )
+        self._build_snaps = common.get_build_snaps(part=self._part, plugin=self._plugin)
 
     @property
     def build_packages(self) -> List[str]:
@@ -153,7 +150,7 @@ class PartHandler:
             return None
 
         try:
-            fetched_packages = self._package_repo.fetch_stage_packages(
+            fetched_packages = packages.Repository.fetch_stage_packages(
                 application_name=step_info.application_name,
                 package_names=stage_packages,
                 target_arch=step_info.target_arch,
@@ -178,7 +175,7 @@ class PartHandler:
         return stage_snaps
 
     def _unpack_stage_packages(self):
-        self._package_repo.unpack_stage_packages(
+        packages.Repository.unpack_stage_packages(
             stage_packages_path=self._part.part_packages_dir,
             install_path=Path(self._part.part_install_dir),
         )

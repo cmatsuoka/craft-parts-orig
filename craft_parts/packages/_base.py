@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright 2017-2021 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,13 +16,13 @@
 
 """Definition and helpers for the repository base class."""
 
+import abc
 import contextlib
 import fileinput
 import glob
 import itertools
 import logging
 import os
-import pathlib
 import re
 import shutil
 import stat
@@ -31,12 +31,10 @@ from typing import List, Optional, Pattern, Set, Tuple, Union
 
 from craft_parts import xattrs
 
-from . import errors
-
 logger = logging.getLogger(__name__)
 
 
-class BaseRepository:
+class BaseRepository(abc.ABC):
     """Base implementation for a platform specific repository handler.
 
     Generally any new repository handling system would inherit from
@@ -44,77 +42,52 @@ class BaseRepository:
 
     - get
     - unpack
-    - get_package_libraries
     - get_packages_for_source_type
     - refresh_build_packages
     - install_build_packages
     - is_package_installed
+    - get_installed_packages
+    - fetch_stage_packages
+    - unpack_stage_packages
+    - update_package_list
 
-    At the end of the `unpack` method `normalize` needs to be called to
-    adapt the artifacts downloaded to be generic enough for building a snap."""
+    At the end of the :meth:`unpack` method :meth:`normalize` must be
+    called to make the artifacts downloaded generic and consistent.
+    """
 
     @classmethod
+    @abc.abstractmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name.
 
         Given the contents of package_name, return the subset of what are
         considered libraries from those contents, be it static or shared.
 
-        :param str package: package name to get library contents from.
-        :returns: a list of libraries that package_name provides. This includes
-                  directories.
-        :rtype: set.
+        :param package_name: The package name to get library contents from.
+        :return: A list of libraries that package_name provides, with paths.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
-    def get_package_for_file(cls, file_path: str) -> str:
-        """Return the package name that provides file_path.
-
-        :param str file_path: the absolute path to the file to search for.
-        :returns: package name that provides file_path.
-        :rtype: str
-        :raises craft_parts.packages.errors.FileProviderNotFound:
-            if file_path is not provided by any package.
-        """
-        raise errors.NoNativeBackendError()
-
-    @classmethod
+    @abc.abstractmethod
     def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return a list of packages required to to work with source_type.
 
-        source_type can be any of the following:
+        :param source_type: A source type to handle.
 
-        - bzr
-        - deb
-        - rpm
-        - git
-        - hg
-        - mercurial
-        - subversion
-        - svn
-        - tar
-        - zip
-
-        :param str source_type: a VCS source type to handle.
-        :returns: a set of packages that need to be installed on the host.
-        :rtype: set of strings.
+        :return: A set of packages that need to be installed on the host.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def refresh_build_packages(cls) -> None:
         """Refresh the build packages cache.
 
         If refreshing is not possible
         craft_parts.packages.errors.CacheUpdateFailed should be raised
-
-        :raises craft_parts.packages.errors.NoNativeBackendError:
-            if the method is not implemented in the subclass.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
 
@@ -131,72 +104,54 @@ class BaseRepository:
         If installing a package on the host failed
         craft_parts.packages.errors.BuildPackagesNotInstalled should be raised.
 
-        :param package_names: a list of package names to install.
-        :type package_names: a list of strings.
-        :return: a list with the packages installed and their versions.
-        :rtype: list of strings.
-        :raises craft_parts.packages.errors.NoNativeBackendError:
-            if the method is not implemented in the subclass.
+        :param package_names: A list of package names to install.
+
+        :return: A list with the packages installed and their versions.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
-    def build_package_is_valid(cls, package_name: str) -> bool:
-        """Check that a given package is valid on the host.
-
-        :param package_name: a package name to check.
-        :type package_name: str
-        """
-        raise errors.NoNativeBackendError()
-
-    @classmethod
+    @abc.abstractmethod
     def is_package_installed(cls, package_name: str) -> bool:
         """Return a bool indicating if package_name is installed.
 
-        :param str package_name: the package name to query.
-        :returns: True if package_name is installed if not False.
-        :rtype: boolean
+        :param package_name: The package name to query.
+
+        :return: Whether the package_name is installed.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def get_installed_packages(cls) -> List[str]:
-        """Return a list of the installed packages and their versions
+        """Obtain a list of the installed packages and their versions.
 
-        :rtype: list of strings with the form package=version.
+        :return: A list of installed packages in the form package=version.
         """
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def fetch_stage_packages(
         cls,
         *,
         application_name: str,
         package_names: List[str],
         base: str,
-        stage_packages_path: pathlib.Path,
+        stage_packages_path: Path,
         target_arch: str,
         list_only: bool = False,
     ) -> List[str]:
         """Fetch stage packages to stage_packages_path."""
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def unpack_stage_packages(
-        cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
+        cls, *, stage_packages_path: Path, install_path: Path
     ) -> None:
         """Unpack stage packages to install_path."""
-        raise errors.NoNativeBackendError()
 
     @classmethod
+    @abc.abstractmethod
     def update_package_list(cls, *, application_name: str, target_arch: str) -> None:
         """Refresh the list of packages available in the repository."""
-        raise errors.NoNativeBackendError()
-
-    @classmethod
-    def install_gpg_key(cls, *, key_id: str, key: str) -> bool:
-        """Install trusted GPG key."""
-        raise errors.NoNativeBackendError()
 
     @classmethod
     def normalize(cls, unpackdir: str) -> None:
@@ -306,8 +261,57 @@ class DummyRepository(BaseRepository):
     """A dummy repository."""
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
+        """Return a list of libraries in package_name."""
         return set()
+
+    @classmethod
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+        """Return a list of packages required to to work with source_type."""
+        return set()
+
+    @classmethod
+    def refresh_build_packages(cls) -> None:
+        """Refresh the build packages cache."""
+
+    @classmethod
+    def install_build_packages(cls, package_names: List[str]) -> List[str]:
+        """Install packages on the host required to build."""
+        return []
+
+    @classmethod
+    def is_package_installed(cls, package_name: str) -> bool:
+        """Return a bool indicating if package_name is installed."""
+        return False
+
+    @classmethod
+    def get_installed_packages(cls) -> List[str]:
+        """Obtain a list of the installed packages and their versions."""
+        return []
+
+    @classmethod
+    def fetch_stage_packages(
+        cls,
+        *,
+        application_name: str,
+        package_names: List[str],
+        base: str,
+        stage_packages_path: Path,
+        target_arch: str,
+        list_only: bool = False,
+    ) -> List[str]:
+        """Fetch stage packages to stage_packages_path."""
+        return []
+
+    @classmethod
+    def unpack_stage_packages(
+        cls, *, stage_packages_path: Path, install_path: Path
+    ) -> None:
+        """Unpack stage packages to install_path."""
+
+    @classmethod
+    def update_package_list(cls, *, application_name: str, target_arch: str) -> None:
+        """Refresh the list of packages available in the repository."""
 
 
 def _try_copy_local(path: str, target: str) -> bool:
@@ -327,8 +331,7 @@ def fix_pkg_config(
     pkg_config_file: Union[str, Path],
     prefix_trim: Optional[Union[str, Path]] = None,
 ) -> None:
-    """Opens a pkg_config_file and prefixes the prefix with root."""
-
+    """Open a pkg_config_file and prefixes the prefix with root."""
     pattern_trim = None
     if prefix_trim:
         pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
@@ -356,8 +359,7 @@ def _fix_filemode(path: str) -> None:
 
 
 def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
-    """Break package name into base parts"""
-
+    """Break package name into base parts."""
     name = pkg_name
     version = None
     with contextlib.suppress(ValueError):
@@ -367,11 +369,10 @@ def get_pkg_name_parts(pkg_name: str) -> Tuple[str, Optional[str]]:
 
 
 def _rewrite_python_shebangs(root_dir):
-    """Recursively change #!/usr/bin/pythonX shebangs to #!/usr/bin/env pythonX
+    """Recursively change #!/usr/bin/pythonX shebangs to #!/usr/bin/env pythonX.
 
     :param str root_dir: Directory that will be crawled for shebangs.
     """
-
     file_pattern = re.compile(r"")
     argless_shebang_pattern = re.compile(r"\A#!.*(python\S*)$", re.MULTILINE)
     shebang_pattern_with_args = re.compile(
@@ -402,16 +403,13 @@ def _rewrite_python_shebangs(root_dir):
 def _replace_in_file(
     directory: str, file_pattern: Pattern, search_pattern: Pattern, replacement: str
 ) -> None:
-    """Searches and replaces patterns that match a file pattern.
+    """Search and replaces patterns that match a file pattern.
 
-    :param str directory: The directory to look for files.
-    :param str file_pattern: The file pattern to match inside directory.
-    :param search_pattern: A re.compile'd pattern to search for within
-                           matching files.
-    :param str replacement: The string to replace the matching search_pattern
-                            with.
+    :param directory: The directory to look for files.
+    :param file_pattern: The file pattern to match inside directory.
+    :param search_pattern: A re.compile'd pattern to search for within matching files.
+    :param replacement: The string to replace the matching search_pattern with.
     """
-
     for root, _, files in os.walk(directory):
         for file_name in files:
             if file_pattern.match(file_name):
@@ -427,9 +425,9 @@ def _search_and_replace_contents(
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 
-    :param str file_path: Path of file to be searched.
+    :param file_path: Path of file to be searched.
     :param re.RegexObject search_pattern: Pattern for which to search.
-    :param str replacement: The string to replace pattern.
+    :param replacement: The string to replace pattern.
     """
     try:
         with open(file_path, "r+") as fil:

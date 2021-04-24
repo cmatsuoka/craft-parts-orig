@@ -54,8 +54,7 @@ class Sequencer:
     def resolve_package_dependencies(self, package_names: List[str]) -> List[str]:
         """Expand the list of provided packages to include dependencies and versions."""
 
-        package_repo = packages.Repository()
-        package_list = package_repo.fetch_stage_packages(
+        package_list = packages.Repository.fetch_stage_packages(
             application_name=self._project_info.application_name,
             package_names=package_names,
             target_arch=self._project_info.target_arch,
@@ -188,7 +187,6 @@ class Sequencer:
             )
 
         elif step == Step.BUILD:
-            package_repo = packages.Repository()
             part_info = PartInfo(self._project_info, part)
 
             plugin = plugins.get_plugin(
@@ -197,13 +195,8 @@ class Sequencer:
                 properties=part.plugin_properties,
             )
 
-            build_packages = common.get_build_packages(
-                part=part, repository=package_repo, plugin=plugin
-            )
-
-            build_snaps = common.get_build_snaps(
-                part=part, repository=package_repo, plugin=plugin
-            )
+            build_packages = common.get_build_packages(part=part, plugin=plugin)
+            build_snaps = common.get_build_snaps(part=part, plugin=plugin)
 
             assets = {
                 "build-packages": build_packages,

@@ -27,7 +27,7 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
-def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
+def get_build_packages(*, part: Part, plugin: Plugin) -> List[str]:
     """Obtain the list of build packages from part, source, and plugin."""
 
     all_packages: List[str] = []
@@ -39,8 +39,9 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
 
     source = part.spec.source
     if source:
+        repo = packages.Repository
         source_type = sources.get_source_type_from_uri(source)
-        source_build_packages = repository.get_packages_for_source_type(source_type)
+        source_build_packages = repo.get_packages_for_source_type(source_type)
         if source_build_packages:
             logger.debug("source build packages: %s", source_build_packages)
             all_packages.extend(source_build_packages)
@@ -53,7 +54,7 @@ def get_build_packages(*, part: Part, repository, plugin: Plugin) -> List[str]:
     return all_packages
 
 
-def get_build_snaps(*, part: Part, repository, plugin: Plugin) -> List[str]:
+def get_build_snaps(*, part: Part, plugin: Plugin) -> List[str]:
     """Obtain the list of build snaps from part and plugin."""
 
     all_snaps: List[str] = []

@@ -181,7 +181,7 @@ class LifecycleManager:
 
         self._executor.refresh_base_packages_list()
 
-        packages.Repository().update_package_list(
+        packages.Repository.update_package_list(
             application_name=self._application_name, target_arch=self._target_arch
         )
 
