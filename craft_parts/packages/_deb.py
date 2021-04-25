@@ -32,7 +32,7 @@ from xdg import BaseDirectory  # type: ignore
 from craft_parts.utils import file_utils, os_utils
 
 from . import errors
-from ._base import BaseRepository, get_pkg_name_parts
+from ._base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 
 if sys.platform == "linux":
     # Ensure importing works on non-Linux.
@@ -451,7 +451,7 @@ class Ubuntu(BaseRepository):
                 cls._extract_deb(pkg_path, extract_dir)
                 # Mark source of files.
                 marked_name = cls._extract_deb_name_version(pkg_path)
-                cls._mark_origin_stage_package(extract_dir, marked_name)
+                mark_origin_stage_package(extract_dir, marked_name)
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
         cls.normalize(str(install_path))
