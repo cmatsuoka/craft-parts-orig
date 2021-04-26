@@ -27,6 +27,7 @@ from craft_parts import errors, utils
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +43,20 @@ class ProjectInfo:
         parallel_build_count: int = 1,
         project_dirs: ProjectDirs = None,
         local_plugins_dir: Union[Path, str] = None,
+        base: str = None,
         **custom_args,  # custom passthrough args
     ):
         if not project_dirs:
             project_dirs = ProjectDirs()
 
+        if not base:
+            base = os_utils.get_build_base()
+
         self._application_name = application_name
         self._set_machine(arch)
         self._parallel_build_count = parallel_build_count
         self._dirs = project_dirs
+        self._base = base
         self._custom_args = custom_args
 
         if not local_plugins_dir:

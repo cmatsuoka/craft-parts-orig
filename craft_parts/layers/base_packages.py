@@ -137,7 +137,9 @@ class BasePackagesOverlay:
 
     def refresh_package_list(self) -> None:
         """Change root and update the available package list."""
-        chroot.run(self._layers.mountpoint, packages.Repository.refresh_build_packages)
+        chroot.run(
+            self._layers.mountpoint, packages.Repository.refresh_build_packages_list
+        )
 
     def resolve_dependencies(self, package_list: List[str]) -> List[str]:
         """Change root and find dependencies for the given package list."""

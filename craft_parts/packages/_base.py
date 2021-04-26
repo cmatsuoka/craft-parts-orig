@@ -39,13 +39,13 @@ class BaseRepository(abc.ABC):
     - get
     - unpack
     - get_packages_for_source_type
-    - refresh_build_packages
+    - refresh_build_packages_list
     - install_build_packages
     - is_package_installed
     - get_installed_packages
     - fetch_stage_packages
     - unpack_stage_packages
-    - update_package_list
+    - refresh_stage_package_list
 
     At the end of the :meth:`unpack` method :meth:`normalize` must be
     called to make the artifacts downloaded generic and consistent.
@@ -75,7 +75,7 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def refresh_build_packages(cls) -> None:
+    def refresh_build_packages_list(cls) -> None:
         """Refresh the build packages cache.
 
         If refreshing is not possible
@@ -146,7 +146,9 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def update_package_list(cls, *, application_name: str, target_arch: str) -> None:
+    def refresh_stage_packages_list(
+        cls, *, application_name: str, target_arch: str
+    ) -> None:
         """Refresh the list of packages available in the repository."""
 
     @classmethod
@@ -168,7 +170,7 @@ class DummyRepository(BaseRepository):
         return set()
 
     @classmethod
-    def refresh_build_packages(cls) -> None:
+    def refresh_build_package_list(cls) -> None:
         """Refresh the build packages cache."""
 
     @classmethod

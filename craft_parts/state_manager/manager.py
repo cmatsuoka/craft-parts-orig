@@ -355,7 +355,7 @@ class StateManager:
                     application_name=self._project_info.application_name,
                     source=part.spec.source,
                     source_dir=part.part_src_dir,
-                    properties=part.spec.marshal(),
+                    part_spec=part.spec,
                     dirs=self._project_info.dirs,
                 )
                 self._source_handler_cache[part.name] = source_handler

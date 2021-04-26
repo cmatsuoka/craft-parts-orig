@@ -181,12 +181,12 @@ class LifecycleManager:
 
         self._executor.refresh_base_packages_list()
 
-        packages.Repository.update_package_list(
+        packages.Repository.refresh_stage_packages_list(
             application_name=self._application_name, target_arch=self._target_arch
         )
 
         if update_system_package_list:
-            packages.Repository.refresh_build_packages()
+            packages.Repository.refresh_build_packages_list()
 
     def plan(self, target_step: Step, part_names: Sequence[str] = None) -> List[Action]:
         """Obtain the list of actions to be executed given the target step and parts.

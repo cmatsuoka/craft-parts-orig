@@ -67,7 +67,7 @@ class PartHandler:
             application_name=part_info.application_name,
             source=part.spec.source,
             source_dir=part.part_src_dir,
-            properties=self._part_properties,
+            part_spec=part.spec,
             dirs=part_info.dirs,
         )
 

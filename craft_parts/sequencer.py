@@ -26,7 +26,6 @@ from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
 from craft_parts.steps import Step
-from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class Sequencer:
             application_name=self._project_info.application_name,
             package_names=package_names,
             target_arch=self._project_info.target_arch,
-            base=os_utils.get_build_base(),
+            base=self._project_info.base,  # os_utils.get_build_base(),
             stage_packages_path=Path(""),  # not used
             list_only=True,
         )

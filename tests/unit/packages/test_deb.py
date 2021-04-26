@@ -198,7 +198,7 @@ class TestBuildPackages:
             ("dependency-package", "1.0"),
         ]
 
-        _deb.Ubuntu.refresh_build_packages()
+        _deb.Ubuntu.refresh_build_packages_list()
 
         build_packages = _deb.Ubuntu.install_build_packages(
             ["package-installed", "package", "versioned-package=2.0"]
@@ -287,7 +287,7 @@ class TestBuildPackages:
             ("package-installed", "3.0")
         ]
 
-        _deb.Ubuntu.refresh_build_packages()
+        _deb.Ubuntu.refresh_build_packages_list()
 
         build_packages = _deb.Ubuntu.install_build_packages(["package-installed=3.0"])
 
@@ -328,7 +328,7 @@ class TestBuildPackages:
             ("package", "1.0")
         ]
 
-        _deb.Ubuntu.refresh_build_packages()
+        _deb.Ubuntu.refresh_build_packages_list()
 
         build_packages = _deb.Ubuntu.install_build_packages(["virtual-package"])
 
@@ -370,7 +370,7 @@ class TestBuildPackages:
             ("package", "1.0")
         ]
 
-        _deb.Ubuntu.refresh_build_packages()
+        _deb.Ubuntu.refresh_build_packages_list()
 
         _deb.Ubuntu.install_build_packages(["package"])
 
@@ -419,7 +419,7 @@ class TestBuildPackages:
         fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
             ("package", "1.0")
         ]
-        mocker.patch("craft_parts.packages._deb.Ubuntu.refresh_build_packages")
+        mocker.patch("craft_parts.packages._deb.Ubuntu.refresh_build_packages_list")
         fake_run.side_effect = CalledProcessError(100, "apt-get")
 
         with pytest.raises(errors.BuildPackagesNotInstalled) as raised:
@@ -429,20 +429,20 @@ class TestBuildPackages:
             == "Could not install all requested build packages: package=1.0"
         )
 
-    def test_refresh_build_packages(self, fake_run):
-        _deb.Ubuntu.refresh_build_packages()
+    def test_refresh_build_packages_list(self, fake_run):
+        _deb.Ubuntu.refresh_build_packages_list()
 
         fake_run.assert_called_once_with(
             ["sudo", "--preserve-env", "apt-get", "update"]
         )
 
-    def test_refresh_build_packages_fails(self, fake_run):
+    def test_refresh_build_packages_list_fails(self, fake_run):
         fake_run.side_effect = CalledProcessError(
             returncode=1, cmd=["sudo", "--preserve-env", "apt-get", "update"]
         )
 
         with pytest.raises(errors.CacheUpdateFailed):
-            _deb.Ubuntu.refresh_build_packages()
+            _deb.Ubuntu.refresh_build_packages_list()
 
         fake_run.assert_has_calls(
             [call(["sudo", "--preserve-env", "apt-get", "update"])]

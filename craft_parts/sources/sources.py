@@ -74,12 +74,16 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from craft_parts.dirs import ProjectDirs
 
 from . import errors
 from .base import SourceHandler
+
+if TYPE_CHECKING:
+    from craft_parts.parts import PartSpec
+
 
 if sys.platform == "linux":
     # from .bazaar import Bazaar  # noqa: F401
@@ -136,13 +140,10 @@ def get_source_handler(
     application_name: str,
     source: Optional[str],
     source_dir: Path,
-    properties: Optional[Dict[str, Any]],
+    part_spec: "PartSpec",
     dirs: ProjectDirs,
 ) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source."""
-
-    if not properties:
-        properties = dict()
 
     if not dirs:
         dirs = ProjectDirs()
@@ -151,17 +152,17 @@ def get_source_handler(
     if source:
         handler_class = _get_source_handler_class(
             source,
-            source_type=properties["source-type"],
+            source_type=part_spec.source_type,
         )
         source_handler = handler_class(
             application_name=application_name,
             source=source,
             source_dir=source_dir,
-            source_checksum=properties["source-checksum"],
-            source_branch=properties["source-branch"],
-            source_tag=properties["source-tag"],
-            source_depth=properties["source-depth"],
-            source_commit=properties["source-commit"],
+            source_checksum=part_spec.source_checksum,
+            source_branch=part_spec.source_branch,
+            source_tag=part_spec.source_tag,
+            source_depth=part_spec.source_depth,
+            source_commit=part_spec.source_commit,
             dirs=dirs,
         )
 

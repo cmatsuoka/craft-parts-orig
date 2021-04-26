@@ -252,7 +252,7 @@ class Ubuntu(BaseRepository):
         return packages
 
     @classmethod
-    def refresh_build_packages(cls) -> None:
+    def refresh_build_packages_list(cls) -> None:
         try:
             cmd = ["sudo", "--preserve-env", "apt-get", "update"]
             logger.debug("Executing: %s", cmd)
@@ -429,7 +429,7 @@ class Ubuntu(BaseRepository):
         return sorted(installed)
 
     @classmethod
-    def update_package_list(cls, *, application_name: str, target_arch: str):
+    def refresh_stage_packages_list(cls, *, application_name: str, target_arch: str):
         """Refresh the list of packages available in the repository."""
 
         stage_cache_dir, _ = get_cache_dirs(application_name)
