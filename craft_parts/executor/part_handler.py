@@ -65,9 +65,7 @@ class PartHandler:
         self._part_properties = part.spec.marshal()
         self._source_handler = sources.get_source_handler(
             application_name=part_info.application_name,
-            source=part.spec.source,
-            source_dir=part.part_src_dir,
-            part_spec=part.spec,
+            part=part,
             dirs=part_info.dirs,
         )
 

@@ -353,9 +353,7 @@ class StateManager:
             else:
                 source_handler = sources.get_source_handler(
                     application_name=self._project_info.application_name,
-                    source=part.spec.source,
-                    source_dir=part.part_src_dir,
-                    part_spec=part.spec,
+                    part=part,
                     dirs=self._project_info.dirs,
                 )
                 self._source_handler_cache[part.name] = source_handler

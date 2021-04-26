@@ -73,7 +73,6 @@ cases you want to refer to the documentation for the specific plugin.
 import os
 import re
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
 from craft_parts.dirs import ProjectDirs
@@ -82,7 +81,7 @@ from . import errors
 from .base import SourceHandler
 
 if TYPE_CHECKING:
-    from craft_parts.parts import PartSpec
+    from craft_parts.parts import Part
 
 
 if sys.platform == "linux":
@@ -138,10 +137,8 @@ else:
 
 def get_source_handler(
     application_name: str,
-    source: Optional[str],
-    source_dir: Path,
-    part_spec: "PartSpec",
-    dirs: ProjectDirs,
+    part: "Part",
+    dirs: ProjectDirs = None,
 ) -> Optional[SourceHandler]:
     """Return the appropriate handler for the given source."""
 
@@ -149,20 +146,20 @@ def get_source_handler(
         dirs = ProjectDirs()
 
     source_handler = None
-    if source:
+    if part.spec.source:
         handler_class = _get_source_handler_class(
-            source,
-            source_type=part_spec.source_type,
+            part.spec.source,
+            source_type=part.spec.source_type,
         )
         source_handler = handler_class(
             application_name=application_name,
-            source=source,
-            source_dir=source_dir,
-            source_checksum=part_spec.source_checksum,
-            source_branch=part_spec.source_branch,
-            source_tag=part_spec.source_tag,
-            source_depth=part_spec.source_depth,
-            source_commit=part_spec.source_commit,
+            source=part.spec.source,
+            source_dir=part.part_src_dir,
+            source_checksum=part.spec.source_checksum,
+            source_branch=part.spec.source_branch,
+            source_tag=part.spec.source_tag,
+            source_depth=part.spec.source_depth,
+            source_commit=part.spec.source_commit,
             dirs=dirs,
         )
 
