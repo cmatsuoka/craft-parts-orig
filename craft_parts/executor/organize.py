@@ -28,8 +28,10 @@ import shutil
 from glob import iglob
 from pathlib import Path
 
-from craft_parts.filesets import Fileset, errors
+from craft_parts import errors
 from craft_parts.utils import file_utils
+
+from .filesets import Fileset
 
 
 def organize_filesets(

@@ -20,9 +20,11 @@ import filecmp
 import os
 from typing import Any, Dict, List
 
-from craft_parts import errors, filesets
-from craft_parts.filesets import Fileset
+from craft_parts import errors
 from craft_parts.parts import Part
+
+from . import filesets
+from .filesets import Fileset
 
 
 def check_for_stage_collisions(part_list: List[Part]) -> None:

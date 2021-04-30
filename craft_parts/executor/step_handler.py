@@ -27,9 +27,8 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set
 
-from craft_parts import errors, filesets, packages
+from craft_parts import errors, packages
 from craft_parts.executor import collisions
-from craft_parts.filesets import Fileset
 from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins import Plugin
@@ -37,7 +36,8 @@ from craft_parts.sources import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils
 
-from . import environment
+from . import environment, filesets
+from .filesets import Fileset
 
 FilesAndDirs = namedtuple("FilesAndDirs", ["files", "dirs"])
 

@@ -21,8 +21,8 @@ from typing import Any, List
 
 import pytest
 
+from craft_parts.executor.filesets import Fileset
 from craft_parts.executor.organize import organize_filesets
-from craft_parts.filesets import Fileset
 
 
 class TestOrganize:
