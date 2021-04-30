@@ -27,15 +27,14 @@ import os
 import shutil
 from glob import iglob
 from pathlib import Path
+from typing import Dict
 
 from craft_parts import errors
 from craft_parts.utils import file_utils
 
-from .filesets import Fileset
 
-
-def organize_filesets(
-    *, part_name: str, fileset: Fileset, base_dir: Path, overwrite: bool
+def organize_files(
+    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
 ):
     """Rearrange files for part staging.
 
@@ -44,10 +43,10 @@ def organize_filesets(
     :param overwrite: Whether existing files should be overwritten.
     """
 
-    for key in sorted(fileset.entries, key=lambda x: ["*" in x, x]):
+    for key in sorted(mapping, key=lambda x: ["*" in x, x]):
         src = str(base_dir / key)
         # Remove the leading slash so the path actually joins
-        dst = str(base_dir / fileset.get(key).lstrip("/"))
+        dst = str(base_dir / mapping[key].lstrip("/"))
 
         sources = iglob(src, recursive=True)
 

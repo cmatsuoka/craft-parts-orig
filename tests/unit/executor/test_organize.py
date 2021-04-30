@@ -21,8 +21,7 @@ from typing import Any, List
 
 import pytest
 
-from craft_parts.executor.filesets import Fileset
-from craft_parts.executor.organize import organize_filesets
+from craft_parts.executor.organize import organize_files
 
 
 class TestOrganize:
@@ -34,7 +33,7 @@ class TestOrganize:
                 dict(
                     setup_dirs=[],
                     setup_files=["foo"],
-                    organize_set={"foo": "bar"},
+                    organize_map={"foo": "bar"},
                     expected=[(["bar"], "")],
                     expected_message=None,
                     expected_overwrite=None,
@@ -47,7 +46,7 @@ class TestOrganize:
             tmp_path=Path(tmpdir),
             setup_dirs=data["setup_dirs"],
             setup_files=data["setup_files"],
-            organize_set=data["organize_set"],
+            organize_map=data["organize_map"],
             expected=data["expected"],
             expected_message=data["expected_message"],
             expected_overwrite=data["expected_overwrite"],
@@ -59,7 +58,7 @@ class TestOrganize:
             tmp_path=Path(tmpdir),
             setup_dirs=data["setup_dirs"],
             setup_files=data["setup_files"],
-            organize_set=data["organize_set"],
+            organize_map=data["organize_map"],
             expected=data["expected"],
             expected_message=data["expected_message"],
             expected_overwrite=data["expected_overwrite"],
@@ -72,7 +71,7 @@ class TestOrganize:
         tmp_path: Path,
         setup_dirs,
         setup_files,
-        organize_set,
+        organize_map,
         expected: List[Any],
         expected_message,
         expected_overwrite,
@@ -90,22 +89,20 @@ class TestOrganize:
         if overwrite and expected_overwrite is not None:
             expected = expected_overwrite
 
-        organize_fileset = Fileset(organize_set)
-
         if isinstance(expected, type) and issubclass(expected, Exception):
             with pytest.raises(expected) as error:  # type: ignore
-                organize_filesets(
+                organize_files(
                     part_name="part-name",
-                    fileset=organize_fileset,
+                    mapping=organize_map,
                     base_dir=base_dir,
                     overwrite=overwrite,
                 )
             assert re.match(expected_message, str(error)) is not None
 
         else:
-            organize_filesets(
+            organize_files(
                 part_name="part-name",
-                fileset=Fileset(organize_set),
+                mapping=organize_map,
                 base_dir=base_dir,
                 overwrite=overwrite,
             )

@@ -27,7 +27,6 @@ from craft_parts.executor.filesets import Fileset
         ([], [], [], []),
         (["a", "b"], ["a", "b"], ["a", "b"], []),
         (["a", "-b"], ["a", "-b"], ["a"], ["b"]),
-        ({"a": "1", "b": "2"}, ["a", "b"], ["a", "b"], []),
     ],
 )
 def test_fileset(tc_data, tc_entries, tc_includes, tc_excludes):

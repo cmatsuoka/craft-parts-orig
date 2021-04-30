@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2021 Canonical Ltd
+# Copyright 2015-2021 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +18,7 @@
 
 import os
 from glob import iglob
-from typing import Dict, List, Set, Tuple, Union
+from typing import List, Set, Tuple
 
 from craft_parts import errors
 from craft_parts.utils import file_utils
@@ -27,18 +27,12 @@ from craft_parts.utils import file_utils
 class Fileset:
     """Helper class to process string lists."""
 
-    def __init__(
-        self, entries: Union[List[str], Dict[str, str], None], *, name: str = ""
-    ):
+    def __init__(self, entries: List[str], *, name: str = ""):
         if not entries:
             entries = []
 
         self._name = name
-        if isinstance(entries, dict):
-            self._dict = entries
-            self._list = list(entries.keys())
-        else:
-            self._list = entries
+        self._list = entries
 
     def __repr__(self):
         return f"Fileset({self._list})"
@@ -62,10 +56,6 @@ class Fileset:
     def excludes(self) -> List[str]:
         """Return the list of files to be excluded."""
         return [x[1:] for x in self._list if x[0] == "-"]
-
-    def get(self, key: str) -> str:
-        """Retrieve fileset dictionary values."""
-        return self._dict[key]
 
     def remove(self, item: str) -> None:
         """Remove this entry from the list of files."""

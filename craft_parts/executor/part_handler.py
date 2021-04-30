@@ -33,8 +33,7 @@ from craft_parts.state_manager import PartState, states
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 
-from .filesets import Fileset
-from .organize import organize_filesets
+from .organize import organize_files
 from .step_handler import FilesAndDirs, StepHandler
 
 logger = logging.getLogger(__name__)
@@ -442,10 +441,10 @@ class PartHandler:
             os.makedirs(dir_name, exist_ok=True)
 
     def _organize(self, *, overwrite=False):
-        fileset = Fileset(self._part.spec.organize_fileset, name="organize")
-        organize_filesets(
+        mapping = self._part.spec.organize_fileset
+        organize_files(
             part_name=self._part.name,
-            fileset=fileset,
+            mapping=mapping,
             base_dir=self._part.part_install_dir,
             overwrite=overwrite,
         )
