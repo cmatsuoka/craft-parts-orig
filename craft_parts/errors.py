@@ -207,13 +207,10 @@ class CopyFileNotFound(CraftPartsError):
 class FilesetError(CraftPartsError):
     """An invalid fileset operation was performed."""
 
-    fmt = "File specification error{where}: {message}"
+    fmt = "File specification error in {name!r}: {message}"
 
     def __init__(self, name: str, message: str):
-        where = ""
-        if name:
-            where = f" in {name!r}"
-        super().__init__(where=where, message=message)
+        super().__init__(name=name, message=message)
 
 
 class OsReleaseIdError(CraftPartsError):
